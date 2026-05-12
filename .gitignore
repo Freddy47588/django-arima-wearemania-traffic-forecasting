@@ -1,0 +1,27 @@
+# Python pycache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Lingkungan Virtual (Virtual Environment)
+venv/
+env/
+ENV/
+
+# Database Lokal Django (Penting agar data tes tidak tertimpa saat kolaborasi)
+db.sqlite3
+db.sqlite3-journal
+
+# File Kredensial & Rahasia (SANGAT PENTING)
+.env
+*credentials*.json
+*ga4*.json
+*service_account*.json
+secret_key.txt
+
+# File Sistem Operasi
+.DS_Store
+Thumbs.db
+
+# File Output Model Statistika (Buka komentar di bawah jika file .pkl terlalu besar untuk GitHub)
+# *.pkl
