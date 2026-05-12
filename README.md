@@ -21,7 +21,7 @@ Dashboard internal berbasis web yang dirancang untuk memprediksi traffic (pagevi
 
 ## 📋 Struktur Anggota Tim
 - **Fredi Irawan**: Backend Developer & API Integration (Project Leader)
-- **Achmad Zaki Naufal**: Data Analyst & ARIMA Modeling
+- **Achmad Zaki Naufal**: Data Analyst
 - **Irsal Fauzan Alfarizi**: Data Scientist & Machine Learning Engineer
 
 ## ⚙️ Instalasi (Local Development)
