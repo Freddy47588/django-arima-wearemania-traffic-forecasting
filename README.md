@@ -28,5 +28,5 @@ Dashboard internal berbasis web yang dirancang untuk memprediksi traffic (pagevi
 
 1. **Clone Repository**
    ```bash
-   git clone [https://github.com/](https://github.com/)[username_anda]/django-arima-wearemania-traffic-forecasting.git
+   git clone https://github.com/Freddy47588/django-arima-wearemania-traffic-forecasting
    cd django-arima-wearemania-traffic-forecasting
