@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wearemania Traffic Forecasting Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #0f172a;
+            color: white;
+            padding: 24px 20px;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .brand {
+            margin-bottom: 36px;
+        }
+
+        .brand h2 {
+            font-size: 22px;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+
+        .brand p {
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .menu a {
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .menu a:hover,
+        .menu a.active {
+            background: #1e293b;
+            color: #ffffff;
+        }
+
+        .main {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            padding: 28px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            gap: 16px;
+        }
+
+        .topbar h1 {
+            font-size: 28px;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .topbar p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 11px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-light {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .btn-light:hover {
+            background: #cbd5e1;
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        select,
+        input {
+            min-width: 220px;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            outline: none;
+            background: white;
+            color: #0f172a;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: #2563eb;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .card .label {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .card .value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .card .note {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 12px;
+        }
+
+        .panel-header h3 {
+            color: #0f172a;
+            font-size: 18px;
+        }
+
+        .panel-header span {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .chart-box {
+            height: 360px;
+        }
+
+        .small-chart-box {
+            height: 300px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            color: #475569;
+            background: #f8fafc;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-up {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-down {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-stable {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        .badge-neutral {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 32px;
+            color: #64748b;
+            background: #f8fafc;
+            border-radius: 14px;
+        }
+
+        .footer-note {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 22px;
+            text-align: center;
+        }
+
+        @media (max-width: 1100px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+                padding: 18px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            select,
+            input {
+                width: 100%;
+                min-width: unset;
+            }
+
+            .filter-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <h2>Wearemania</h2>
+            <p>Traffic Forecasting Dashboard</p>
+        </div>
+
+        <nav class="menu">
+            <a href="/" class="active">Dashboard</a>
+            <a href="/upload/">Upload & Cleaning Data</a>
+            <a href="/admin/">Admin Panel</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+
+        <section class="topbar">
+            <div>
+                <h1>Traffic Forecasting Dashboard</h1>
+                <p>Monitoring traffic aktual, prediksi ARIMA, dan performa kategori berita.</p>
+            </div>
+
+            <div class="action-group">
+                <a href="/upload/" class="btn btn-primary">Upload Raw CSV</a>
+                <a href="/run-forecast/" class="btn btn-success">Run Forecast</a>
+            </div>
+        </section>
+
+        <section class="filter-card">
+            <form method="get" class="filter-form">
+                <div class="form-group">
+                    <label for="category">Kategori</label>
+                    <select name="category" id="category">
+                        <option value="">Semua Kategori</option>
+
+                        {% for category in categories %}
+                            <option value="{{ category.id }}"
+                                {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}
+                            >
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="start_date">Tanggal Awal</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="end_date">Tanggal Akhir</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Terapkan Filter</button>
+                <a href="/" class="btn btn-light">Reset</a>
+            </form>
+        </section>
+
+        <section class="cards">
+            <div class="card">
+                <div class="label">Total Views Aktual</div>
+                <div class="value">{{ total_views|default:"0" }}</div>
+                <div class="note">Berdasarkan data historis yang tersimpan</div>
+            </div>
+
+            <div class="card">
+                <div class="label">Total Kategori</div>
+                <div class="value">{{ total_categories|default:"0" }}</div>
+                <div class="note">Kategori hasil mapping Page Path</div>
+            </div>
+
+            <div class="card">
+                <div class="label">Total Data Harian</div>
+                <div class="value">{{ total_records|default:"0" }}</div>
+                <div class="note">Jumlah record traffic harian</div>
+            </div>
+
+            <div class="card">
+                <div class="label">Forecast Horizon</div>
+                <div class="value">{{ forecast_horizon|default:"7" }} Hari</div>
+                <div class="note">Prediksi traffic ke depan</div>
+            </div>
+        </section>
+
+        <section class="grid-2">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>Actual vs Forecast Views</h3>
+                        <span>Perbandingan data aktual dan hasil prediksi</span>
+                    </div>
+                </div>
+
+                <div class="chart-box">
+                    <canvas id="trafficForecastChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>Top Kategori</h3>
+                        <span>Berdasarkan total views</span>
+                    </div>
+                </div>
+
+                <div class="small-chart-box">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid-2">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>Ranking Kategori Potensial</h3>
+                        <span>Kategori dengan prediksi traffic tertinggi</span>
+                    </div>
+                </div>
+
+                {% if top_forecast_categories %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ranking</th>
+                                <th>Kategori</th>
+                                <th>Prediksi Views</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in top_forecast_categories %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.predicted_views }}</td>
+                                    <td>
+                                        {% if item.status == "Naik" %}
+                                            <span class="badge badge-up">Naik</span>
+                                        {% elif item.status == "Turun" %}
+                                            <span class="badge badge-down">Turun</span>
+                                        {% elif item.status == "Stabil" %}
+                                            <span class="badge badge-stable">Stabil</span>
+                                        {% else %}
+                                            <span class="badge badge-neutral">{{ item.status|default:"-" }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="empty">
+                        Belum ada hasil prediksi. Jalankan forecasting dulu, karena grafik tidak bisa meramal dari udara kosong.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3>Insight Redaksi</h3>
+                        <span>Rekomendasi sederhana berbasis data</span>
+                    </div>
+                </div>
+
+                {% if recommendation_text %}
+                    <p style="line-height: 1.7; color: #334155;">
+                        {{ recommendation_text }}
+                    </p>
+                {% else %}
+                    <p style="line-height: 1.7; color: #334155;">
+                        Belum ada rekomendasi. Setelah data kategori dan prediksi tersedia,
+                        sistem dapat menampilkan kategori yang berpotensi naik, turun, atau stabil.
+                    </p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h3>Data Prediksi Terbaru</h3>
+                    <span>Hasil forecast yang tersimpan di database</span>
+                </div>
+            </div>
+
+            {% if predictions %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal Prediksi</th>
+                            <th>Kategori</th>
+                            <th>Predicted Views</th>
+                            <th>Lower Bound</th>
+                            <th>Upper Bound</th>
+                            <th>Dibuat Pada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prediction in predictions %}
+                            <tr>
+                                <td>{{ prediction.prediction_date }}</td>
+                                <td>{{ prediction.category.name }}</td>
+                                <td>{{ prediction.predicted_views|floatformat:0 }}</td>
+                                <td>{{ prediction.lower_bound|default:"-" }}</td>
+                                <td>{{ prediction.upper_bound|default:"-" }}</td>
+                                <td>{{ prediction.created_at }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty">
+                    Data prediksi belum tersedia. Model ARIMA-nya belum bekerja, mungkin masih menunggu manusia menekan tombol.
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="panel" style="margin-top: 22px;">
+            <div class="panel-header">
+                <div>
+                    <h3>Import Log Terbaru</h3>
+                    <span>Riwayat upload dan cleaning data</span>
+                </div>
+            </div>
+
+            {% if import_logs %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Total Rows</th>
+                            <th>Cleaned Rows</th>
+                            <th>Skipped</th>
+                            <th>Imported</th>
+                            <th>Status</th>
+                            <th>Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in import_logs %}
+                            <tr>
+                                <td>{{ log.file_name }}</td>
+                                <td>{{ log.total_rows }}</td>
+                                <td>{{ log.cleaned_rows }}</td>
+                                <td>{{ log.skipped_rows }}</td>
+                                <td>{{ log.imported_rows }}</td>
+                                <td>
+                                    {% if log.status == "success" %}
+                                        <span class="badge badge-up">Success</span>
+                                    {% else %}
+                                        <span class="badge badge-down">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ log.imported_at }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty">
+                    Belum ada riwayat import data.
+                </div>
+            {% endif %}
+        </section>
+
+        <p class="footer-note">
+            Wearemania Traffic Forecasting Dashboard · Django · ARIMA · Data Cleaning Pipeline
+        </p>
+
+    </main>
+</div>
+
+{{ actual_labels|json_script:"actual-labels-data" }}
+{{ actual_views|json_script:"actual-views-data" }}
+{{ forecast_labels|json_script:"forecast-labels-data" }}
+{{ forecast_views|json_script:"forecast-views-data" }}
+{{ forecast_lower|json_script:"forecast-lower-data" }}
+{{ forecast_upper|json_script:"forecast-upper-data" }}
+{{ category_labels|json_script:"category-labels-data" }}
+{{ category_views|json_script:"category-views-data" }}
+
+<script>
+    const actualLabels = JSON.parse(document.getElementById("actual-labels-data").textContent);
+    const actualViews = JSON.parse(document.getElementById("actual-views-data").textContent);
+
+    const forecastLabels = JSON.parse(document.getElementById("forecast-labels-data").textContent);
+    const forecastViews = JSON.parse(document.getElementById("forecast-views-data").textContent);
+    const forecastLower = JSON.parse(document.getElementById("forecast-lower-data").textContent);
+    const forecastUpper = JSON.parse(document.getElementById("forecast-upper-data").textContent);
+
+    const categoryLabels = JSON.parse(document.getElementById("category-labels-data").textContent);
+    const categoryViews = JSON.parse(document.getElementById("category-views-data").textContent);
+
+    const combinedLabels = [...actualLabels];
+
+    forecastLabels.forEach(label => {
+        if (!combinedLabels.includes(label)) {
+            combinedLabels.push(label);
+        }
+    });
+
+    const actualData = combinedLabels.map(label => {
+        const index = actualLabels.indexOf(label);
+        return index !== -1 ? actualViews[index] : null;
+    });
+
+    const forecastData = combinedLabels.map(label => {
+        const index = forecastLabels.indexOf(label);
+        return index !== -1 ? forecastViews[index] : null;
+    });
+
+    const lowerData = combinedLabels.map(label => {
+        const index = forecastLabels.indexOf(label);
+        return index !== -1 ? forecastLower[index] : null;
+    });
+
+    const upperData = combinedLabels.map(label => {
+        const index = forecastLabels.indexOf(label);
+        return index !== -1 ? forecastUpper[index] : null;
+    });
+
+    const trafficCtx = document.getElementById("trafficForecastChart");
+
+    new Chart(trafficCtx, {
+        type: "line",
+        data: {
+            labels: combinedLabels,
+            datasets: [
+                {
+                    label: "Actual Views",
+                    data: actualData,
+                    borderWidth: 3,
+                    tension: 0.35,
+                    pointRadius: 2
+                },
+                {
+                    label: "Forecast Views",
+                    data: forecastData,
+                    borderWidth: 3,
+                    borderDash: [7, 5],
+                    tension: 0.35,
+                    pointRadius: 3
+                },
+                {
+                    label: "Lower Bound",
+                    data: lowerData,
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    tension: 0.35,
+                    pointRadius: 0
+                },
+                {
+                    label: "Upper Bound",
+                    data: upperData,
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    tension: 0.35,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: "index",
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    position: "bottom"
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            if (value === null) return null;
+                            return context.dataset.label + ": " + Number(value).toLocaleString("id-ID");
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return Number(value).toLocaleString("id-ID");
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const categoryCtx = document.getElementById("categoryChart");
+
+    new Chart(categoryCtx, {
+        type: "bar",
+        data: {
+            labels: categoryLabels,
+            datasets: [
+                {
+                    label: "Total Views",
+                    data: categoryViews,
+                    borderWidth: 1,
+                    borderRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return "Views: " + Number(context.raw).toLocaleString("id-ID");
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return Number(value).toLocaleString("id-ID");
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
