@@ -14,7 +14,7 @@ Dashboard internal berbasis web yang dirancang untuk memprediksi traffic (pagevi
 
 ## 🛠️ Tech Stack
 - **Backend**: Django (Python)
-- **Database**: SQLite
+- **Database**: MySQL
 - **Data Processing**: Pandas, NumPy
 - **Machine Learning**: Statsmodels (ARIMA), Scikit-Learn
 - **API Integration**: Google Analytics Data API v1beta
