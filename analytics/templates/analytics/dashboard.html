@@ -5,19 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wearemania Traffic Forecasting Dashboard</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        :root {
+            --bg: #f5f7fb;
+            --bg-soft: #eef3fb;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --text: #0f172a;
+            --muted: #64748b;
+            --muted-soft: #94a3b8;
+            --line: #e2e8f0;
+            --primary: #0f4c81;
+            --primary-dark: #0b355f;
+            --primary-soft: #e0f2fe;
+            --accent: #f97316;
+            --green: #16a34a;
+            --green-soft: #dcfce7;
+            --red: #dc2626;
+            --red-soft: #fee2e2;
+            --blue-soft: #dbeafe;
+            --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+            --shadow-soft: 0 8px 28px rgba(15, 23, 42, 0.06);
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            background: #f4f7fb;
-            color: #1f2937;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(15, 76, 129, 0.12), transparent 30%),
+                radial-gradient(circle at top right, rgba(249, 115, 22, 0.10), transparent 32%),
+                var(--bg);
+            color: var(--text);
+            font-family: "Inter", Arial, Helvetica, sans-serif;
+        }
+
+        a {
+            color: inherit;
         }
 
         .layout {
@@ -26,135 +66,300 @@
         }
 
         .sidebar {
-            width: 260px;
-            background: #0f172a;
-            color: white;
-            padding: 24px 20px;
+            width: 282px;
+            padding: 22px;
             position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
+            inset: 0 auto 0 0;
+            background:
+                linear-gradient(180deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
+                #0f172a;
+            color: #ffffff;
+            overflow-y: auto;
+            box-shadow: 16px 0 40px rgba(15, 23, 42, 0.18);
+            z-index: 10;
         }
 
         .brand {
-            margin-bottom: 36px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 28px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-logo {
+            width: 46px;
+            height: 46px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 46px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f97316, #facc15);
+            color: #111827;
+            font-size: 22px;
+            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.32);
         }
 
         .brand h2 {
-            font-size: 22px;
-            margin-bottom: 6px;
-            color: #ffffff;
+            font-size: 19px;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
         }
 
         .brand p {
-            font-size: 13px;
-            color: #94a3b8;
-            line-height: 1.5;
+            color: rgba(226, 232, 240, 0.86);
+            font-size: 12px;
+            line-height: 1.45;
+            margin-top: 5px;
+        }
+
+        .sidebar-label {
+            color: rgba(226, 232, 240, 0.68);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin: 0 8px 10px;
         }
 
         .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            display: grid;
+            gap: 9px;
         }
 
         .menu a {
-            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            color: rgba(226, 232, 240, 0.86);
             text-decoration: none;
             padding: 12px 14px;
-            border-radius: 10px;
+            border-radius: 16px;
             font-size: 14px;
-            transition: 0.2s;
+            font-weight: 650;
+            transition: 0.22s ease;
         }
 
         .menu a:hover,
         .menu a.active {
-            background: #1e293b;
+            background: rgba(255, 255, 255, 0.13);
             color: #ffffff;
+            transform: translateX(3px);
         }
 
-        .main {
-            margin-left: 260px;
-            width: calc(100% - 260px);
-            padding: 28px;
+        .menu-icon {
+            width: 29px;
+            height: 29px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.12);
+            font-size: 14px;
         }
 
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 28px;
-            gap: 16px;
+        .sidebar-card {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .topbar h1 {
-            font-size: 28px;
-            color: #0f172a;
+        .sidebar-card strong {
+            display: block;
+            font-size: 13px;
             margin-bottom: 6px;
         }
 
-        .topbar p {
-            color: #64748b;
+        .sidebar-card span {
+            color: rgba(226, 232, 240, 0.78);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .main {
+            margin-left: 282px;
+            width: calc(100% - 282px);
+            padding: 28px;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 22px;
+            padding: 26px;
+            min-height: 164px;
+            border-radius: var(--radius-xl);
+            background:
+                linear-gradient(135deg, rgba(15, 76, 129, 0.96), rgba(15, 23, 42, 0.96)),
+                var(--primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .hero::before,
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 230px;
+            height: 230px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero::before {
+            right: -88px;
+            top: -112px;
+            background: rgba(249, 115, 22, 0.38);
+        }
+
+        .hero::after {
+            right: 120px;
+            bottom: -176px;
+            background: rgba(14, 165, 233, 0.22);
+        }
+
+        .hero-content,
+        .action-group {
+            position: relative;
+            z-index: 1;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 11px;
+            margin-bottom: 13px;
+            border-radius: 999px;
+            color: #ffedd5;
+            background: rgba(249, 115, 22, 0.16);
+            border: 1px solid rgba(251, 146, 60, 0.26);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            max-width: 760px;
+            font-size: clamp(28px, 3vw, 42px);
+            line-height: 1.06;
+            letter-spacing: -0.05em;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            max-width: 720px;
+            color: rgba(226, 232, 240, 0.88);
             font-size: 14px;
+            line-height: 1.7;
         }
 
         .action-group {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .btn {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 43px;
             padding: 11px 16px;
-            border-radius: 10px;
+            border-radius: 14px;
             text-decoration: none;
-            border: none;
+            border: 1px solid transparent;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 800;
+            white-space: nowrap;
+            transition: 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
         }
 
         .btn-primary {
-            background: #2563eb;
-            color: white;
+            background: #ffffff;
+            color: var(--primary-dark);
+            box-shadow: 0 14px 24px rgba(15, 23, 42, 0.12);
         }
 
         .btn-primary:hover {
-            background: #1d4ed8;
+            background: #f8fafc;
         }
 
         .btn-success {
-            background: #16a34a;
-            color: white;
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 14px 24px rgba(249, 115, 22, 0.28);
         }
 
         .btn-success:hover {
-            background: #15803d;
+            background: #ea580c;
         }
 
         .btn-light {
-            background: #e2e8f0;
-            color: #0f172a;
+            color: var(--primary);
+            background: var(--primary-soft);
+            border-color: rgba(14, 116, 144, 0.12);
         }
 
         .btn-light:hover {
-            background: #cbd5e1;
+            background: #bae6fd;
+        }
+
+        .filter-card,
+        .card,
+        .panel {
+            background: rgba(255, 255, 255, 0.90);
+            border: 1px solid rgba(226, 232, 240, 0.88);
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(12px);
         }
 
         .filter-card {
-            background: white;
-            border-radius: 18px;
-            padding: 20px;
-            margin-bottom: 22px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            border-radius: var(--radius-xl);
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .filter-title h2 {
+            font-size: 17px;
+            letter-spacing: -0.02em;
+        }
+
+        .filter-title span {
+            color: var(--muted);
+            font-size: 13px;
         }
 
         .filter-form {
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) auto auto;
             gap: 12px;
             align-items: end;
-            flex-wrap: wrap;
         }
 
         .form-group {
@@ -164,102 +369,167 @@
         }
 
         .form-group label {
-            font-size: 13px;
             color: #475569;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 800;
         }
 
         select,
         input {
-            min-width: 220px;
-            padding: 11px 12px;
+            width: 100%;
+            min-height: 43px;
+            padding: 11px 13px;
             border: 1px solid #cbd5e1;
-            border-radius: 10px;
+            border-radius: 14px;
             outline: none;
-            background: white;
-            color: #0f172a;
+            background: #ffffff;
+            color: var(--text);
+            font: inherit;
+            transition: 0.2s ease;
         }
 
         select:focus,
         input:focus {
-            border-color: #2563eb;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.16);
         }
 
         .cards {
             display: grid;
-            grid-template-columns: repeat(4, minmax(180px, 1fr));
-            gap: 18px;
-            margin-bottom: 22px;
+            grid-template-columns: repeat(4, minmax(190px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
         .card {
-            background: white;
-            border-radius: 18px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            position: relative;
+            overflow: hidden;
+            min-height: 150px;
+            border-radius: var(--radius-xl);
+            padding: 19px;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            right: -34px;
+            top: -34px;
+            width: 106px;
+            height: 106px;
+            border-radius: 50%;
+            background: rgba(14, 165, 233, 0.10);
+        }
+
+        .card-top {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
         }
 
         .card .label {
-            color: #64748b;
+            color: var(--muted);
             font-size: 13px;
-            margin-bottom: 10px;
+            font-weight: 750;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: 15px;
+            background: var(--blue-soft);
+            font-size: 19px;
         }
 
         .card .value {
-            font-size: 28px;
-            font-weight: 800;
-            color: #0f172a;
+            position: relative;
+            z-index: 1;
+            color: var(--text);
+            font-size: clamp(24px, 2.25vw, 34px);
+            font-weight: 850;
+            letter-spacing: -0.04em;
+            line-height: 1;
         }
 
         .card .note {
+            position: relative;
+            z-index: 1;
+            color: var(--muted-soft);
             font-size: 12px;
-            color: #94a3b8;
-            margin-top: 8px;
+            line-height: 1.55;
+            margin-top: 10px;
         }
 
-        .grid-2 {
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
             gap: 18px;
-            margin-bottom: 22px;
+            margin-bottom: 20px;
         }
 
         .panel {
-            background: white;
-            border-radius: 18px;
+            border-radius: var(--radius-xl);
             padding: 20px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            min-width: 0;
         }
 
         .panel-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
+            align-items: flex-start;
             gap: 12px;
+            margin-bottom: 18px;
         }
 
         .panel-header h3 {
-            color: #0f172a;
+            color: var(--text);
             font-size: 18px;
+            letter-spacing: -0.03em;
         }
 
         .panel-header span {
-            color: #64748b;
+            display: inline-block;
+            color: var(--muted);
             font-size: 13px;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
+        .panel-chip {
+            padding: 7px 10px;
+            border-radius: 999px;
+            color: var(--primary);
+            background: var(--primary-soft);
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
         }
 
         .chart-box {
-            height: 360px;
+            height: 380px;
+            padding-top: 4px;
         }
 
         .small-chart-box {
-            height: 300px;
+            height: 320px;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: 18px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 720px;
             font-size: 14px;
         }
 
@@ -267,40 +537,62 @@
             text-align: left;
             color: #475569;
             background: #f8fafc;
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--line);
+            font-size: 12px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
         }
 
         td {
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--line);
             color: #334155;
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 0;
         }
 
         tr:hover td {
             background: #f8fafc;
         }
 
+        .rank-number {
+            width: 34px;
+            height: 34px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--surface-soft);
+            color: var(--primary);
+            font-weight: 850;
+        }
+
         .badge {
-            display: inline-block;
-            padding: 5px 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 72px;
+            padding: 6px 10px;
             border-radius: 999px;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 850;
         }
 
         .badge-up {
-            background: #dcfce7;
+            background: var(--green-soft);
             color: #166534;
         }
 
         .badge-down {
-            background: #fee2e2;
+            background: var(--red-soft);
             color: #991b1b;
         }
 
         .badge-stable {
-            background: #e0f2fe;
+            background: var(--primary-soft);
             color: #075985;
         }
 
@@ -309,60 +601,130 @@
             color: #475569;
         }
 
+        .insight-box {
+            position: relative;
+            overflow: hidden;
+            min-height: 206px;
+            padding: 18px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #fff7ed, #ffffff 56%, #eff6ff);
+            border: 1px solid #fed7aa;
+        }
+
+        .insight-box::after {
+            content: "💡";
+            position: absolute;
+            right: 18px;
+            bottom: 10px;
+            font-size: 58px;
+            opacity: 0.15;
+        }
+
+        .insight-box p {
+            position: relative;
+            z-index: 1;
+            color: #334155;
+            line-height: 1.75;
+            font-size: 14px;
+        }
+
         .empty {
             text-align: center;
-            padding: 32px;
-            color: #64748b;
-            background: #f8fafc;
-            border-radius: 14px;
+            padding: 34px 24px;
+            color: var(--muted);
+            background: var(--surface-soft);
+            border: 1px dashed #cbd5e1;
+            border-radius: 18px;
+            line-height: 1.65;
         }
 
         .footer-note {
-            color: #64748b;
+            color: var(--muted);
             font-size: 13px;
             margin-top: 22px;
             text-align: center;
         }
 
-        @media (max-width: 1100px) {
+        @media (max-width: 1180px) {
+            .filter-form {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
             .cards {
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .grid-2 {
+            .dashboard-grid {
                 grid-template-columns: 1fr;
             }
         }
 
-        @media (max-width: 760px) {
+        @media (max-width: 860px) {
             .sidebar {
-                display: none;
+                position: static;
+                width: 100%;
+                min-height: auto;
+                border-radius: 0 0 26px 26px;
+            }
+
+            .layout {
+                display: block;
             }
 
             .main {
-                margin-left: 0;
                 width: 100%;
+                margin-left: 0;
                 padding: 18px;
             }
 
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
+            .menu {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
 
-            .cards {
+            .menu a {
+                justify-content: center;
+                text-align: center;
+                flex-direction: column;
+                padding: 12px 10px;
+            }
+
+            .sidebar-card {
+                display: none;
+            }
+
+            .hero {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 22px;
+            }
+
+            .action-group {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .filter-title {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .filter-form,
+            .cards,
+            .menu {
                 grid-template-columns: 1fr;
             }
 
-            select,
-            input {
+            .btn {
                 width: 100%;
-                min-width: unset;
             }
 
-            .filter-form {
-                flex-direction: column;
-                align-items: stretch;
+            .chart-box {
+                height: 320px;
+            }
+
+            .small-chart-box {
+                height: 280px;
             }
         }
     </style>
@@ -373,35 +735,52 @@
 
     <aside class="sidebar">
         <div class="brand">
-            <h2>Wearemania</h2>
-            <p>Traffic Forecasting Dashboard</p>
+            <div class="brand-logo">⚽</div>
+            <div>
+                <h2>Wearemania</h2>
+                <p>Traffic Forecasting Dashboard</p>
+            </div>
         </div>
 
+        <div class="sidebar-label">Menu Utama</div>
         <nav class="menu">
-            <a href="/" class="active">Dashboard</a>
-            <a href="/upload/">Upload & Cleaning Data</a>
-            <a href="/admin/">Admin Panel</a>
+            <a href="/" class="active"><span class="menu-icon">📊</span><span>Dashboard</span></a>
+            <a href="/upload/"><span class="menu-icon">📁</span><span>Upload & Cleaning</span></a>
+            <a href="/admin/"><span class="menu-icon">⚙️</span><span>Admin Panel</span></a>
         </nav>
+
+        <div class="sidebar-card">
+            <strong>Mode Analitik</strong>
+            <span>Monitoring traffic aktual, forecast ARIMA, kategori berita, dan riwayat import dalam satu halaman.</span>
+        </div>
     </aside>
 
     <main class="main">
 
-        <section class="topbar">
-            <div>
+        <section class="hero">
+            <div class="hero-content">
+                <div class="eyebrow">Live Analytics · ARIMA Forecast</div>
                 <h1>Traffic Forecasting Dashboard</h1>
-                <p>Monitoring traffic aktual, prediksi ARIMA, dan performa kategori berita.</p>
+                <p>Monitoring traffic aktual, prediksi ARIMA, performa kategori berita, dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.</p>
             </div>
 
             <div class="action-group">
-                <a href="/upload/" class="btn btn-primary">Upload Raw CSV</a>
-                <a href="/run-forecast/" class="btn btn-success">Run Forecast</a>
+                <a href="/upload/" class="btn btn-primary">⬆️ Upload Raw CSV</a>
+                <a href="/run-forecast/" class="btn btn-success">⚡ Run Forecast</a>
             </div>
         </section>
 
         <section class="filter-card">
+            <div class="filter-title">
+                <div>
+                    <h2>Filter Data Dashboard</h2>
+                    <span>Pilih kategori dan rentang tanggal untuk melihat performa lebih spesifik.</span>
+                </div>
+            </div>
+
             <form method="get" class="filter-form">
                 <div class="form-group">
-                    <label for="category">Kategori</label>
+                    <label for="category">Kategori Berita</label>
                     <select name="category" id="category">
                         <option value="">Semua Kategori</option>
 
@@ -425,44 +804,57 @@
                     <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
                 </div>
 
-                <button type="submit" class="btn btn-primary">Terapkan Filter</button>
+                <button type="submit" class="btn btn-success">Terapkan</button>
                 <a href="/" class="btn btn-light">Reset</a>
             </form>
         </section>
 
         <section class="cards">
             <div class="card">
-                <div class="label">Total Views Aktual</div>
+                <div class="card-top">
+                    <div class="label">Total Views Aktual</div>
+                    <div class="card-icon">👁️</div>
+                </div>
                 <div class="value">{{ total_views|default:"0" }}</div>
                 <div class="note">Berdasarkan data historis yang tersimpan</div>
             </div>
 
             <div class="card">
-                <div class="label">Total Kategori</div>
+                <div class="card-top">
+                    <div class="label">Total Kategori</div>
+                    <div class="card-icon">🗂️</div>
+                </div>
                 <div class="value">{{ total_categories|default:"0" }}</div>
                 <div class="note">Kategori hasil mapping Page Path</div>
             </div>
 
             <div class="card">
-                <div class="label">Total Data Harian</div>
+                <div class="card-top">
+                    <div class="label">Total Data Harian</div>
+                    <div class="card-icon">📅</div>
+                </div>
                 <div class="value">{{ total_records|default:"0" }}</div>
                 <div class="note">Jumlah record traffic harian</div>
             </div>
 
             <div class="card">
-                <div class="label">Forecast Horizon</div>
+                <div class="card-top">
+                    <div class="label">Forecast Horizon</div>
+                    <div class="card-icon">🔮</div>
+                </div>
                 <div class="value">{{ forecast_horizon|default:"7" }} Hari</div>
                 <div class="note">Prediksi traffic ke depan</div>
             </div>
         </section>
 
-        <section class="grid-2">
+        <section class="dashboard-grid">
             <div class="panel">
                 <div class="panel-header">
                     <div>
                         <h3>Actual vs Forecast Views</h3>
-                        <span>Perbandingan data aktual dan hasil prediksi</span>
+                        <span>Perbandingan data aktual, prediksi ARIMA, dan batas estimasi.</span>
                     </div>
+                    <div class="panel-chip">Line Chart</div>
                 </div>
 
                 <div class="chart-box">
@@ -474,8 +866,9 @@
                 <div class="panel-header">
                     <div>
                         <h3>Top Kategori</h3>
-                        <span>Berdasarkan total views</span>
+                        <span>Berdasarkan total views pada data yang difilter.</span>
                     </div>
+                    <div class="panel-chip">Ranking</div>
                 </div>
 
                 <div class="small-chart-box">
@@ -484,46 +877,49 @@
             </div>
         </section>
 
-        <section class="grid-2">
+        <section class="dashboard-grid">
             <div class="panel">
                 <div class="panel-header">
                     <div>
                         <h3>Ranking Kategori Potensial</h3>
-                        <span>Kategori dengan prediksi traffic tertinggi</span>
+                        <span>Kategori dengan prediksi traffic tertinggi.</span>
                     </div>
+                    <div class="panel-chip">Forecast</div>
                 </div>
 
                 {% if top_forecast_categories %}
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Ranking</th>
-                                <th>Kategori</th>
-                                <th>Prediksi Views</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in top_forecast_categories %}
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>{{ item.category }}</td>
-                                    <td>{{ item.predicted_views }}</td>
-                                    <td>
-                                        {% if item.status == "Naik" %}
-                                            <span class="badge badge-up">Naik</span>
-                                        {% elif item.status == "Turun" %}
-                                            <span class="badge badge-down">Turun</span>
-                                        {% elif item.status == "Stabil" %}
-                                            <span class="badge badge-stable">Stabil</span>
-                                        {% else %}
-                                            <span class="badge badge-neutral">{{ item.status|default:"-" }}</span>
-                                        {% endif %}
-                                    </td>
+                                    <th>Ranking</th>
+                                    <th>Kategori</th>
+                                    <th>Prediksi Views</th>
+                                    <th>Status</th>
                                 </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {% for item in top_forecast_categories %}
+                                    <tr>
+                                        <td><span class="rank-number">{{ forloop.counter }}</span></td>
+                                        <td><strong>{{ item.category }}</strong></td>
+                                        <td>{{ item.predicted_views }}</td>
+                                        <td>
+                                            {% if item.status == "Naik" %}
+                                                <span class="badge badge-up">Naik</span>
+                                            {% elif item.status == "Turun" %}
+                                                <span class="badge badge-down">Turun</span>
+                                            {% elif item.status == "Stabil" %}
+                                                <span class="badge badge-stable">Stabil</span>
+                                            {% else %}
+                                                <span class="badge badge-neutral">{{ item.status|default:"-" }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 {% else %}
                     <div class="empty">
                         Belum ada hasil prediksi. Jalankan forecasting dulu, karena grafik tidak bisa meramal dari udara kosong.
@@ -535,20 +931,20 @@
                 <div class="panel-header">
                     <div>
                         <h3>Insight Redaksi</h3>
-                        <span>Rekomendasi sederhana berbasis data</span>
+                        <span>Rekomendasi sederhana berbasis data.</span>
                     </div>
                 </div>
 
-                {% if recommendation_text %}
-                    <p style="line-height: 1.7; color: #334155;">
-                        {{ recommendation_text }}
-                    </p>
-                {% else %}
-                    <p style="line-height: 1.7; color: #334155;">
-                        Belum ada rekomendasi. Setelah data kategori dan prediksi tersedia,
-                        sistem dapat menampilkan kategori yang berpotensi naik, turun, atau stabil.
-                    </p>
-                {% endif %}
+                <div class="insight-box">
+                    {% if recommendation_text %}
+                        <p>{{ recommendation_text }}</p>
+                    {% else %}
+                        <p>
+                            Belum ada rekomendasi. Setelah data kategori dan prediksi tersedia,
+                            sistem dapat menampilkan kategori yang berpotensi naik, turun, atau stabil.
+                        </p>
+                    {% endif %}
+                </div>
             </div>
         </section>
 
@@ -556,35 +952,38 @@
             <div class="panel-header">
                 <div>
                     <h3>Data Prediksi Terbaru</h3>
-                    <span>Hasil forecast yang tersimpan di database</span>
+                    <span>Hasil forecast yang tersimpan di database.</span>
                 </div>
+                <div class="panel-chip">Database</div>
             </div>
 
             {% if predictions %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tanggal Prediksi</th>
-                            <th>Kategori</th>
-                            <th>Predicted Views</th>
-                            <th>Lower Bound</th>
-                            <th>Upper Bound</th>
-                            <th>Dibuat Pada</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for prediction in predictions %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
                             <tr>
-                                <td>{{ prediction.prediction_date }}</td>
-                                <td>{{ prediction.category.name }}</td>
-                                <td>{{ prediction.predicted_views|floatformat:0 }}</td>
-                                <td>{{ prediction.lower_bound|default:"-" }}</td>
-                                <td>{{ prediction.upper_bound|default:"-" }}</td>
-                                <td>{{ prediction.created_at }}</td>
+                                <th>Tanggal Prediksi</th>
+                                <th>Kategori</th>
+                                <th>Predicted Views</th>
+                                <th>Lower Bound</th>
+                                <th>Upper Bound</th>
+                                <th>Dibuat Pada</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for prediction in predictions %}
+                                <tr>
+                                    <td>{{ prediction.prediction_date }}</td>
+                                    <td><strong>{{ prediction.category.name }}</strong></td>
+                                    <td>{{ prediction.predicted_views|floatformat:0 }}</td>
+                                    <td>{{ prediction.lower_bound|default:"-" }}</td>
+                                    <td>{{ prediction.upper_bound|default:"-" }}</td>
+                                    <td>{{ prediction.created_at }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
                 <div class="empty">
                     Data prediksi belum tersedia. Model ARIMA-nya belum bekerja, mungkin masih menunggu manusia menekan tombol.
@@ -592,47 +991,50 @@
             {% endif %}
         </section>
 
-        <section class="panel" style="margin-top: 22px;">
+        <section class="panel" style="margin-top: 20px;">
             <div class="panel-header">
                 <div>
                     <h3>Import Log Terbaru</h3>
-                    <span>Riwayat upload dan cleaning data</span>
+                    <span>Riwayat upload dan cleaning data.</span>
                 </div>
+                <div class="panel-chip">Import CSV</div>
             </div>
 
             {% if import_logs %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>File</th>
-                            <th>Total Rows</th>
-                            <th>Cleaned Rows</th>
-                            <th>Skipped</th>
-                            <th>Imported</th>
-                            <th>Status</th>
-                            <th>Waktu</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in import_logs %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
                             <tr>
-                                <td>{{ log.file_name }}</td>
-                                <td>{{ log.total_rows }}</td>
-                                <td>{{ log.cleaned_rows }}</td>
-                                <td>{{ log.skipped_rows }}</td>
-                                <td>{{ log.imported_rows }}</td>
-                                <td>
-                                    {% if log.status == "success" %}
-                                        <span class="badge badge-up">Success</span>
-                                    {% else %}
-                                        <span class="badge badge-down">Failed</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ log.imported_at }}</td>
+                                <th>File</th>
+                                <th>Total Rows</th>
+                                <th>Cleaned Rows</th>
+                                <th>Skipped</th>
+                                <th>Imported</th>
+                                <th>Status</th>
+                                <th>Waktu</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for log in import_logs %}
+                                <tr>
+                                    <td><strong>{{ log.file_name }}</strong></td>
+                                    <td>{{ log.total_rows }}</td>
+                                    <td>{{ log.cleaned_rows }}</td>
+                                    <td>{{ log.skipped_rows }}</td>
+                                    <td>{{ log.imported_rows }}</td>
+                                    <td>
+                                        {% if log.status == "success" %}
+                                            <span class="badge badge-up">Success</span>
+                                        {% else %}
+                                            <span class="badge badge-down">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.imported_at }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
                 <div class="empty">
                     Belum ada riwayat import data.
@@ -657,16 +1059,26 @@
 {{ category_views|json_script:"category-views-data" }}
 
 <script>
-    const actualLabels = JSON.parse(document.getElementById("actual-labels-data").textContent);
-    const actualViews = JSON.parse(document.getElementById("actual-views-data").textContent);
+    function readJsonScript(id, fallback) {
+        const element = document.getElementById(id);
+        if (!element) return fallback;
 
-    const forecastLabels = JSON.parse(document.getElementById("forecast-labels-data").textContent);
-    const forecastViews = JSON.parse(document.getElementById("forecast-views-data").textContent);
-    const forecastLower = JSON.parse(document.getElementById("forecast-lower-data").textContent);
-    const forecastUpper = JSON.parse(document.getElementById("forecast-upper-data").textContent);
+        try {
+            const parsed = JSON.parse(element.textContent);
+            return Array.isArray(parsed) ? parsed : fallback;
+        } catch (error) {
+            return fallback;
+        }
+    }
 
-    const categoryLabels = JSON.parse(document.getElementById("category-labels-data").textContent);
-    const categoryViews = JSON.parse(document.getElementById("category-views-data").textContent);
+    const actualLabels = readJsonScript("actual-labels-data", []);
+    const actualViews = readJsonScript("actual-views-data", []);
+    const forecastLabels = readJsonScript("forecast-labels-data", []);
+    const forecastViews = readJsonScript("forecast-views-data", []);
+    const forecastLower = readJsonScript("forecast-lower-data", []);
+    const forecastUpper = readJsonScript("forecast-upper-data", []);
+    const categoryLabels = readJsonScript("category-labels-data", []);
+    const categoryViews = readJsonScript("category-views-data", []);
 
     const combinedLabels = [...actualLabels];
 
@@ -696,123 +1108,176 @@
         return index !== -1 ? forecastUpper[index] : null;
     });
 
+    Chart.defaults.font.family = "Inter, Arial, sans-serif";
+    Chart.defaults.color = "#64748b";
+
     const trafficCtx = document.getElementById("trafficForecastChart");
 
-    new Chart(trafficCtx, {
-        type: "line",
-        data: {
-            labels: combinedLabels,
-            datasets: [
-                {
-                    label: "Actual Views",
-                    data: actualData,
-                    borderWidth: 3,
-                    tension: 0.35,
-                    pointRadius: 2
-                },
-                {
-                    label: "Forecast Views",
-                    data: forecastData,
-                    borderWidth: 3,
-                    borderDash: [7, 5],
-                    tension: 0.35,
-                    pointRadius: 3
-                },
-                {
-                    label: "Lower Bound",
-                    data: lowerData,
-                    borderWidth: 1,
-                    borderDash: [3, 3],
-                    tension: 0.35,
-                    pointRadius: 0
-                },
-                {
-                    label: "Upper Bound",
-                    data: upperData,
-                    borderWidth: 1,
-                    borderDash: [3, 3],
-                    tension: 0.35,
-                    pointRadius: 0
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: "index",
-                intersect: false
+    if (trafficCtx) {
+        new Chart(trafficCtx, {
+            type: "line",
+            data: {
+                labels: combinedLabels,
+                datasets: [
+                    {
+                        label: "Actual Views",
+                        data: actualData,
+                        borderColor: "#0f4c81",
+                        backgroundColor: "rgba(15, 76, 129, 0.12)",
+                        borderWidth: 3,
+                        tension: 0.38,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        fill: false
+                    },
+                    {
+                        label: "Forecast Views",
+                        data: forecastData,
+                        borderColor: "#f97316",
+                        backgroundColor: "rgba(249, 115, 22, 0.12)",
+                        borderWidth: 3,
+                        borderDash: [8, 5],
+                        tension: 0.38,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        fill: false
+                    },
+                    {
+                        label: "Lower Bound",
+                        data: lowerData,
+                        borderColor: "rgba(22, 163, 74, 0.55)",
+                        backgroundColor: "rgba(22, 163, 74, 0.06)",
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        tension: 0.38,
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: "Upper Bound",
+                        data: upperData,
+                        borderColor: "rgba(220, 38, 38, 0.50)",
+                        backgroundColor: "rgba(220, 38, 38, 0.06)",
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        tension: 0.38,
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
             },
-            plugins: {
-                legend: {
-                    position: "bottom"
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: "index",
+                    intersect: false
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const value = context.raw;
-                            if (value === null) return null;
-                            return context.dataset.label + ": " + Number(value).toLocaleString("id-ID");
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            padding: 18
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "#0f172a",
+                        padding: 12,
+                        cornerRadius: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                if (value === null) return null;
+                                return context.dataset.label + ": " + Number(value).toLocaleString("id-ID");
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return Number(value).toLocaleString("id-ID");
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(148, 163, 184, 0.18)"
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return Number(value).toLocaleString("id-ID");
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
     const categoryCtx = document.getElementById("categoryChart");
 
-    new Chart(categoryCtx, {
-        type: "bar",
-        data: {
-            labels: categoryLabels,
-            datasets: [
-                {
-                    label: "Total Views",
-                    data: categoryViews,
-                    borderWidth: 1,
-                    borderRadius: 8
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: "y",
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return "Views: " + Number(context.raw).toLocaleString("id-ID");
+    if (categoryCtx) {
+        new Chart(categoryCtx, {
+            type: "bar",
+            data: {
+                labels: categoryLabels,
+                datasets: [
+                    {
+                        label: "Total Views",
+                        data: categoryViews,
+                        backgroundColor: "rgba(15, 76, 129, 0.84)",
+                        hoverBackgroundColor: "rgba(249, 115, 22, 0.90)",
+                        borderColor: "rgba(15, 76, 129, 1)",
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        barThickness: 18
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: "y",
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "#0f172a",
+                        padding: 12,
+                        cornerRadius: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return "Views: " + Number(context.raw).toLocaleString("id-ID");
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return Number(value).toLocaleString("id-ID");
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: "rgba(148, 163, 184, 0.18)"
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return Number(value).toLocaleString("id-ID");
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 </script>
 
 </body>

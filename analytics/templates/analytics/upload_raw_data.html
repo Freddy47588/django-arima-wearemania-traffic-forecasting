@@ -2,137 +2,906 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Upload Raw CSV</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Raw CSV | Wearemania Dashboard</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-            color: #1f2937;
-            padding: 40px;
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --success-soft: #dcfce7;
+            --danger: #dc2626;
+            --danger-soft: #fee2e2;
+            --warning-soft: #fef3c7;
+            --dark: #0f172a;
+            --muted: #64748b;
+            --soft: #f8fafc;
+            --border: #e2e8f0;
+            --card-shadow: 0 18px 45px rgba(15, 23, 42, 0.10);
         }
 
-        .card {
-            max-width: 760px;
-            margin: auto;
-            background: white;
-            padding: 28px;
-            border-radius: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 30%),
+                linear-gradient(135deg, #f8fafc 0%, #eef4ff 48%, #f4f7fb 100%);
+            color: #1f2937;
+            padding: 34px;
+        }
+
+        .page-shell {
+            width: min(1080px, 100%);
+            margin: 0 auto;
+        }
+
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 46px;
+            height: 46px;
+            display: grid;
+            place-items: center;
+            border-radius: 16px;
+            background: var(--dark);
+            color: white;
+            font-size: 22px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.20);
+        }
+
+        .brand-text strong {
+            display: block;
+            color: var(--dark);
+            font-size: 17px;
+            margin-bottom: 3px;
+        }
+
+        .brand-text span {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .card,
+        .side-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.90);
+            border-radius: 26px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+
+        .hero {
+            padding: 30px 30px 22px;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 64, 175, 0.92)),
+                radial-gradient(circle at top right, rgba(96, 165, 250, 0.34), transparent 28%);
+            color: white;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 16px;
         }
 
         h1 {
-            margin-bottom: 8px;
-            color: #0f172a;
+            font-size: clamp(28px, 4vw, 42px);
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
         }
 
-        p {
-            color: #64748b;
-            line-height: 1.7;
+        .hero p {
+            max-width: 720px;
+            color: #dbeafe;
+            line-height: 1.75;
+            font-size: 15px;
+        }
+
+        code {
+            background: rgba(226, 232, 240, 0.90);
+            color: #0f172a;
+            padding: 3px 7px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .content {
+            padding: 26px 30px 30px;
         }
 
         .messages {
-            margin: 20px 0;
+            margin-bottom: 20px;
+            display: grid;
+            gap: 10px;
         }
 
         .message {
-            padding: 14px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            font-weight: bold;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-weight: 700;
+            border: 1px solid transparent;
         }
 
         .success {
-            background: #dcfce7;
+            background: var(--success-soft);
             color: #166534;
+            border-color: #bbf7d0;
         }
 
         .error {
-            background: #fee2e2;
+            background: var(--danger-soft);
             color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .warning {
+            background: var(--warning-soft);
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .info-box {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: start;
+            background: #eff6ff;
+            color: #1e40af;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid #bfdbfe;
+            margin-bottom: 20px;
+        }
+
+        .info-box .icon {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .info-box p {
+            line-height: 1.65;
+            font-size: 14px;
         }
 
         form {
-            margin-top: 24px;
-            padding: 22px;
-            background: #f8fafc;
-            border-radius: 14px;
+            background: var(--soft);
             border: 1px dashed #cbd5e1;
+            border-radius: 22px;
+            padding: 22px;
+        }
+
+        .upload-zone {
+            position: relative;
+            display: grid;
+            place-items: center;
+            min-height: 220px;
+            padding: 28px;
+            border-radius: 20px;
+            border: 2px dashed #bfdbfe;
+            background:
+                linear-gradient(180deg, rgba(239, 246, 255, 0.92), rgba(255, 255, 255, 0.86));
+            text-align: center;
+            transition: 0.22s ease;
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--primary);
+            background: #eff6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.14);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            display: grid;
+            place-items: center;
+            border-radius: 22px;
+            background: white;
+            color: var(--primary);
+            font-size: 30px;
+            margin: 0 auto 16px;
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.14);
+        }
+
+        .upload-zone label {
+            display: block;
+            color: var(--dark);
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .upload-zone .hint {
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 14px;
+            margin-bottom: 18px;
         }
 
         input[type="file"] {
             width: 100%;
-            padding: 14px;
+            max-width: 460px;
+            padding: 13px;
             background: white;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-
-        button, .btn {
-            display: inline-block;
-            margin-top: 18px;
-            padding: 12px 16px;
-            border-radius: 10px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            text-decoration: none;
-            font-weight: bold;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: #334155;
             cursor: pointer;
         }
 
-        .btn-light {
-            background: #e2e8f0;
-            color: #0f172a;
-            margin-left: 8px;
+        input[type="file"]::file-selector-button {
+            padding: 10px 13px;
+            border: none;
+            border-radius: 10px;
+            background: #e0ecff;
+            color: #1d4ed8;
+            font-weight: 800;
+            cursor: pointer;
+            margin-right: 12px;
         }
 
-        .info {
-            background: #eff6ff;
-            color: #1e40af;
+        .file-preview {
+            display: none;
+            margin-top: 18px;
             padding: 14px;
-            border-radius: 12px;
+            border-radius: 16px;
+            background: white;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .file-preview.show {
+            display: block;
+        }
+
+        .file-preview strong {
+            display: block;
+            color: var(--dark);
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .file-preview span {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .progress-panel {
+            display: none;
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: 18px;
+            background: white;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .progress-panel.active {
+            display: block;
+        }
+
+        .progress-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .progress-title {
+            color: var(--dark);
+            font-weight: 800;
+        }
+
+        .progress-percent {
+            color: var(--primary);
+            font-weight: 900;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 12px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e2e8f0;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--primary), #22c55e);
+            transition: width 0.35s ease;
+        }
+
+        .progress-status {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .step-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: #cbd5e1;
+        }
+
+        .step.active {
+            color: #1d4ed8;
+            font-weight: 800;
+        }
+
+        .step.done {
+            color: #166534;
+            font-weight: 800;
+        }
+
+        .step.active .step-dot,
+        .step.done .step-dot {
+            background: currentColor;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
             margin-top: 18px;
         }
 
-        code {
-            background: #e2e8f0;
-            padding: 2px 6px;
-            border-radius: 6px;
+        button,
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 46px;
+            padding: 12px 17px;
+            border-radius: 14px;
+            border: none;
+            text-decoration: none;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.78;
+            transform: none;
+        }
+
+        .btn-light {
+            background: white;
+            color: #0f172a;
+            border: 1px solid var(--border);
+        }
+
+        .btn-light:hover {
+            background: #f1f5f9;
+        }
+
+        .side-card {
+            padding: 24px;
+        }
+
+        .side-card h2 {
+            font-size: 19px;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .side-card p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .check-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .check-item {
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            gap: 10px;
+            align-items: start;
+            padding: 12px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+        }
+
+        .check-icon {
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 900;
+        }
+
+        .check-item strong {
+            display: block;
+            color: var(--dark);
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .check-item span {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .mini-warning {
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 16px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            color: #9a3412;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .small-note {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: white;
+            border-radius: 999px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        button.loading .spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 20px;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .top-nav {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 14px;
+            }
+
+            .hero,
+            .content,
+            .side-card {
+                padding: 22px;
+            }
+
+            .upload-zone {
+                padding: 20px;
+            }
+
+            .form-actions,
+            .nav-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            button,
+            .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>Upload Raw CSV</h1>
-        <p>
-            Upload file mentah dari GA4 / Looker Studio. Sistem akan membersihkan data,
-            mapping <code>Page path</code> ke kategori, agregasi harian, lalu menyimpan ke database.
-        </p>
-
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="message {{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+    <div class="page-shell">
+        <header class="top-nav">
+            <div class="brand">
+                <div class="brand-logo">📈</div>
+                <div class="brand-text">
+                    <strong>Wearemania Forecasting</strong>
+                    <span>Upload & Cleaning Raw Data</span>
+                </div>
             </div>
-        {% endif %}
 
-        <div class="info">
-            Format wajib CSV: <code>Date</code>, <code>Page path</code>, <code>Views</code>.
-        </div>
+            <div class="nav-actions">
+                <a href="{% url 'dashboard' %}" class="btn btn-light">← Kembali ke Dashboard</a>
+            </div>
+        </header>
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.csv_file.label_tag }}
-            {{ form.csv_file }}
-            <button type="submit">Upload, Clean & Import</button>
-            <a href="{% url 'dashboard' %}" class="btn btn-light">Kembali</a>
-        </form>
+        <main class="layout">
+            <section class="card">
+                <div class="hero">
+                    <div class="hero-badge">CSV Import Pipeline</div>
+                    <h1>Upload Raw CSV</h1>
+                    <p>
+                        Upload file mentah dari GA4 / Looker Studio. Sistem akan membersihkan data,
+                        mapping <code>Page path</code> ke kategori, agregasi harian, lalu menyimpan hasilnya ke database.
+                    </p>
+                </div>
+
+                <div class="content">
+                    {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                                <div class="message {{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="info-box">
+                        <div class="icon">ℹ️</div>
+                        <div>
+                            <strong>Format wajib CSV</strong>
+                            <p>
+                                File harus memiliki kolom <code>Date</code>, <code>Page path</code>, dan <code>Views</code>.
+                                Gunakan file CSV agar proses cleaning dan import berjalan aman.
+                            </p>
+                        </div>
+                    </div>
+
+                    <form id="uploadForm" method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <div class="upload-zone" id="uploadZone">
+                            <div>
+                                <div class="upload-icon">⬆️</div>
+                                {{ form.csv_file.label_tag }}
+                                <div class="hint">
+                                    Pilih file CSV dari komputer. Setelah tombol upload ditekan,
+                                    indikator proses akan tampil sampai server selesai memproses data.
+                                </div>
+                                {{ form.csv_file }}
+
+                                <div class="file-preview" id="filePreview">
+                                    <strong id="fileName">Belum ada file dipilih</strong>
+                                    <span id="fileSize">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="progress-panel" id="progressPanel" aria-live="polite">
+                            <div class="progress-head">
+                                <div class="progress-title" id="progressTitle">Menyiapkan upload...</div>
+                                <div class="progress-percent" id="progressPercent">0%</div>
+                            </div>
+
+                            <div class="progress-track">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+
+                            <div class="progress-status" id="progressStatus">
+                                Sistem sedang menyiapkan file. Jangan tutup halaman ini sampai proses selesai.
+                            </div>
+
+                            <div class="step-list">
+                                <div class="step active" data-step="upload">
+                                    <span class="step-dot"></span>
+                                    <span>Upload file CSV</span>
+                                </div>
+                                <div class="step" data-step="cleaning">
+                                    <span class="step-dot"></span>
+                                    <span>Cleaning data dan validasi kolom</span>
+                                </div>
+                                <div class="step" data-step="mapping">
+                                    <span class="step-dot"></span>
+                                    <span>Mapping Page path ke kategori</span>
+                                </div>
+                                <div class="step" data-step="import">
+                                    <span class="step-dot"></span>
+                                    <span>Import data harian ke database</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="submitBtn">
+                                <span class="spinner"></span>
+                                <span id="submitText">Upload, Clean & Import</span>
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-light">Kembali</a>
+                        </div>
+
+                        <p class="small-note">
+                            Catatan: progress bar ini menunjukkan tahapan proses dari sisi tampilan.
+                            Halaman akan otomatis berpindah atau menampilkan pesan ketika server Django selesai memproses upload.
+                        </p>
+                    </form>
+                </div>
+            </section>
+
+            <aside class="side-card">
+                <h2>Checklist sebelum upload</h2>
+                <p>
+                    Supaya proses import tidak rewel seperti deadline PKL, cek tiga hal ini dulu sebelum menekan tombol upload.
+                </p>
+
+                <div class="check-list">
+                    <div class="check-item">
+                        <div class="check-icon">✓</div>
+                        <div>
+                            <strong>Kolom sudah sesuai</strong>
+                            <span>Pastikan nama kolom memakai <code>Date</code>, <code>Page path</code>, dan <code>Views</code>.</span>
+                        </div>
+                    </div>
+
+                    <div class="check-item">
+                        <div class="check-icon">✓</div>
+                        <div>
+                            <strong>Format tanggal rapi</strong>
+                            <span>Tanggal sebaiknya konsisten agar agregasi harian tidak kacau.</span>
+                        </div>
+                    </div>
+
+                    <div class="check-item">
+                        <div class="check-icon">✓</div>
+                        <div>
+                            <strong>File tidak kosong</strong>
+                            <span>Pastikan data views benar-benar ada sebelum diproses ke database.</span>
+                        </div>
+                    </div>
+                </div>s                                                                                                                                                                                                                                                                                                                                                                                                                                            
+            </aside>
+        </main>
     </div>
+
+    <script>
+        const uploadForm = document.getElementById("uploadForm");
+        const uploadZone = document.getElementById("uploadZone");
+        const fileInput = uploadForm.querySelector('input[type="file"]');
+        const filePreview = document.getElementById("filePreview");
+        const fileName = document.getElementById("fileName");
+        const fileSize = document.getElementById("fileSize");
+        const progressPanel = document.getElementById("progressPanel");
+        const progressBar = document.getElementById("progressBar");
+        const progressPercent = document.getElementById("progressPercent");
+        const progressTitle = document.getElementById("progressTitle");
+        const progressStatus = document.getElementById("progressStatus");
+        const submitBtn = document.getElementById("submitBtn");
+        const submitText = document.getElementById("submitText");
+        const steps = document.querySelectorAll(".step");
+
+        function formatFileSize(bytes) {
+            if (!bytes && bytes !== 0) return "-";
+            const units = ["B", "KB", "MB", "GB"];
+            let size = bytes;
+            let unitIndex = 0;
+
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+
+            return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+        }
+
+        function updateFilePreview() {
+            const file = fileInput.files && fileInput.files[0];
+
+            if (!file) {
+                filePreview.classList.remove("show");
+                fileName.textContent = "Belum ada file dipilih";
+                fileSize.textContent = "-";
+                return;
+            }
+
+            filePreview.classList.add("show");
+            fileName.textContent = file.name;
+            fileSize.textContent = `${formatFileSize(file.size)} · ${file.type || "text/csv"}`;
+        }
+
+        function setProgress(value, title, status, activeStep) {
+            const safeValue = Math.max(0, Math.min(100, value));
+            progressBar.style.width = `${safeValue}%`;
+            progressPercent.textContent = `${safeValue}%`;
+            progressTitle.textContent = title;
+            progressStatus.textContent = status;
+
+            steps.forEach(step => {
+                const stepName = step.dataset.step;
+                step.classList.remove("active", "done");
+
+                if (activeStep === "upload" && stepName === "upload") step.classList.add("active");
+                if (activeStep === "cleaning" && stepName === "cleaning") step.classList.add("active");
+                if (activeStep === "mapping" && stepName === "mapping") step.classList.add("active");
+                if (activeStep === "import" && stepName === "import") step.classList.add("active");
+
+                const order = ["upload", "cleaning", "mapping", "import"];
+                if (order.indexOf(stepName) < order.indexOf(activeStep)) {
+                    step.classList.add("done");
+                }
+            });
+        }
+
+        function startFakeProgress() {
+            progressPanel.classList.add("active");
+            submitBtn.disabled = true;
+            submitBtn.classList.add("loading");
+            submitText.textContent = "Memproses data...";
+
+            let progress = 0;
+            setProgress(0, "Upload dimulai", "File sedang dikirim ke server Django.", "upload");
+
+            const timer = setInterval(() => {
+                if (progress < 32) {
+                    progress += 4;
+                    setProgress(progress, "Mengupload file CSV", "File sedang dikirim ke server. Jangan tutup halaman ini.", "upload");
+                } else if (progress < 62) {
+                    progress += 3;
+                    setProgress(progress, "Cleaning data", "Sistem memvalidasi kolom, tanggal, dan nilai views.", "cleaning");
+                } else if (progress < 82) {
+                    progress += 2;
+                    setProgress(progress, "Mapping kategori", "Page path sedang dipetakan ke kategori berita.", "mapping");
+                } else if (progress < 95) {
+                    progress += 1;
+                    setProgress(progress, "Import ke database", "Data harian sedang disimpan. Menunggu response server.", "import");
+                } else {
+                    clearInterval(timer);
+                    setProgress(95, "Hampir selesai", "Server masih menyelesaikan import. Halaman akan berubah setelah proses selesai.", "import");
+                }
+            }, 420);
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener("change", updateFilePreview);
+        }
+
+        ["dragenter", "dragover"].forEach(eventName => {
+            uploadZone.addEventListener(eventName, event => {
+                event.preventDefault();
+                uploadZone.classList.add("drag-over");
+            });
+        });
+
+        ["dragleave", "drop"].forEach(eventName => {
+            uploadZone.addEventListener(eventName, event => {
+                event.preventDefault();
+                uploadZone.classList.remove("drag-over");
+            });
+        });
+
+        uploadZone.addEventListener("drop", event => {
+            const file = event.dataTransfer.files && event.dataTransfer.files[0];
+            if (!file || !fileInput) return;
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            updateFilePreview();
+        });
+
+        uploadForm.addEventListener("submit", event => {
+            const file = fileInput && fileInput.files && fileInput.files[0];
+
+            if (!file) {
+                event.preventDefault();
+                alert("Pilih file CSV terlebih dahulu, wak.");
+                return;
+            }
+
+            if (!file.name.toLowerCase().endsWith(".csv")) {
+                event.preventDefault();
+                alert("File harus berformat .csv agar bisa diproses.");
+                return;
+            }
+
+            event.preventDefault();
+            startFakeProgress();
+
+            window.requestAnimationFrame(() => {
+                setTimeout(() => {
+                    uploadForm.submit();
+                }, 260);
+            });
+        });
+    </script>
 </body>
 </html>
