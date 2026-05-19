@@ -3,57 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Raw CSV | Wearemania Dashboard</title>
+    <title>Upload & Cleaning Data | Wearemania Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --success: #16a34a;
-            --success-soft: #dcfce7;
-            --danger: #dc2626;
-            --danger-soft: #fee2e2;
-            --warning-soft: #fef3c7;
-            --dark: #0f172a;
+            --bg: #f5f7fb;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --text: #0f172a;
             --muted: #64748b;
-            --soft: #f8fafc;
-            --border: #e2e8f0;
-            --card-shadow: 0 18px 45px rgba(15, 23, 42, 0.10);
+            --muted-soft: #94a3b8;
+            --line: #e2e8f0;
+            --primary: #0f4c81;
+            --primary-dark: #0b355f;
+            --primary-soft: #e0f2fe;
+            --accent: #f97316;
+            --green: #16a34a;
+            --green-soft: #dcfce7;
+            --red: #dc2626;
+            --red-soft: #fee2e2;
+            --yellow-soft: #fef3c7;
+            --orange-soft: #fff7ed;
+            --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+            --shadow-soft: 0 8px 28px rgba(15, 23, 42, 0.06);
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
             min-height: 100vh;
             background:
-                radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 30%),
-                linear-gradient(135deg, #f8fafc 0%, #eef4ff 48%, #f4f7fb 100%);
-            color: #1f2937;
-            padding: 34px;
+                radial-gradient(circle at top left, rgba(15, 76, 129, 0.12), transparent 30%),
+                radial-gradient(circle at top right, rgba(249, 115, 22, 0.10), transparent 32%),
+                var(--bg);
+            color: var(--text);
+            font-family: "Inter", Arial, Helvetica, sans-serif;
         }
 
-        .page-shell {
-            width: min(1080px, 100%);
-            margin: 0 auto;
+        a {
+            color: inherit;
         }
 
-        .top-nav {
+        code {
+            display: inline-block;
+            background: rgba(226, 232, 240, 0.96);
+            color: #0f172a;
+            padding: 3px 7px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .layout {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 22px;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 282px;
+            padding: 22px;
+            position: fixed;
+            inset: 0 auto 0 0;
+            background:
+                linear-gradient(180deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
+                #0f172a;
+            color: #ffffff;
+            overflow-y: auto;
+            box-shadow: 16px 0 40px rgba(15, 23, 42, 0.18);
+            z-index: 10;
         }
 
         .brand {
             display: flex;
+            gap: 14px;
             align-items: center;
-            gap: 12px;
+            margin-bottom: 28px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
         }
 
         .brand-logo {
@@ -61,55 +105,241 @@
             height: 46px;
             display: grid;
             place-items: center;
+            flex: 0 0 46px;
             border-radius: 16px;
-            background: var(--dark);
-            color: white;
+            background: linear-gradient(135deg, #f97316, #facc15);
+            color: #111827;
             font-size: 22px;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.20);
+            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.32);
         }
 
-        .brand-text strong {
-            display: block;
-            color: var(--dark);
-            font-size: 17px;
-            margin-bottom: 3px;
+        .brand h2 {
+            font-size: 19px;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
         }
 
-        .brand-text span {
-            color: var(--muted);
-            font-size: 13px;
+        .brand p {
+            color: rgba(226, 232, 240, 0.86);
+            font-size: 12px;
+            line-height: 1.45;
+            margin-top: 5px;
         }
 
-        .nav-actions {
+        .sidebar-label {
+            color: rgba(226, 232, 240, 0.68);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin: 0 8px 10px;
+        }
+
+        .menu {
+            display: grid;
+            gap: 9px;
+        }
+
+        .menu a {
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 11px;
+            color: rgba(226, 232, 240, 0.86);
+            text-decoration: none;
+            padding: 12px 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 650;
+            transition: 0.22s ease;
         }
 
-        .layout {
+        .menu a:hover,
+        .menu a.active {
+            background: rgba(255, 255, 255, 0.13);
+            color: #ffffff;
+            transform: translateX(3px);
+        }
+
+        .menu-icon {
+            width: 29px;
+            height: 29px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.12);
+            font-size: 14px;
+        }
+
+        .sidebar-card {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .sidebar-card strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .sidebar-card span {
+            color: rgba(226, 232, 240, 0.78);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .main {
+            margin-left: 282px;
+            width: calc(100% - 282px);
+            padding: 28px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .page-title .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .page-title h1 {
+            color: var(--text);
+            font-size: clamp(28px, 3vw, 40px);
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+            margin-bottom: 8px;
+        }
+
+        .page-title p {
+            max-width: 740px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn,
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 46px;
+            padding: 12px 17px;
+            border-radius: 15px;
+            border: 0;
+            outline: 0;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.22s ease;
+            white-space: nowrap;
+        }
+
+        .btn-primary,
+        button {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 12px 22px rgba(15, 76, 129, 0.18);
+        }
+
+        .btn-primary:hover,
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-light {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--line);
+        }
+
+        .btn-light:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.78;
+            transform: none;
+        }
+
+        .content-grid {
             display: grid;
             grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
             gap: 22px;
             align-items: start;
         }
 
-        .card,
-        .side-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.90);
-            border-radius: 26px;
-            box-shadow: var(--card-shadow);
+        .panel {
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-soft);
             overflow: hidden;
         }
 
-        .hero {
-            padding: 30px 30px 22px;
+        .hero-upload {
+            position: relative;
+            overflow: hidden;
+            padding: 28px;
             background:
-                linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 64, 175, 0.92)),
-                radial-gradient(circle at top right, rgba(96, 165, 250, 0.34), transparent 28%);
+                linear-gradient(135deg, rgba(15, 76, 129, 0.97), rgba(15, 23, 42, 0.97)),
+                var(--primary);
             color: white;
+        }
+
+        .hero-upload::before,
+        .hero-upload::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            pointer-events: none;
+        }
+
+        .hero-upload::before {
+            right: -76px;
+            top: -92px;
+            width: 210px;
+            height: 210px;
+            background: rgba(249, 115, 22, 0.36);
+        }
+
+        .hero-upload::after {
+            right: 80px;
+            bottom: -120px;
+            width: 220px;
+            height: 220px;
+            background: rgba(56, 189, 248, 0.18);
+        }
+
+        .hero-upload > * {
+            position: relative;
+            z-index: 1;
         }
 
         .hero-badge {
@@ -121,39 +351,30 @@
             background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.18);
             font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 16px;
+            font-weight: 800;
+            margin-bottom: 14px;
         }
 
-        h1 {
-            font-size: clamp(28px, 4vw, 42px);
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            margin-bottom: 12px;
+        .hero-upload h2 {
+            font-size: clamp(26px, 3vw, 38px);
+            line-height: 1.12;
+            letter-spacing: -0.04em;
+            margin-bottom: 10px;
         }
 
-        .hero p {
-            max-width: 720px;
+        .hero-upload p {
+            max-width: 740px;
             color: #dbeafe;
             line-height: 1.75;
-            font-size: 15px;
+            font-size: 14px;
         }
 
-        code {
-            background: rgba(226, 232, 240, 0.90);
-            color: #0f172a;
-            padding: 3px 7px;
-            border-radius: 7px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .content {
-            padding: 26px 30px 30px;
+        .panel-body {
+            padding: 24px;
         }
 
         .messages {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             display: grid;
             gap: 10px;
         }
@@ -161,42 +382,44 @@
         .message {
             padding: 14px 16px;
             border-radius: 16px;
-            font-weight: 700;
+            font-weight: 750;
             border: 1px solid transparent;
+            line-height: 1.55;
         }
 
         .success {
-            background: var(--success-soft);
+            background: var(--green-soft);
             color: #166534;
             border-color: #bbf7d0;
         }
 
         .error {
-            background: var(--danger-soft);
+            background: var(--red-soft);
             color: #991b1b;
             border-color: #fecaca;
         }
 
         .warning {
-            background: var(--warning-soft);
+            background: var(--yellow-soft);
             color: #92400e;
             border-color: #fde68a;
         }
 
+        .info,
         .info-box {
             display: grid;
             grid-template-columns: auto 1fr;
             gap: 12px;
             align-items: start;
-            background: #eff6ff;
-            color: #1e40af;
+            margin-bottom: 18px;
             padding: 16px;
             border-radius: 18px;
+            background: #eff6ff;
             border: 1px solid #bfdbfe;
-            margin-bottom: 20px;
+            color: #1e40af;
         }
 
-        .info-box .icon {
+        .info-icon {
             width: 36px;
             height: 36px;
             display: grid;
@@ -206,33 +429,33 @@
             box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
         }
 
-        .info-box strong {
+        .info strong {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
 
-        .info-box p {
+        .info p {
             line-height: 1.65;
             font-size: 14px;
         }
 
         form {
-            background: var(--soft);
+            padding: 22px;
+            background: var(--surface-soft);
             border: 1px dashed #cbd5e1;
             border-radius: 22px;
-            padding: 22px;
         }
 
         .upload-zone {
             position: relative;
             display: grid;
             place-items: center;
-            min-height: 220px;
-            padding: 28px;
+            min-height: 235px;
+            padding: 30px;
             border-radius: 20px;
             border: 2px dashed #bfdbfe;
             background:
-                linear-gradient(180deg, rgba(239, 246, 255, 0.92), rgba(255, 255, 255, 0.86));
+                linear-gradient(180deg, rgba(239, 246, 255, 0.92), rgba(255, 255, 255, 0.88));
             text-align: center;
             transition: 0.22s ease;
         }
@@ -241,83 +464,167 @@
             border-color: var(--primary);
             background: #eff6ff;
             transform: translateY(-2px);
-            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.14);
+            box-shadow: 0 14px 30px rgba(15, 76, 129, 0.14);
         }
 
         .upload-icon {
-            width: 64px;
-            height: 64px;
+            width: 68px;
+            height: 68px;
             display: grid;
             place-items: center;
-            border-radius: 22px;
+            border-radius: 24px;
             background: white;
             color: var(--primary);
             font-size: 30px;
             margin: 0 auto 16px;
-            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.14);
+            box-shadow: 0 12px 28px rgba(15, 76, 129, 0.14);
         }
 
         .upload-zone label {
             display: block;
-            color: var(--dark);
+            color: var(--text);
             font-size: 18px;
-            font-weight: 800;
+            font-weight: 850;
             margin-bottom: 8px;
         }
 
         .upload-zone .hint {
+            max-width: 620px;
+            margin: 0 auto 18px;
             color: var(--muted);
-            line-height: 1.6;
+            line-height: 1.65;
             font-size: 14px;
-            margin-bottom: 18px;
         }
 
         input[type="file"] {
             width: 100%;
-            max-width: 460px;
+            max-width: 500px;
             padding: 13px;
             background: white;
-            border: 1px solid var(--border);
+            border: 1px solid var(--line);
             border-radius: 14px;
             color: #334155;
             cursor: pointer;
         }
 
         input[type="file"]::file-selector-button {
+            margin-right: 12px;
             padding: 10px 13px;
             border: none;
             border-radius: 10px;
-            background: #e0ecff;
-            color: #1d4ed8;
-            font-weight: 800;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            font-weight: 850;
             cursor: pointer;
-            margin-right: 12px;
+        }
+
+        .upload-zone.has-file,
+        .upload-zone.is-imported {
+            border-color: #bbf7d0;
+            background:
+                linear-gradient(180deg, rgba(240, 253, 244, 0.94), rgba(255, 255, 255, 0.92));
+        }
+
+        .upload-zone.has-file input[type="file"],
+        .upload-zone.is-imported input[type="file"] {
+            display: none;
+        }
+
+        .upload-zone.is-imported .hint,
+        .upload-zone.has-file .hint {
+            display: none;
+        }
+
+        .upload-zone.is-imported .upload-icon,
+        .upload-zone.has-file .upload-icon {
+            background: var(--green-soft);
+            color: #166534;
         }
 
         .file-preview {
             display: none;
-            margin-top: 18px;
-            padding: 14px;
-            border-radius: 16px;
+            width: min(100%, 620px);
+            margin: 18px auto 0;
+            padding: 16px;
+            border-radius: 18px;
             background: white;
-            border: 1px solid var(--border);
+            border: 1px solid #bbf7d0;
             text-align: left;
+            box-shadow: 0 12px 26px rgba(22, 163, 74, 0.10);
         }
 
         .file-preview.show {
-            display: block;
+            display: grid;
+            gap: 10px;
+        }
+
+        .file-preview-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .file-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            width: fit-content;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: var(--green-soft);
+            color: #166534;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .file-remove {
+            width: 34px;
+            height: 34px;
+            min-height: 34px;
+            padding: 0;
+            border-radius: 12px;
+            background: var(--red-soft);
+            color: #991b1b;
+            box-shadow: none;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .file-remove:hover {
+            background: #fecaca;
+            color: #7f1d1d;
+            transform: translateY(-1px);
         }
 
         .file-preview strong {
             display: block;
-            color: var(--dark);
-            margin-bottom: 4px;
+            color: var(--text);
+            margin-bottom: 2px;
             word-break: break-all;
+            font-size: 15px;
         }
 
         .file-preview span {
             color: var(--muted);
             font-size: 13px;
+        }
+
+        .file-source {
+            margin: 0;
+            padding: 11px 12px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .file-source strong {
+            display: inline;
+            font-size: inherit;
+            margin: 0;
         }
 
         .progress-panel {
@@ -326,7 +633,7 @@
             padding: 18px;
             border-radius: 18px;
             background: white;
-            border: 1px solid var(--border);
+            border: 1px solid var(--line);
             box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
         }
 
@@ -343,8 +650,8 @@
         }
 
         .progress-title {
-            color: var(--dark);
-            font-weight: 800;
+            color: var(--text);
+            font-weight: 850;
         }
 
         .progress-percent {
@@ -364,7 +671,7 @@
             width: 0%;
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(90deg, var(--primary), #22c55e);
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--green));
             transition: width 0.35s ease;
         }
 
@@ -377,6 +684,7 @@
 
         .step-list {
             display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-top: 16px;
         }
@@ -384,26 +692,36 @@
         .step {
             display: flex;
             align-items: center;
-            gap: 10px;
-            color: #64748b;
-            font-size: 14px;
+            gap: 9px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.35;
+            padding: 11px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
         }
 
         .step-dot {
             width: 12px;
             height: 12px;
+            flex: 0 0 12px;
             border-radius: 999px;
             background: #cbd5e1;
         }
 
         .step.active {
-            color: #1d4ed8;
-            font-weight: 800;
+            color: var(--primary-dark);
+            font-weight: 850;
+            background: #eff6ff;
+            border-color: #bfdbfe;
         }
 
         .step.done {
             color: #166534;
-            font-weight: 800;
+            font-weight: 850;
+            background: #f0fdf4;
+            border-color: #bbf7d0;
         }
 
         .step.active .step-dot,
@@ -419,60 +737,34 @@
             margin-top: 18px;
         }
 
-        button,
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-height: 46px;
-            padding: 12px 17px;
-            border-radius: 14px;
-            border: none;
-            text-decoration: none;
-            font-weight: 800;
-            cursor: pointer;
-            transition: 0.2s ease;
+        .small-note {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.65;
         }
 
-        button {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+        .side-stack {
+            display: grid;
+            gap: 18px;
         }
 
-        button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
+        .side-panel {
+            padding: 22px;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-soft);
         }
 
-        button:disabled {
-            cursor: not-allowed;
-            opacity: 0.78;
-            transform: none;
+        .side-panel h3 {
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
         }
 
-        .btn-light {
-            background: white;
-            color: #0f172a;
-            border: 1px solid var(--border);
-        }
-
-        .btn-light:hover {
-            background: #f1f5f9;
-        }
-
-        .side-card {
-            padding: 24px;
-        }
-
-        .side-card h2 {
-            font-size: 19px;
-            color: var(--dark);
-            margin-bottom: 10px;
-        }
-
-        .side-card p {
+        .side-panel p {
             color: var(--muted);
             font-size: 14px;
             line-height: 1.7;
@@ -481,34 +773,34 @@
         .check-list {
             display: grid;
             gap: 12px;
-            margin-top: 18px;
+            margin-top: 16px;
         }
 
         .check-item {
             display: grid;
-            grid-template-columns: 28px 1fr;
+            grid-template-columns: 30px 1fr;
             gap: 10px;
             align-items: start;
             padding: 12px;
             border-radius: 16px;
-            background: #f8fafc;
-            border: 1px solid var(--border);
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
         }
 
         .check-icon {
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             display: grid;
             place-items: center;
-            border-radius: 10px;
-            background: #dcfce7;
+            border-radius: 11px;
+            background: var(--green-soft);
             color: #166534;
             font-weight: 900;
         }
 
         .check-item strong {
             display: block;
-            color: var(--dark);
+            color: var(--text);
             font-size: 14px;
             margin-bottom: 3px;
         }
@@ -520,21 +812,41 @@
         }
 
         .mini-warning {
-            margin-top: 18px;
+            margin-top: 16px;
             padding: 14px;
             border-radius: 16px;
-            background: #fff7ed;
+            background: var(--orange-soft);
             border: 1px solid #fed7aa;
             color: #9a3412;
             font-size: 13px;
-            line-height: 1.6;
+            line-height: 1.65;
         }
 
-        .small-note {
+        .metric-mini {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
             margin-top: 16px;
+        }
+
+        .mini-card {
+            padding: 14px;
+            border-radius: 17px;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+        }
+
+        .mini-card strong {
+            display: block;
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .mini-card span {
             color: var(--muted);
-            font-size: 13px;
-            line-height: 1.6;
+            font-size: 12px;
+            line-height: 1.45;
         }
 
         .spinner {
@@ -555,78 +867,139 @@
             to { transform: rotate(360deg); }
         }
 
-        @media (max-width: 900px) {
-            body {
-                padding: 20px;
-            }
-
-            .layout {
+        @media (max-width: 1160px) {
+            .content-grid {
                 grid-template-columns: 1fr;
             }
 
-            .top-nav {
-                align-items: flex-start;
+            .step-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 860px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+                border-radius: 0 0 26px 26px;
+            }
+
+            .layout {
+                display: block;
+            }
+
+            .main {
+                width: 100%;
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .topbar {
                 flex-direction: column;
+            }
+
+            .action-group {
+                justify-content: flex-start;
             }
         }
 
         @media (max-width: 560px) {
-            body {
+            .main {
                 padding: 14px;
             }
 
-            .hero,
-            .content,
-            .side-card {
-                padding: 22px;
+            .panel-body,
+            .hero-upload,
+            .side-panel {
+                padding: 20px;
             }
 
             .upload-zone {
                 padding: 20px;
+                min-height: 210px;
             }
 
             .form-actions,
-            .nav-actions {
+            .action-group {
                 flex-direction: column;
                 align-items: stretch;
             }
 
-            button,
-            .btn {
+            .btn,
+            button {
                 width: 100%;
+            }
+
+            .step-list,
+            .metric-mini {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="page-shell">
-        <header class="top-nav">
-            <div class="brand">
-                <div class="brand-logo">📈</div>
-                <div class="brand-text">
-                    <strong>Wearemania Forecasting</strong>
-                    <span>Upload & Cleaning Raw Data</span>
-                </div>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">📈</div>
+            <div>
+                <h2>Wearemania</h2>
+                <p>Traffic Forecasting Dashboard</p>
+            </div>
+        </div>
+
+        <div class="sidebar-label">Main Menu</div>
+        <nav class="menu">
+            <a href="{% url 'dashboard' %}">
+                <span class="menu-icon">🏠</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="/upload/" class="active">
+                <span class="menu-icon">⬆️</span>
+                <span>Upload & Cleaning Data</span>
+            </a>
+            <a href="/admin/">
+                <span class="menu-icon">⚙️</span>
+                <span>Admin Panel</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-card">
+            <strong>Import Pipeline</strong>
+            <span>Upload CSV, validasi kolom, cleaning data, mapping kategori, lalu simpan hasil agregasi ke database.</span>
+        </div>
+    </aside>
+
+    <main class="main">
+        <section class="topbar">
+            <div class="page-title">
+                <div class="eyebrow">📦 Data Acquisition</div>
+                <h1>Upload & Cleaning Data</h1>
+                <p>
+                    Halaman ini dipakai untuk mengimpor data mentah dari GA4 / Looker Studio,
+                    membersihkan data, memetakan <code>Page path</code> ke kategori, dan menyimpan data harian ke database.
+                </p>
             </div>
 
-            <div class="nav-actions">
-                <a href="{% url 'dashboard' %}" class="btn btn-light">← Kembali ke Dashboard</a>
+            <div class="action-group">
+                <a href="{% url 'dashboard' %}" class="btn btn-light">← Dashboard</a>
+                <a href="/admin/" class="btn btn-primary">Admin Panel</a>
             </div>
-        </header>
+        </section>
 
-        <main class="layout">
-            <section class="card">
-                <div class="hero">
+        <section class="content-grid">
+            <div class="panel">
+                <div class="hero-upload">
                     <div class="hero-badge">CSV Import Pipeline</div>
-                    <h1>Upload Raw CSV</h1>
+                    <h2>Upload Raw CSV</h2>
                     <p>
-                        Upload file mentah dari GA4 / Looker Studio. Sistem akan membersihkan data,
-                        mapping <code>Page path</code> ke kategori, agregasi harian, lalu menyimpan hasilnya ke database.
+                        Upload file CSV yang berisi kolom <code>Date</code>, <code>Page path</code>, dan <code>Views</code>.
+                        Progress bar akan tampil ketika proses upload, cleaning, mapping, dan import sedang berjalan.
                     </p>
                 </div>
 
-                <div class="content">
+                <div class="panel-body">
                     {% if messages %}
                         <div class="messages">
                             {% for message in messages %}
@@ -637,13 +1010,13 @@
                         </div>
                     {% endif %}
 
-                    <div class="info-box">
-                        <div class="icon">ℹ️</div>
+                    <div class="info">
+                        <div class="info-icon">ℹ️</div>
                         <div>
                             <strong>Format wajib CSV</strong>
                             <p>
-                                File harus memiliki kolom <code>Date</code>, <code>Page path</code>, dan <code>Views</code>.
-                                Gunakan file CSV agar proses cleaning dan import berjalan aman.
+                                Pastikan file memiliki kolom <code>Date</code>, <code>Page path</code>, dan <code>Views</code>.
+                                File selain CSV akan ditolak dari sisi tampilan agar proses backend lebih aman.
                             </p>
                         </div>
                     </div>
@@ -656,14 +1029,23 @@
                                 <div class="upload-icon">⬆️</div>
                                 {{ form.csv_file.label_tag }}
                                 <div class="hint">
-                                    Pilih file CSV dari komputer. Setelah tombol upload ditekan,
-                                    indikator proses akan tampil sampai server selesai memproses data.
+                                    Pilih file CSV dari komputer atau drag & drop ke area ini.
+                                    Setelah tombol upload ditekan, indikator proses akan tampil sampai server selesai memproses data.
                                 </div>
                                 {{ form.csv_file }}
 
                                 <div class="file-preview" id="filePreview">
-                                    <strong id="fileName">Belum ada file dipilih</strong>
-                                    <span id="fileSize">-</span>
+                                    <div class="file-preview-head">
+                                        <div class="file-status-pill" id="fileStatusPill">✅ File siap</div>
+                                        <button type="button" class="file-remove" id="removeFileBtn" title="Klik untuk upload ulang" aria-label="Hapus file dan upload ulang">×</button>
+                                    </div>
+                                    <div>
+                                        <strong id="fileName">Belum ada file dipilih</strong>
+                                        <span id="fileSize">-</span>
+                                    </div>
+                                    <p class="file-source" id="fileSource">
+                                        File ini siap diupload. Klik tombol × jika ingin mengganti file.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -689,15 +1071,15 @@
                                 </div>
                                 <div class="step" data-step="cleaning">
                                     <span class="step-dot"></span>
-                                    <span>Cleaning data dan validasi kolom</span>
+                                    <span>Cleaning & validasi</span>
                                 </div>
                                 <div class="step" data-step="mapping">
                                     <span class="step-dot"></span>
-                                    <span>Mapping Page path ke kategori</span>
+                                    <span>Mapping kategori</span>
                                 </div>
                                 <div class="step" data-step="import">
                                     <span class="step-dot"></span>
-                                    <span>Import data harian ke database</span>
+                                    <span>Import database</span>
                                 </div>
                             </div>
                         </div>
@@ -716,147 +1098,375 @@
                         </p>
                     </form>
                 </div>
-            </section>
+            </div>
 
-            <aside class="side-card">
-                <h2>Checklist sebelum upload</h2>
-                <p>
-                    Supaya proses import tidak rewel seperti deadline PKL, cek tiga hal ini dulu sebelum menekan tombol upload.
-                </p>
+            <aside class="side-stack">
+                <div class="side-panel">
+                    <h3>Checklist sebelum upload</h3>
+                    <p>
+                        Biar proses import tidak rewel, cek dulu format data sebelum menekan tombol upload.
+                    </p>
 
-                <div class="check-list">
-                    <div class="check-item">
-                        <div class="check-icon">✓</div>
-                        <div>
-                            <strong>Kolom sudah sesuai</strong>
-                            <span>Pastikan nama kolom memakai <code>Date</code>, <code>Page path</code>, dan <code>Views</code>.</span>
+                    <div class="check-list">
+                        <div class="check-item">
+                            <div class="check-icon">✓</div>
+                            <div>
+                                <strong>Kolom sudah sesuai</strong>
+                                <span>Nama kolom wajib <code>Date</code>, <code>Page path</code>, dan <code>Views</code>.</span>
+                            </div>
+                        </div>
+
+                        <div class="check-item">
+                            <div class="check-icon">✓</div>
+                            <div>
+                                <strong>Format tanggal konsisten</strong>
+                                <span>Tanggal yang rapi membuat agregasi harian lebih aman dan akurat.</span>
+                            </div>
+                        </div>
+
+                        <div class="check-item">
+                            <div class="check-icon">✓</div>
+                            <div>
+                                <strong>Views berbentuk angka</strong>
+                                <span>Pastikan kolom views tidak berisi teks agar cleaning tidak banyak skip data.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="side-panel">
+                    <h3>Alur proses</h3>
+                    <p>Ringkasan proses setelah file dikirim ke server.</p>
+
+                    <div class="metric-mini">
+                        <div class="mini-card">
+                            <strong>01</strong>
+                            <span>Validasi file CSV</span>
+                        </div>
+                        <div class="mini-card">
+                            <strong>02</strong>
+                            <span>Cleaning data mentah</span>
+                        </div>
+                        <div class="mini-card">
+                            <strong>03</strong>
+                            <span>Mapping kategori berita</span>
+                        </div>
+                        <div class="mini-card">
+                            <strong>04</strong>
+                            <span>Import ke database</span>
                         </div>
                     </div>
 
-                    <div class="check-item">
-                        <div class="check-icon">✓</div>
-                        <div>
-                            <strong>Format tanggal rapi</strong>
-                            <span>Tanggal sebaiknya konsisten agar agregasi harian tidak kacau.</span>
-                        </div>
+                    <div class="mini-warning">
+                        <strong>Data siap dianalisis:</strong><br>
+                        Setelah import berhasil, data harian yang sudah dibersihkan akan digunakan sebagai sumber utama
+                        untuk grafik traffic aktual, ranking kategori, dan proses forecasting ARIMA di dashboard.
                     </div>
-
-                    <div class="check-item">
-                        <div class="check-icon">✓</div>
-                        <div>
-                            <strong>File tidak kosong</strong>
-                            <span>Pastikan data views benar-benar ada sebelum diproses ke database.</span>
-                        </div>
-                    </div>
-                </div>s                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                </div>
             </aside>
-        </main>
-    </div>
+        </section>
+    </main>
+</div>
 
-    <script>
-        const uploadForm = document.getElementById("uploadForm");
-        const uploadZone = document.getElementById("uploadZone");
-        const fileInput = uploadForm.querySelector('input[type="file"]');
-        const filePreview = document.getElementById("filePreview");
-        const fileName = document.getElementById("fileName");
-        const fileSize = document.getElementById("fileSize");
-        const progressPanel = document.getElementById("progressPanel");
-        const progressBar = document.getElementById("progressBar");
-        const progressPercent = document.getElementById("progressPercent");
-        const progressTitle = document.getElementById("progressTitle");
-        const progressStatus = document.getElementById("progressStatus");
-        const submitBtn = document.getElementById("submitBtn");
-        const submitText = document.getElementById("submitText");
-        const steps = document.querySelectorAll(".step");
+<script>
+    const STORAGE_KEY = "wearemania:last-imported-csv";
 
-        function formatFileSize(bytes) {
-            if (!bytes && bytes !== 0) return "-";
-            const units = ["B", "KB", "MB", "GB"];
-            let size = bytes;
-            let unitIndex = 0;
+    const uploadForm = document.getElementById("uploadForm");
+    const uploadZone = document.getElementById("uploadZone");
+    const fileInput = uploadForm ? uploadForm.querySelector('input[type="file"]') : null;
+    const filePreview = document.getElementById("filePreview");
+    const fileName = document.getElementById("fileName");
+    const fileSize = document.getElementById("fileSize");
+    const fileSource = document.getElementById("fileSource");
+    const fileStatusPill = document.getElementById("fileStatusPill");
+    const removeFileBtn = document.getElementById("removeFileBtn");
+    const progressPanel = document.getElementById("progressPanel");
+    const progressBar = document.getElementById("progressBar");
+    const progressPercent = document.getElementById("progressPercent");
+    const progressTitle = document.getElementById("progressTitle");
+    const progressStatus = document.getElementById("progressStatus");
+    const submitBtn = document.getElementById("submitBtn");
+    const submitText = document.getElementById("submitText");
+    const steps = document.querySelectorAll(".step");
 
-            while (size >= 1024 && unitIndex < units.length - 1) {
-                size /= 1024;
-                unitIndex++;
-            }
+    const serverLastImport = {
+        fileName: "{{ last_import_result.file_name|default:''|escapejs }}",
+        importedRows: "{{ last_import_result.imported_rows|default:''|escapejs }}",
+        startDate: "{{ last_import_result.start_date|default:''|escapejs }}",
+        endDate: "{{ last_import_result.end_date|default:''|escapejs }}",
+        totalCategories: "{{ last_import_result.total_categories|default:''|escapejs }}"
+    };
 
-            return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    function formatFileSize(bytes) {
+        if (!bytes && bytes !== 0) return "-";
+        const units = ["B", "KB", "MB", "GB"];
+        let size = Number(bytes);
+        let unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
         }
 
-        function updateFilePreview() {
-            const file = fileInput.files && fileInput.files[0];
+        return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
 
-            if (!file) {
-                filePreview.classList.remove("show");
-                fileName.textContent = "Belum ada file dipilih";
-                fileSize.textContent = "-";
-                return;
-            }
+    function getMessageText(type) {
+        const selector = type ? `.message.${type}` : ".message";
+        const message = document.querySelector(selector);
+        return message ? message.textContent.replace(/\s+/g, " ").trim() : "";
+    }
 
-            filePreview.classList.add("show");
-            fileName.textContent = file.name;
-            fileSize.textContent = `${formatFileSize(file.size)} · ${file.type || "text/csv"}`;
+    function getStoredImport() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (error) {
+            return null;
         }
+    }
 
-        function setProgress(value, title, status, activeStep) {
-            const safeValue = Math.max(0, Math.min(100, value));
-            progressBar.style.width = `${safeValue}%`;
-            progressPercent.textContent = `${safeValue}%`;
-            progressTitle.textContent = title;
-            progressStatus.textContent = status;
+    function setStoredImport(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            fileName: data.fileName || "File CSV terakhir",
+            fileSize: data.fileSize || "-",
+            fileType: data.fileType || "text/csv",
+            summary: data.summary || "File terakhir berhasil diimport.",
+            status: data.status || "imported",
+            savedAt: new Date().toISOString()
+        }));
+    }
 
-            steps.forEach(step => {
-                const stepName = step.dataset.step;
-                step.classList.remove("active", "done");
+    function clearStoredImport() {
+        localStorage.removeItem(STORAGE_KEY);
+    }
 
-                if (activeStep === "upload" && stepName === "upload") step.classList.add("active");
-                if (activeStep === "cleaning" && stepName === "cleaning") step.classList.add("active");
-                if (activeStep === "mapping" && stepName === "mapping") step.classList.add("active");
-                if (activeStep === "import" && stepName === "import") step.classList.add("active");
+    function lockImportedFile(data) {
+        if (!uploadZone || !filePreview) return;
 
-                const order = ["upload", "cleaning", "mapping", "import"];
-                if (order.indexOf(stepName) < order.indexOf(activeStep)) {
-                    step.classList.add("done");
-                }
-            });
-        }
+        uploadZone.classList.remove("has-file");
+        uploadZone.classList.add("is-imported");
+        filePreview.classList.add("show");
 
-        function startFakeProgress() {
-            progressPanel.classList.add("active");
-            submitBtn.disabled = true;
-            submitBtn.classList.add("loading");
-            submitText.textContent = "Memproses data...";
-
-            let progress = 0;
-            setProgress(0, "Upload dimulai", "File sedang dikirim ke server Django.", "upload");
-
-            const timer = setInterval(() => {
-                if (progress < 32) {
-                    progress += 4;
-                    setProgress(progress, "Mengupload file CSV", "File sedang dikirim ke server. Jangan tutup halaman ini.", "upload");
-                } else if (progress < 62) {
-                    progress += 3;
-                    setProgress(progress, "Cleaning data", "Sistem memvalidasi kolom, tanggal, dan nilai views.", "cleaning");
-                } else if (progress < 82) {
-                    progress += 2;
-                    setProgress(progress, "Mapping kategori", "Page path sedang dipetakan ke kategori berita.", "mapping");
-                } else if (progress < 95) {
-                    progress += 1;
-                    setProgress(progress, "Import ke database", "Data harian sedang disimpan. Menunggu response server.", "import");
-                } else {
-                    clearInterval(timer);
-                    setProgress(95, "Hampir selesai", "Server masih menyelesaikan import. Halaman akan berubah setelah proses selesai.", "import");
-                }
-            }, 420);
-        }
+        fileName.textContent = data.fileName || "File CSV terakhir";
+        fileSize.textContent = data.fileSize || "File sudah tersimpan sebagai import terakhir";
+        fileStatusPill.textContent = "✅ File terakhir berhasil diimport";
+        fileSource.innerHTML = `<strong>Status:</strong> ${data.summary || "Import berhasil. File ini menjadi data aktif terakhir di sistem."}<br><strong>Aksi:</strong> klik tombol × dulu jika ingin upload file baru.`;
 
         if (fileInput) {
-            fileInput.addEventListener("change", updateFilePreview);
+            fileInput.value = "";
+            fileInput.disabled = true;
         }
 
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+
+        if (submitText) {
+            submitText.textContent = "Klik × untuk upload ulang";
+        }
+    }
+
+    function lockSelectedFile(file) {
+        if (!uploadZone || !filePreview || !file) return;
+
+        uploadZone.classList.remove("is-imported");
+        uploadZone.classList.add("has-file");
+        filePreview.classList.add("show");
+
+        fileName.textContent = file.name;
+        fileSize.textContent = `${formatFileSize(file.size)} · ${file.type || "text/csv"}`;
+        fileStatusPill.textContent = "📄 File dipilih";
+        fileSource.innerHTML = "File ini siap diupload. Kalau salah pilih file, klik tombol × dulu untuk memilih file lain.";
+
+        if (fileInput) {
+            fileInput.disabled = false;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
+
+        if (submitText) {
+            submitText.textContent = "Upload, Clean & Import";
+        }
+    }
+
+    function unlockForNewUpload() {
+        uploadZone.classList.remove("has-file", "is-imported", "drag-over");
+        filePreview.classList.remove("show");
+        fileName.textContent = "Belum ada file dipilih";
+        fileSize.textContent = "-";
+        fileStatusPill.textContent = "✅ File siap";
+        fileSource.textContent = "File ini siap diupload. Klik tombol × jika ingin mengganti file.";
+
+        if (fileInput) {
+            fileInput.disabled = false;
+            fileInput.value = "";
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.remove("loading");
+        }
+
+        if (submitText) {
+            submitText.textContent = "Pilih CSV terlebih dahulu";
+        }
+
+        clearStoredImport();
+    }
+
+    function updateFilePreview() {
+        const file = fileInput && fileInput.files && fileInput.files[0];
+
+        if (!file) {
+            unlockForNewUpload();
+            return;
+        }
+
+        lockSelectedFile(file);
+    }
+
+    function hydrateImportStatusAfterReload() {
+        const successText = getMessageText("success");
+        const errorText = getMessageText("error");
+        const stored = getStoredImport();
+
+        if (errorText) {
+            clearStoredImport();
+            unlockForNewUpload();
+            return;
+        }
+
+        if (serverLastImport.fileName) {
+            const summaryParts = [];
+
+            if (serverLastImport.importedRows) {
+                summaryParts.push(`Import berhasil. ${serverLastImport.importedRows} data harian kategori disimpan.`);
+            }
+
+            if (serverLastImport.startDate && serverLastImport.endDate) {
+                summaryParts.push(`Periode ${serverLastImport.startDate} sampai ${serverLastImport.endDate}.`);
+            }
+
+            if (serverLastImport.totalCategories) {
+                summaryParts.push(`Total kategori: ${serverLastImport.totalCategories}.`);
+            }
+
+            const data = {
+                fileName: serverLastImport.fileName,
+                fileSize: "Data import terakhir dari server",
+                summary: successText || summaryParts.join(" ") || "File terakhir berhasil diimport.",
+                status: "imported"
+            };
+
+            setStoredImport(data);
+            lockImportedFile(data);
+            return;
+        }
+
+        if (stored && successText) {
+            const data = {
+                ...stored,
+                summary: successText,
+                status: "imported"
+            };
+
+            setStoredImport(data);
+            lockImportedFile(data);
+            return;
+        }
+
+        if (stored && stored.status === "imported") {
+            lockImportedFile(stored);
+            return;
+        }
+
+        if (stored && stored.status === "pending") {
+            lockImportedFile({
+                ...stored,
+                summary: stored.summary || "File terakhir sudah dikirim ke server. Jika muncul pesan sukses, berarti import sudah selesai.",
+                status: "imported"
+            });
+            return;
+        }
+
+        unlockForNewUpload();
+    }
+
+    function setProgress(value, title, status, activeStep) {
+        const safeValue = Math.max(0, Math.min(100, value));
+        const order = ["upload", "cleaning", "mapping", "import"];
+        const activeIndex = order.indexOf(activeStep);
+
+        progressBar.style.width = `${safeValue}%`;
+        progressPercent.textContent = `${safeValue}%`;
+        progressTitle.textContent = title;
+        progressStatus.textContent = status;
+
+        steps.forEach(step => {
+            const stepName = step.dataset.step;
+            const stepIndex = order.indexOf(stepName);
+
+            step.classList.remove("active", "done");
+
+            if (stepName === activeStep) {
+                step.classList.add("active");
+            }
+
+            if (stepIndex !== -1 && activeIndex !== -1 && stepIndex < activeIndex) {
+                step.classList.add("done");
+            }
+        });
+    }
+
+    function startVisualProgress() {
+        progressPanel.classList.add("active");
+        submitBtn.disabled = true;
+        submitBtn.classList.add("loading");
+        submitText.textContent = "Memproses data...";
+
+        let progress = 0;
+        setProgress(0, "Upload dimulai", "File sedang dikirim ke server Django.", "upload");
+
+        const timer = setInterval(() => {
+            if (progress < 32) {
+                progress += 4;
+                setProgress(progress, "Mengupload file CSV", "File sedang dikirim ke server. Jangan tutup halaman ini.", "upload");
+            } else if (progress < 62) {
+                progress += 3;
+                setProgress(progress, "Cleaning data", "Sistem memvalidasi kolom, tanggal, dan nilai views.", "cleaning");
+            } else if (progress < 82) {
+                progress += 2;
+                setProgress(progress, "Mapping kategori", "Page path sedang dipetakan ke kategori berita.", "mapping");
+            } else if (progress < 95) {
+                progress += 1;
+                setProgress(progress, "Import ke database", "Data harian sedang disimpan. Menunggu response server.", "import");
+            } else {
+                clearInterval(timer);
+                setProgress(95, "Hampir selesai", "Server masih menyelesaikan import. Halaman akan berubah setelah proses selesai.", "import");
+            }
+        }, 420);
+    }
+
+    if (removeFileBtn) {
+        removeFileBtn.addEventListener("click", unlockForNewUpload);
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener("change", updateFilePreview);
+    }
+
+    if (uploadZone) {
         ["dragenter", "dragover"].forEach(eventName => {
             uploadZone.addEventListener(eventName, event => {
                 event.preventDefault();
+
+                if (uploadZone.classList.contains("is-imported") || uploadZone.classList.contains("has-file")) {
+                    return;
+                }
+
                 uploadZone.classList.add("drag-over");
             });
         });
@@ -869,6 +1479,11 @@
         });
 
         uploadZone.addEventListener("drop", event => {
+            if (uploadZone.classList.contains("is-imported") || uploadZone.classList.contains("has-file")) {
+                alert("Klik tombol × dulu untuk upload ulang.");
+                return;
+            }
+
             const file = event.dataTransfer.files && event.dataTransfer.files[0];
             if (!file || !fileInput) return;
 
@@ -877,7 +1492,9 @@
             fileInput.files = dataTransfer.files;
             updateFilePreview();
         });
+    }
 
+    if (uploadForm) {
         uploadForm.addEventListener("submit", event => {
             const file = fileInput && fileInput.files && fileInput.files[0];
 
@@ -893,8 +1510,16 @@
                 return;
             }
 
+            setStoredImport({
+                fileName: file.name,
+                fileSize: `${formatFileSize(file.size)} · ${file.type || "text/csv"}`,
+                fileType: file.type || "text/csv",
+                summary: "File sedang diproses oleh server Django.",
+                status: "pending"
+            });
+
             event.preventDefault();
-            startFakeProgress();
+            startVisualProgress();
 
             window.requestAnimationFrame(() => {
                 setTimeout(() => {
@@ -902,6 +1527,9 @@
                 }, 260);
             });
         });
-    </script>
+    }
+
+    hydrateImportStatusAfterReload();
+</script>
 </body>
 </html>
