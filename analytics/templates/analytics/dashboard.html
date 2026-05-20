@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -79,6 +81,21 @@
             z-index: 10;
         }
 
+        .logout-btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: #dc2626;
+}
+
         .brand {
             display: flex;
             gap: 14px;
@@ -92,16 +109,21 @@
         }
 
         .brand-logo {
-            width: 46px;
-            height: 46px;
-            display: grid;
-            place-items: center;
-            flex: 0 0 46px;
+            width: 52px;
+            height: 52px;
             border-radius: 16px;
-            background: linear-gradient(135deg, #f97316, #facc15);
-            color: #111827;
-            font-size: 22px;
-            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.32);
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.22);
+        }
+
+        .brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .brand h2 {
@@ -735,7 +757,9 @@
 
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-logo">⚽</div>
+            <div class="brand-logo">
+                    <img src="{% static 'assets/logo1.png' %}" alt="Wearemania Logo">
+                </div>
             <div>
                 <h2>Wearemania</h2>
                 <p>Traffic Forecasting Dashboard</p>
@@ -748,6 +772,20 @@
             <a href="/upload/"><span class="menu-icon">📁</span><span>Upload & Cleaning</span></a>
             <a href="/admin/"><span class="menu-icon">⚙️</span><span>Admin Panel</span></a>
         </nav>
+        
+        <div class="sidebar-label">Akun</div>
+
+<div class="sidebar-card">
+    <strong>{{ request.user.username }}</strong>
+    <span>Logged in user</span>
+
+    <form method="post" action="{% url 'logout' %}" style="margin-top: 12px;">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">
+            Logout
+        </button>
+    </form>
+</div>
 
         <div class="sidebar-card">
             <strong>Mode Analitik</strong>
