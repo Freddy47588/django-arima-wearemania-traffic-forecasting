@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from analytics.services.forecasting import generate_all_forecasts
+from analytics.services.forecasting import create_forecast_run_and_generate
 
 
 class Command(BaseCommand):
@@ -11,29 +11,40 @@ class Command(BaseCommand):
             "--days",
             type=int,
             default=7,
-            help="Number of days to forecast. Default: 7"
+            help="Jumlah hari prediksi ke depan. Default: 7.",
         )
 
     def handle(self, *args, **options):
         forecast_days = options["days"]
 
+        if forecast_days < 1:
+            forecast_days = 7
+
+        if forecast_days > 30:
+            forecast_days = 30
+
         self.stdout.write(
             self.style.WARNING(
-                f"Generating ARIMA forecast for {forecast_days} days..."
+                f"Generating forecast for {forecast_days} days..."
             )
         )
 
-        forecast_run = generate_all_forecasts(forecast_days=forecast_days)
+        try:
+            forecast_run = create_forecast_run_and_generate(
+                forecast_days=forecast_days
+            )
 
-        if forecast_run.status == "success":
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Forecast success. Total predictions: {forecast_run.total_predictions}"
+                    "Forecast generated successfully. "
+                    f"Run ID: {forecast_run.id}. "
+                    f"Total predictions: {forecast_run.total_predictions}."
                 )
             )
-        else:
+
+        except Exception as error:
             self.stdout.write(
                 self.style.ERROR(
-                    f"Forecast failed: {forecast_run.message}"
+                    f"Forecast generation failed: {error}"
                 )
             )

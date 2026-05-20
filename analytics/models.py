@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 
@@ -7,14 +8,15 @@ class Category(models.Model):
     slug = models.SlugField(max_length=120, unique=True, blank=True)
 
     class Meta:
-        verbose_name_plural = "Categories"
         ordering = ["name"]
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base_slug = slugify(self.name) or "category"
+            base_slug = slugify(self.name)
             slug = base_slug
-            counter = 2
+            counter = 1
 
             while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
                 slug = f"{base_slug}-{counter}"
@@ -46,80 +48,94 @@ class TrafficData(models.Model):
             models.Index(fields=["date"]),
             models.Index(fields=["category", "date"]),
         ]
+        verbose_name = "Traffic Data"
+        verbose_name_plural = "Traffic Data"
 
     def __str__(self):
         return f"{self.category.name} - {self.date} - {self.views} views"
 
 
 class ForecastRun(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_RUNNING = "running"
+    STATUS_SUCCESS = "success"
+    STATUS_FAILED = "failed"
+
     STATUS_CHOICES = [
-        ("running", "Running"),
-        ("success", "Success"),
-        ("failed", "Failed"),
+        (STATUS_PENDING, "Pending"),
+        (STATUS_RUNNING, "Running"),
+        (STATUS_SUCCESS, "Success"),
+        (STATUS_FAILED, "Failed"),
     ]
 
-    model_name = models.CharField(max_length=100, default="ARIMA")
-    forecast_days = models.PositiveIntegerField(default=7)
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="running"
+        default=STATUS_PENDING
     )
+    forecast_days = models.PositiveIntegerField(default=7)
     total_predictions = models.PositiveIntegerField(default=0)
-    message = models.TextField(blank=True, null=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    error_message = models.TextField(blank=True, null=True)
+
+    started_at = models.DateTimeField(default=timezone.now)
     finished_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-started_at"]
+        verbose_name = "Forecast Run"
+        verbose_name_plural = "Forecast Runs"
+
+    def mark_success(self, total_predictions=0):
+        self.status = self.STATUS_SUCCESS
+        self.total_predictions = total_predictions
+        self.finished_at = timezone.now()
+        self.save(update_fields=["status", "total_predictions", "finished_at"])
+
+    def mark_failed(self, error_message):
+        self.status = self.STATUS_FAILED
+        self.error_message = str(error_message)
+        self.finished_at = timezone.now()
+        self.save(update_fields=["status", "error_message", "finished_at"])
 
     def __str__(self):
-        return f"{self.model_name} - {self.status} - {self.created_at}"
+        return f"ForecastRun #{self.id} - {self.status}"
 
 
 class Prediction(models.Model):
-    forecast_run = models.ForeignKey(
-        ForecastRun,
-        on_delete=models.CASCADE,
-        related_name="predictions",
-        blank=True,
-        null=True
-    )
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE,
         related_name="predictions"
     )
+    forecast_run = models.ForeignKey(
+        ForecastRun,
+        on_delete=models.SET_NULL,
+        related_name="predictions",
+        blank=True,
+        null=True
+    )
+
     prediction_date = models.DateField()
     predicted_views = models.PositiveIntegerField(default=0)
     lower_bound = models.PositiveIntegerField(default=0)
     upper_bound = models.PositiveIntegerField(default=0)
-    model_order = models.CharField(max_length=50, default="ARIMA(1,1,1)")
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    model_name = models.CharField(max_length=100, default="ARIMA")
+    generated_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["prediction_date"]
         indexes = [
+            models.Index(fields=["prediction_date"]),
             models.Index(fields=["category", "prediction_date"]),
         ]
+        verbose_name = "Prediction"
+        verbose_name_plural = "Predictions"
 
     def __str__(self):
-        return f"{self.category.name} - {self.prediction_date} - {self.predicted_views}"
-
-
-class ImportLog(models.Model):
-    filename = models.CharField(max_length=255)
-    total_rows = models.PositiveIntegerField(default=0)
-    imported_rows = models.PositiveIntegerField(default=0)
-    skipped_rows = models.PositiveIntegerField(default=0)
-    status = models.CharField(max_length=50, default="success")
-    message = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"{self.filename} - {self.status}"
+        return (
+            f"{self.category.name} - "
+            f"{self.prediction_date} - "
+            f"{self.predicted_views} predicted views"
+        )
