@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -11,13 +13,91 @@
             font-family: Arial, sans-serif;
             background: #f5f7fb;
             margin: 0;
-            padding: 24px;
-            color: #1f2937;
+            padding: 0;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(15, 76, 129, 0.12), transparent 30%),
+                radial-gradient(circle at top right, rgba(249, 115, 22, 0.10), transparent 32%),
+                var(--bg);
+            color: var(--text);
+            font-family: "Inter", Arial, Helvetica, sans-serif;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 282px;
+            padding: 22px;
+            position: fixed;
+            inset: 0 auto 0 0;
+            background:
+                linear-gradient(180deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
+                #0f172a;
+            color: #ffffff;
+            overflow-y: auto;
+            box-shadow: 16px 0 40px rgba(15, 23, 42, 0.18);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 28px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-logo {
+            width: 46px;
+            height: 46px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 46px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f97316, #facc15);
+            color: #111827;
+            font-size: 22px;
+            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.32);
+        }
+
+        .brand h2 {
+            font-size: 19px;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+        }
+
+        .brand p {
+            color: rgba(226, 232, 240, 0.86);
+            font-size: 12px;
+            line-height: 1.45;
+            margin-top: 5px;
+        }
+
+        .sidebar-label {
+            color: rgba(226, 232, 240, 0.68);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin: 0 8px 10px;
         }
 
         .header {
@@ -140,16 +220,48 @@
 <body>
 <div class="container">
 
-    <div class="header">
-        <h1>Wearemania Traffic Forecasting Dashboard</h1>
-        <p>Dashboard analitik untuk melihat traffic aktual dan prediksi pageviews menggunakan ARIMA.</p>
-    </div>
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">⚽</div>
+            <div>
+                <h2>Wearemania</h2>
+                <p>Traffic Forecasting Dashboard</p>
+            </div>
+        </div>
 
-    {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="message">
-                    {{ message }}
+        <div class="sidebar-label">Menu Utama</div>
+        <nav class="menu">
+            <a href="/" class="active"><span class="menu-icon">📊</span><span>Dashboard</span></a>
+            <a href="/upload/"><span class="menu-icon">📁</span><span>Upload & Cleaning</span></a>
+            <a href="/admin/"><span class="menu-icon">⚙️</span><span>Admin Panel</span></a>
+        </nav>
+
+        <div class="sidebar-card">
+            <strong>Mode Analitik</strong>
+            <span>Monitoring traffic aktual, forecast ARIMA, kategori berita, dan riwayat import dalam satu halaman.</span>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <section class="hero">
+            <div class="hero-content">
+                <div class="eyebrow">Live Analytics · ARIMA Forecast</div>
+                <h1>Traffic Forecasting Dashboard</h1>
+                <p>Monitoring traffic aktual, prediksi ARIMA, performa kategori berita, dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.</p>
+            </div>
+
+            <div class="action-group">
+                <a href="/upload/" class="btn btn-primary">⬆️ Upload Raw CSV</a>
+                <a href="/run-forecast/" class="btn btn-success">⚡ Run Forecast</a>
+            </div>
+        </section>
+
+        <section class="filter-card">
+            <div class="filter-title">
+                <div>
+                    <h2>Filter Data Dashboard</h2>
+                    <span>Pilih kategori dan rentang tanggal untuk melihat performa lebih spesifik.</span>
                 </div>
             {% endfor %}
         </div>
