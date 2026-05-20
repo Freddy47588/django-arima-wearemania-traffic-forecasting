@@ -9,11 +9,21 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fb;
-            margin: 0;
-            padding: 0;
+        :root {
+            --bg: #f5f7fb;
+            --text: #111827;
+            --muted: #6b7280;
+            --primary: #0f4c81;
+            --primary-dark: #0a1d35;
+            --accent: #f97316;
+            --success: #16a34a;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --shadow: 0 14px 40px rgba(15, 23, 42, 0.10);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         html {
@@ -22,16 +32,18 @@
 
         body {
             min-height: 100vh;
+            margin: 0;
             background:
                 radial-gradient(circle at top left, rgba(15, 76, 129, 0.12), transparent 30%),
                 radial-gradient(circle at top right, rgba(249, 115, 22, 0.10), transparent 32%),
                 var(--bg);
             color: var(--text);
-            font-family: "Inter", Arial, Helvetica, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
         a {
             color: inherit;
+            text-decoration: none;
         }
 
         .layout {
@@ -79,16 +91,17 @@
         }
 
         .brand h2 {
+            margin: 0;
             font-size: 19px;
             line-height: 1.1;
             letter-spacing: -0.03em;
         }
 
         .brand p {
+            margin: 5px 0 0;
             color: rgba(226, 232, 240, 0.86);
             font-size: 12px;
             line-height: 1.45;
-            margin-top: 5px;
         }
 
         .sidebar-label {
@@ -100,25 +113,203 @@
             margin: 0 8px 10px;
         }
 
-        .header {
-            margin-bottom: 24px;
+        .menu {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 22px;
         }
 
-        .header h1 {
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            color: rgba(255, 255, 255, 0.86);
+            font-weight: 700;
+            transition: 0.2s ease;
+        }
+
+        .menu a:hover,
+        .menu a.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .menu-icon {
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar-card {
+            display: grid;
+            gap: 8px;
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.86);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .sidebar-card strong {
+            color: #ffffff;
+        }
+
+        .main {
+            width: 100%;
+            margin-left: 282px;
+            padding: 28px;
+        }
+
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 22px;
+            padding: 26px;
+            border-radius: 26px;
+            background:
+                linear-gradient(135deg, rgba(15, 76, 129, 0.96), rgba(10, 29, 53, 0.96)),
+                #0f4c81;
+            color: #ffffff;
+            box-shadow: var(--shadow);
+        }
+
+        .hero-content {
+            max-width: 760px;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
             margin: 0;
-            font-size: 28px;
+            font-size: 34px;
+            letter-spacing: -0.04em;
         }
 
-        .header p {
-            color: #6b7280;
+        .hero p {
+            margin: 10px 0 0;
+            color: rgba(255, 255, 255, 0.82);
+            line-height: 1.6;
         }
 
-        .card {
-            background: #ffffff;
+        .action-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn,
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 15px;
             border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 800;
+            transition: 0.2s ease;
+        }
+
+        .btn-primary,
+        button {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: #ffffff;
+        }
+
+        .btn:hover,
+        button:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.96);
+        }
+
+        .card,
+        .filter-card,
+        .metric {
+            background: var(--card);
+            border-radius: 20px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(229, 231, 235, 0.75);
+        }
+
+        .filter-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .filter-title h2,
+        .card h2 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .filter-title span {
+            display: block;
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0;
+            padding: 0;
+            box-shadow: none;
+            border: none;
+        }
+
+        select {
+            min-width: 220px;
+            padding: 11px 14px;
+            border-radius: 14px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            font-size: 14px;
+        }
+
+        .messages {
+            margin-bottom: 16px;
+        }
+
+        .message {
+            padding: 12px 14px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            background: #e0f2fe;
+            color: #075985;
+            font-weight: 700;
         }
 
         .grid {
@@ -129,62 +320,19 @@
         }
 
         .metric {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            margin-bottom: 0;
         }
 
         .metric h3 {
             margin: 0;
             font-size: 14px;
-            color: #6b7280;
+            color: var(--muted);
         }
 
         .metric p {
             margin: 10px 0 0;
-            font-size: 26px;
-            font-weight: bold;
-        }
-
-        .toolbar {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        select,
-        button {
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
-            font-size: 14px;
-        }
-
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background: #1d4ed8;
-        }
-
-        .messages {
-            margin-bottom: 16px;
-        }
-
-        .message {
-            padding: 12px 14px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            background: #e0f2fe;
-            color: #075985;
+            font-size: 28px;
+            font-weight: 900;
         }
 
         .recommendation-list {
@@ -194,9 +342,10 @@
         }
 
         .recommendation-item {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
             padding: 16px;
+            background: #fbfdff;
         }
 
         .recommendation-item strong {
@@ -205,20 +354,81 @@
             margin-bottom: 8px;
         }
 
-        @media (max-width: 768px) {
+        .recommendation-item span {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .recommendation-item p {
+            margin: 8px 0 0;
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .empty-text {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        canvas {
+            margin-top: 16px;
+        }
+
+        @media (max-width: 980px) {
+            .sidebar {
+                position: static;
+                width: 100%;
+                border-radius: 0 0 24px 24px;
+            }
+
+            .layout {
+                display: block;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 18px;
+            }
+
+            .hero {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .action-group {
+                justify-content: flex-start;
+            }
+
             .grid,
             .recommendation-list {
                 grid-template-columns: 1fr;
             }
+        }
 
-            body {
-                padding: 14px;
+        @media (max-width: 560px) {
+            .hero h1 {
+                font-size: 26px;
+            }
+
+            .filter-title {
+                display: block;
+            }
+
+            .toolbar {
+                display: grid;
+            }
+
+            select,
+            button,
+            .btn {
+                width: 100%;
             }
         }
     </style>
 </head>
+
 <body>
-<div class="container">
+<div class="layout">
 
     <aside class="sidebar">
         <div class="brand">
@@ -230,10 +440,20 @@
         </div>
 
         <div class="sidebar-label">Menu Utama</div>
+
         <nav class="menu">
-            <a href="/" class="active"><span class="menu-icon">📊</span><span>Dashboard</span></a>
-            <a href="/upload/"><span class="menu-icon">📁</span><span>Upload & Cleaning</span></a>
-            <a href="/admin/"><span class="menu-icon">⚙️</span><span>Admin Panel</span></a>
+            <a href="/" class="active">
+                <span class="menu-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="/upload/">
+                <span class="menu-icon">📁</span>
+                <span>Upload & Cleaning</span>
+            </a>
+            <a href="/admin/">
+                <span class="menu-icon">⚙️</span>
+                <span>Admin Panel</span>
+            </a>
         </nav>
 
         <div class="sidebar-card">
@@ -248,94 +468,114 @@
             <div class="hero-content">
                 <div class="eyebrow">Live Analytics · ARIMA Forecast</div>
                 <h1>Traffic Forecasting Dashboard</h1>
-                <p>Monitoring traffic aktual, prediksi ARIMA, performa kategori berita, dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.</p>
+                <p>
+                    Monitoring traffic aktual, prediksi ARIMA, performa kategori berita,
+                    dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.
+                </p>
             </div>
 
             <div class="action-group">
-                <a href="/upload/" class="btn btn-primary">⬆️ Upload Raw CSV</a>
-                <a href="/run-forecast/" class="btn btn-success">⚡ Run Forecast</a>
+                <a href="{% url 'upload_raw_data' %}" class="btn btn-primary">⬆️ Upload Raw CSV</a>
+
+                <form method="post" action="{% url 'generate_forecast' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-success">⚡ Generate Forecast</button>
+                </form>
             </div>
         </section>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <section class="filter-card">
             <div class="filter-title">
                 <div>
                     <h2>Filter Data Dashboard</h2>
-                    <span>Pilih kategori dan rentang tanggal untuk melihat performa lebih spesifik.</span>
+                    <span>Pilih kategori untuk melihat performa traffic lebih spesifik.</span>
                 </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <div class="toolbar card">
-        <form method="get" action="">
-            <select name="category" onchange="this.form.submit()">
-                <option value="">Semua Kategori</option>
-
-                {% for category in categories %}
-                    <option value="{{ category.id }}"
-                        {% if selected_category|stringformat:"s" == category.id|stringformat:"s" %}
-                            selected
-                        {% endif %}
-                    >
-                        {{ category.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </form>
-
-        <form method="post" action="{% url 'generate_forecast' %}">
-            {% csrf_token %}
-            <button type="submit">Generate Forecast</button>
-        </form>
-    </div>
-
-    <div class="grid">
-        <div class="metric">
-            <h3>Total Actual Views</h3>
-            <p>{{ total_actual_views }}</p>
-        </div>
-
-        <div class="metric">
-            <h3>Total Forecast Views</h3>
-            <p>{{ total_forecast_views }}</p>
-        </div>
-
-        <div class="metric">
-            <h3>Prediksi Terakhir</h3>
-            {% if latest_forecast_run %}
-                <p style="font-size: 16px;">
-                    {{ latest_forecast_run.created_at|date:"d M Y H:i" }}
-                </p>
-            {% else %}
-                <p style="font-size: 16px;">Belum ada</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>Actual Traffic vs Forecast Traffic</h2>
-        <canvas id="trafficChart"></canvas>
-    </div>
-
-    <div class="card">
-        <h2>Rekomendasi Kategori Potensial</h2>
-
-        {% if top_forecast_categories %}
-            <div class="recommendation-list">
-                {% for item in top_forecast_categories %}
-                    <div class="recommendation-item">
-                        <strong>{{ item.category__name }}</strong>
-                        <span>Estimasi views 7 hari:</span>
-                        <p>{{ item.total_predicted_views }}</p>
-                    </div>
-                {% endfor %}
             </div>
-        {% else %}
-            <p>Belum ada hasil prediksi. Klik tombol Generate Forecast terlebih dahulu.</p>
-        {% endif %}
-    </div>
 
+            <div class="toolbar">
+                <form method="get" action="">
+                    <select name="category" onchange="this.form.submit()">
+                        <option value="">Semua Kategori</option>
+
+                        {% for category in categories %}
+                            <option value="{{ category.id }}"
+                                {% if selected_category|stringformat:"s" == category.id|stringformat:"s" %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                <form method="post" action="{% url 'generate_forecast' %}">
+                    {% csrf_token %}
+                    <button type="submit">Generate Forecast</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="grid">
+            <div class="metric">
+                <h3>Total Actual Views</h3>
+                <p>{{ total_actual_views }}</p>
+            </div>
+
+            <div class="metric">
+                <h3>Total Forecast Views</h3>
+                <p>{{ total_forecast_views }}</p>
+            </div>
+
+            <div class="metric">
+                <h3>Prediksi Terakhir</h3>
+
+                {% if latest_forecast_run %}
+                    <p style="font-size: 16px;">
+                        {{ latest_forecast_run.created_at|date:"d M Y H:i" }}
+                    </p>
+                {% else %}
+                    <p style="font-size: 16px;">Belum ada</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Actual Traffic vs Forecast Traffic</h2>
+            <canvas id="trafficChart"></canvas>
+        </section>
+
+        <section class="card">
+            <h2>Rekomendasi Kategori Potensial</h2>
+
+            {% if top_forecast_categories %}
+                <div class="recommendation-list">
+                    {% for item in top_forecast_categories %}
+                        <div class="recommendation-item">
+                            <strong>{{ item.category__name }}</strong>
+                            <span>Estimasi views 7 hari:</span>
+                            <p>{{ item.total_predicted_views }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-text">
+                    Belum ada hasil prediksi. Klik tombol Generate Forecast terlebih dahulu.
+                </p>
+            {% endif %}
+        </section>
+
+    </main>
 </div>
 
 <script>
