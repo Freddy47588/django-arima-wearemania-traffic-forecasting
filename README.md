@@ -4,30 +4,53 @@
 [![Framework](https://img.shields.io/badge/framework-django-green.svg)](https://www.djangoproject.com/)
 [![Algorithm](https://img.shields.io/badge/algorithm-ARIMA-orange.svg)](https://www.statsmodels.org/)
 
-Dashboard internal berbasis web untuk menganalisis dan memprediksi traffic atau pageviews portal berita **Wearemania** menggunakan metode time-series **ARIMA**. Project ini dikembangkan untuk membantu proses analisis performa konten, visualisasi data traffic, serta mendukung pengambilan keputusan redaksi berbasis data.
+Dashboard internal berbasis web untuk mengelola, menganalisis, dan memprediksi traffic atau pageviews portal berita **Wearemania** menggunakan Django dan metode time-series **ARIMA**.
 
-Sistem ini dirancang agar dapat menggunakan data dari **Google Analytics 4 (GA4)** melalui integrasi API. Pada tahap development, sistem juga dapat menggunakan file **CSV** sebagai sumber data awal atau fallback.
+Pada tahap pengembangan saat ini, project difokuskan pada fitur **upload CSV manual** sebagai sumber data utama. Data traffic dari file CSV akan diproses, dibersihkan, disimpan ke database, dikelompokkan berdasarkan kategori berita, lalu divisualisasikan pada dashboard.
+
+Integrasi langsung dengan Google Analytics 4 API belum menjadi fokus utama pada tahap ini dan direncanakan sebagai pengembangan lanjutan.
 
 ---
 
 ## Deskripsi Project
 
-Wearemania memiliki pola traffic yang dinamis karena dipengaruhi oleh jadwal pertandingan, isu klub, performa konten, dan tren berita harian. Dashboard ini dibuat untuk membantu tim melihat data historis traffic dan memperkirakan potensi kunjungan pada periode berikutnya.
+Wearemania memiliki pola traffic pembaca yang dinamis karena dipengaruhi oleh jadwal pertandingan, isu klub, performa konten, dan tren berita harian. Dashboard ini dibuat untuk membantu tim melihat data historis traffic dan memperkirakan potensi kunjungan pada periode berikutnya.
 
-Dengan adanya dashboard forecasting ini, analisis traffic tidak hanya dilakukan secara reaktif berdasarkan data sebelumnya, tetapi juga dapat digunakan untuk memperkirakan tren traffic ke depan.
+Dengan adanya dashboard forecasting ini, proses analisis tidak hanya dilakukan secara reaktif berdasarkan data sebelumnya, tetapi juga dapat digunakan untuk memperkirakan tren traffic ke depan.
+
+Project ini mendukung pendekatan data-driven agar redaksi dapat melihat kategori berita yang berpotensi mengalami kenaikan atau penurunan traffic.
+
+---
+
+## Fokus Pengembangan Saat Ini
+
+Fokus utama project saat ini adalah:
+
+- Upload file CSV traffic secara manual.
+- Membersihkan dan memvalidasi data CSV.
+- Menyimpan data hasil upload ke database.
+- Mengelompokkan data berdasarkan kategori berita.
+- Menampilkan data aktual pada dashboard.
+- Menyiapkan data agar dapat digunakan untuk proses forecasting ARIMA.
+- Menampilkan visualisasi data aktual dan hasil prediksi pada dashboard.
 
 ---
 
 ## Fitur Utama
 
 - Upload dataset traffic dalam format CSV.
-- Menampilkan data traffic pada dashboard.
+- Validasi format file sebelum data diproses.
+- Import data traffic ke database.
+- Menampilkan status import data.
+- Menampilkan jumlah data yang berhasil disimpan.
+- Menampilkan periode data yang berhasil diimport.
+- Menampilkan total kategori berita.
 - Data cleaning dan preprocessing menggunakan Python.
-- Pengelompokan data berdasarkan kategori berita.
-- Prediksi traffic untuk beberapa hari ke depan menggunakan model ARIMA.
-- Visualisasi perbandingan data aktual dan data hasil prediksi.
+- Mapping URL path ke kategori berita.
+- Visualisasi data aktual pada dashboard.
+- Forecasting traffic menggunakan model ARIMA.
+- Visualisasi perbandingan data aktual dan data prediksi.
 - Dashboard internal berbasis Django.
-- Rencana integrasi data langsung dari Google Analytics 4 API.
 
 ---
 
@@ -39,8 +62,8 @@ Dengan adanya dashboard forecasting ini, analisis traffic tidak hanya dilakukan 
 - **Database Production**: MySQL / PostgreSQL
 - **Data Processing**: Pandas, NumPy
 - **Machine Learning / Forecasting**: Statsmodels ARIMA
-- **Visualisasi**: Chart.js / template dashboard
-- **API Integration**: Google Analytics Data API
+- **Visualisasi**: Chart.js
+- **Frontend**: HTML, CSS, JavaScript
 - **Version Control**: Git & GitHub
 
 ---
@@ -50,7 +73,7 @@ Dengan adanya dashboard forecasting ini, analisis traffic tidak hanya dilakukan 
 ```bash
 django-arima-wearemania-traffic-forecasting/
 │
-├── analytics/              # App utama untuk data traffic, upload, analisis, dan forecasting
+├── analytics/              # App utama untuk upload CSV, cleaning data, analisis, dan forecasting
 ├── core/                   # Konfigurasi utama project Django
 ├── manage.py               # File utama untuk menjalankan perintah Django
 ├── requirements.txt        # Daftar dependency Python
@@ -64,9 +87,65 @@ django-arima-wearemania-traffic-forecasting/
 
 | Nama | Peran |
 |---|---|
-| Fredi Irawan | Backend Developer, API Integration, Database Management |
+| Fredi Irawan | Backend Developer, Upload CSV, Database Management, Dashboard Integration |
 | Achmad Zaki Naufal | Data Analyst, Data Cleaning, ARIMA Modeling |
 | Irsal Fauzan Alfarizi | Data Analyst, Data Cleaning, ARIMA Modeling |
+
+---
+
+## Alur Kerja Sistem
+
+Alur utama sistem pada tahap saat ini:
+
+```txt
+Upload CSV Manual
+        ↓
+Validasi File CSV
+        ↓
+Data Cleaning
+        ↓
+Mapping Kategori Berita
+        ↓
+Simpan ke Database
+        ↓
+Dashboard Menampilkan Data Aktual
+        ↓
+Generate Forecast ARIMA
+        ↓
+Dashboard Menampilkan Data Prediksi
+```
+
+Penjelasan alur:
+
+1. Admin mengupload file CSV traffic melalui halaman upload.
+2. Sistem memvalidasi file yang diupload.
+3. Data dibaca dan dibersihkan menggunakan Python.
+4. URL path berita dipetakan ke kategori tertentu.
+5. Data yang sudah bersih disimpan ke database.
+6. Dashboard membaca data aktual dari database.
+7. Model ARIMA digunakan untuk menghasilkan prediksi traffic.
+8. Dashboard menampilkan perbandingan traffic aktual dan hasil prediksi.
+
+---
+
+## Format Dataset CSV
+
+Dataset CSV yang digunakan sebaiknya memiliki kolom utama berikut:
+
+| Kolom | Keterangan |
+|---|---|
+| date | Tanggal data traffic |
+| page_path | URL atau path halaman berita |
+| views | Jumlah pageviews |
+| category | Kategori berita, jika tersedia |
+
+Catatan:
+
+- Kolom `date` harus berisi tanggal.
+- Kolom `views` harus berupa angka.
+- Kolom `page_path` digunakan untuk membaca sumber halaman atau URL berita.
+- Kolom `category` dapat diisi langsung atau dihasilkan dari proses mapping URL.
+- Format kolom dapat disesuaikan dengan struktur model dan script preprocessing pada project.
 
 ---
 
@@ -163,8 +242,9 @@ DATABASE_NAME=db.sqlite3
 Catatan:
 
 - Jangan upload file `.env` ke GitHub.
-- Jangan upload credentials Google API ke repository publik.
-- Simpan file credentials seperti `google-credentials.json` secara lokal atau di server yang aman.
+- Jangan upload file credentials ke repository publik.
+- Simpan konfigurasi rahasia secara lokal atau di server yang aman.
+- Untuk tahap upload CSV manual, konfigurasi GA4 API belum wajib digunakan.
 
 ---
 
@@ -226,42 +306,88 @@ Login menggunakan akun superuser yang sudah dibuat sebelumnya.
 
 ---
 
-## Panduan Upload Dataset CSV
+## Panduan Upload CSV Manual
 
-Jika fitur upload CSV sudah tersedia pada dashboard, langkah penggunaannya sebagai berikut:
+Langkah penggunaan fitur upload CSV:
 
 1. Jalankan server Django.
 2. Buka halaman dashboard melalui browser.
-3. Pilih menu atau tombol upload CSV.
-4. Pilih file dataset traffic.
-5. Upload file ke sistem.
-6. Sistem akan membaca dan menampilkan data pada dashboard.
-7. Data dapat digunakan untuk analisis dan proses forecasting.
+3. Masuk ke halaman **Upload & Cleaning**.
+4. Pilih file CSV traffic.
+5. Klik tombol upload atau import.
+6. Sistem akan membaca file CSV.
+7. Sistem melakukan validasi dan cleaning data.
+8. Data yang valid disimpan ke database.
+9. Sistem menampilkan status import.
+10. Dashboard dapat membaca dan menampilkan data yang sudah diimport.
 
-Format data yang disarankan:
+Output yang diharapkan setelah import berhasil:
 
-| Kolom | Keterangan |
-|---|---|
-| date | Tanggal data traffic |
-| page_path | URL atau path halaman berita |
-| views | Jumlah pageviews |
-| category | Kategori berita, jika tersedia |
-
-Catatan:
-
-Nama kolom dapat disesuaikan dengan struktur model, script preprocessing, atau format export dari Google Analytics.
+```txt
+Import berhasil.
+Data harian kategori berhasil disimpan.
+Periode data berhasil terdeteksi.
+Total kategori berhasil dihitung.
+Data siap dianalisis.
+```
 
 ---
 
-## Alur Kerja Sistem
+## Panduan Generate Forecast
 
-1. Data traffic diperoleh dari Google Analytics 4 API atau file CSV.
-2. Data dibersihkan dan disesuaikan formatnya.
-3. URL atau path berita dipetakan ke kategori tertentu.
-4. Data historis digunakan sebagai input model ARIMA.
-5. Model menghasilkan prediksi traffic untuk periode berikutnya.
-6. Hasil prediksi divisualisasikan pada dashboard.
-7. Pengguna dapat melihat perbandingan antara data aktual dan data prediksi.
+Setelah data CSV berhasil diimport, proses forecasting dapat dijalankan.
+
+Alur forecasting:
+
+```txt
+Data CSV berhasil diimport
+        ↓
+Data tersimpan di TrafficData
+        ↓
+User menjalankan Generate Forecast
+        ↓
+Model ARIMA membuat prediksi
+        ↓
+Hasil disimpan ke Prediction
+        ↓
+Dashboard menampilkan hasil prediksi
+```
+
+Jika tersedia management command, jalankan:
+
+```bash
+python manage.py generate_forecast
+```
+
+Jika ingin menentukan jumlah hari prediksi:
+
+```bash
+python manage.py generate_forecast --days 7
+```
+
+Catatan:
+
+- Forecasting sebaiknya tidak dijalankan otomatis setiap dashboard dibuka.
+- Dashboard cukup membaca hasil prediksi dari database.
+- Training atau generate forecast lebih baik dijalankan melalui tombol khusus atau management command.
+
+---
+
+## Database Utama
+
+Pada tahap development, database yang digunakan adalah SQLite.
+
+File database lokal biasanya bernama:
+
+```bash
+db.sqlite3
+```
+
+Catatan:
+
+- File `db.sqlite3` tidak wajib diupload ke GitHub.
+- Database lokal dapat dibuat ulang dengan perintah migrate.
+- Untuk deployment atau produksi, database dapat dipindahkan ke MySQL atau PostgreSQL.
 
 ---
 
@@ -270,11 +396,14 @@ Nama kolom dapat disesuaikan dengan struktur model, script preprocessing, atau f
 Beberapa fitur yang dapat dikembangkan selanjutnya:
 
 - Integrasi langsung dengan Google Analytics 4 API.
+- Import data otomatis dari GA4.
 - Penyimpanan data produksi menggunakan MySQL atau PostgreSQL.
 - Training model ARIMA berdasarkan kategori berita.
-- Penyimpanan model hasil training agar dapat dipanggil ulang tanpa training berulang.
+- Hyperparameter tuning untuk mencari kombinasi ARIMA terbaik.
+- Penyimpanan model hasil training agar dapat dipanggil ulang.
 - Endpoint API untuk mengambil hasil forecasting.
-- Filter data berdasarkan kategori dan rentang tanggal.
+- Filter dashboard berdasarkan kategori berita.
+- Filter dashboard berdasarkan rentang tanggal.
 - Visualisasi data menggunakan Chart.js atau ApexCharts.
 - Deployment ke server hosting atau cloud.
 - Dokumentasi teknis dan user manual.
@@ -289,8 +418,9 @@ Untuk tahap development lokal:
 - Jangan upload file `db.sqlite3` jika database hanya digunakan lokal.
 - Jangan upload folder `venv`.
 - Jangan upload file `.env`.
-- Jangan upload file credentials seperti JSON dari Google API.
+- Jangan upload file credentials.
 - Simpan konfigurasi rahasia di file environment.
+- Fokus development saat ini adalah upload CSV manual terlebih dahulu.
 
 Contoh isi `.gitignore` yang disarankan:
 
@@ -324,7 +454,7 @@ git add .
 Commit perubahan:
 
 ```bash
-git commit -m "docs: update README setup guide"
+git commit -m "docs: update README for manual CSV upload workflow"
 ```
 
 Push ke GitHub:
@@ -367,7 +497,7 @@ py manage.py runserver
 
 ### 2. Virtual environment tidak aktif
 
-Aktifkan ulang virtual environment:
+Aktifkan ulang virtual environment.
 
 #### Windows
 
@@ -420,9 +550,24 @@ http://127.0.0.1:8080/
 
 ---
 
+### 6. File CSV gagal diupload
+
+Beberapa hal yang perlu dicek:
+
+- Pastikan file berformat `.csv`.
+- Pastikan kolom tanggal tersedia.
+- Pastikan kolom views berisi angka.
+- Pastikan file tidak kosong.
+- Pastikan ukuran file tidak melebihi batas upload.
+- Pastikan delimiter CSV sesuai dengan script import yang digunakan.
+
+---
+
 ## Status Project
 
-Project masih dalam tahap pengembangan. Fitur upload CSV dan tampilan data dashboard sudah berjalan. Tahap berikutnya adalah pengembangan model ARIMA, penyimpanan model hasil training, integrasi hasil prediksi ke dashboard, serta integrasi lanjutan dengan Google Analytics 4 API.
+Project masih dalam tahap pengembangan. Fokus terbaru project adalah menyelesaikan fitur upload CSV manual, proses cleaning data, penyimpanan data traffic ke database, dan visualisasi data pada dashboard.
+
+Integrasi Google Analytics 4 API belum menjadi prioritas utama pada tahap ini dan akan dikembangkan setelah alur upload CSV manual stabil.
 
 ---
 
