@@ -139,15 +139,6 @@ Dataset CSV yang digunakan sebaiknya memiliki kolom utama berikut:
 | views | Jumlah pageviews |
 | category | Kategori berita, jika tersedia |
 
-Contoh format CSV:
-
-```csv
-date,page_path,views,category
-2026-04-01,/arema-fc/berita-contoh,1200,Arema FC
-2026-04-01,/liga-1/jadwal-pertandingan,850,Liga 1
-2026-04-02,/kriminal/berita-contoh,430,Kriminal
-```
-
 Catatan:
 
 - Kolom `date` harus berisi tanggal.
