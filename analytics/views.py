@@ -36,38 +36,116 @@ def find_column(columns, possible_names):
     return None
 
 
+import re
+from urllib.parse import urlparse
+
+
+EXCLUDED_FORECAST_CATEGORIES = [
+    "Homepage",
+    "Halaman Arsip",
+    "Halaman Informasi",
+    "Noise / Teknis",
+]
+
+
 def clean_page_path(page_path):
+    """
+    Membersihkan page path dari CSV/GA4 agar format URL konsisten.
+    Contoh:
+    https://wearemania.net/berita-arema/contoh?utm=abc
+    menjadi:
+    /berita-arema/contoh
+    """
+
     if pd.isna(page_path):
         return "/"
 
     page_path = str(page_path).strip()
 
-    if not page_path:
+    if not page_path or page_path.lower() in ["nan", "null", "(other)", "other"]:
         return "/"
 
     if page_path.startswith("http://") or page_path.startswith("https://"):
         try:
-            from urllib.parse import urlparse
-
             parsed_url = urlparse(page_path)
             page_path = parsed_url.path or "/"
         except Exception:
             pass
 
+    page_path = page_path.split("?")[0].split("#")[0]
+
     if not page_path.startswith("/"):
         page_path = f"/{page_path}"
 
-    return page_path.lower()
+    page_path = re.sub(r"/+", "/", page_path)
+    page_path = page_path.lower().strip()
+
+    if len(page_path) > 1:
+        page_path = page_path.rstrip("/")
+
+    return page_path
 
 
 def detect_category_from_path(page_path):
+    """
+    Mapping URL path Wearemania ke kategori berita.
+    Fungsi ini dipakai saat upload CSV agar data masuk ke Category yang tepat.
+    """
+
     path = clean_page_path(page_path)
+
+    if path in ["/", ""]:
+        return "Homepage"
+
+    if any(keyword in path for keyword in [
+        "/tag",
+        "/category",
+        "/author",
+        "/date",
+        "/page",
+        "/search",
+    ]):
+        return "Halaman Arsip"
+
+    if any(keyword in path for keyword in [
+        "/iklan",
+        "/disclaimer",
+        "/pedoman-media-online",
+        "/kebijakan-privasi",
+        "/kontak",
+        "/contact",
+        "/redaksi-wearemania",
+        "/sponsor",
+        "/ratecard",
+        "/about",
+        "/tentang-kami",
+    ]):
+        return "Halaman Informasi"
+
+    if any(keyword in path for keyword in [
+        "/wp-content",
+        "/wp-admin",
+        "/wp-json",
+        "/.well-known",
+        "wpac-",
+        "xnyc-",
+        "sackboy",
+        "panderma",
+        "/resource",
+        "/lander",
+        "/feed",
+        "/xmlrpc",
+        "/robots.txt",
+        "/favicon",
+    ]):
+        return "Noise / Teknis"
 
     category_rules = {
         "Berita Arema": [
             "/berita-arema",
             "/arema-news",
             "/arema-fc",
+            "/news/",
         ],
         "Aremaday": [
             "/aremaday",
@@ -75,21 +153,97 @@ def detect_category_from_path(page_path):
         ],
         "Aremania": [
             "/aremania",
+            "/aremania-voice",
         ],
-        "Memori Arema": [
-            "/memori-arema",
+        "Fokus / Analisis": [
+            "/fokus",
+            "/ruang-taktik",
+            "/analisis",
+            "/opini",
+        ],
+        "Nasional": [
+            "/nasional",
+        ],
+        "Ngalam / Malang Raya": [
+            "/ngalam",
+            "/malang-raya",
+        ],
+        "Futsal": [
+            "/liga-futsal-profesional-indonesia",
+            "/usc-futsal-league",
+            "/futsal",
         ],
         "Arema Putri": [
             "/arema-putri",
         ],
-        "Ngalam": [
-            "/ngalam",
+        "Arema Junior": [
+            "/arema-junior",
+            "/akademi-arema",
         ],
-        "Fokus": [
-            "/fokus",
+        "Sejarah Arema": [
+            "/memori-arema",
+            "/legenda",
+            "/this-day-in-history",
+            "/sejarah",
+            "sejarah-arema-hari-ini",
+            "sejarah-hari-ini",
         ],
-        "Nasional": [
-            "/nasional",
+        "Intip Lawan": [
+            "/intip-lawan",
+        ],
+        "Bursa Transfer": [
+            "/bursa-transfer-pemain",
+            "/bursa-transfer",
+            "/transfer",
+        ],
+        "Jadwal, Hasil & Klasemen": [
+            "/jadwal-hasil",
+            "/pertandingan",
+            "/jadwal_skor",
+            "/jadwal",
+            "/hasil",
+            "/klasemen",
+            "/posisi",
+            "/kick-off",
+            "/susunan-pemain",
+            "/live_commentary",
+        ],
+        "Profil Pemain & Staff": [
+            "/pemain",
+            "/player",
+            "/staff",
+            "/pelatih",
+            "/official",
+        ],
+        "Foto & Video": [
+            "/lensa",
+            "/berita-foto",
+            "/photoplayer",
+            "/topshot",
+            "/wallpaper",
+            "/video",
+        ],
+        "Review Jersey": [
+            "/review-jersey",
+            "/jersey",
+        ],
+        "Kompetisi": [
+            "/kompetisi",
+        ],
+        "E-Football": [
+            "/indonesian-football-e-league",
+            "/e-football",
+        ],
+        "Luar Lapangan": [
+            "/luar-lapangan",
+        ],
+        "Profil Klub / Kompetisi": [
+            "/klub",
+            "/venue",
+            "/stadion",
+            "/musim",
+            "/liga",
+            "/arema/",
         ],
         "Liga 1": [
             "/liga-1",
@@ -119,7 +273,6 @@ def detect_category_from_path(page_path):
                 return category_name
 
     return "Lainnya"
-
 
 def parse_date_value(value):
     if pd.isna(value):
@@ -353,18 +506,22 @@ def upload_raw_data(request):
 
                     category_name = detect_category_from_path(page_path)
 
+                    if category_name in EXCLUDED_FORECAST_CATEGORIES:
+                       skipped_count += 1
+                       continue
+
                     category, _ = Category.objects.get_or_create(
-                        name=category_name
-                    )
+    name=category_name
+)
 
                     traffic_objects.append(
-                        TrafficData(
-                            category=category,
-                            date=traffic_date,
-                            page_path=page_path,
-                            views=views,
-                        )
-                    )
+    TrafficData(
+        category=category,
+        date=traffic_date,
+        page_path=page_path,
+        views=views,
+    )
+)
 
                 if not traffic_objects:
                     messages.error(
