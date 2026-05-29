@@ -4,6 +4,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wearemania Traffic Forecasting Dashboard</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -41,6 +42,10 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
+        body.sidebar-open {
+            overflow: hidden;
+        }
+
         a {
             color: inherit;
             text-decoration: none;
@@ -49,6 +54,14 @@
         .layout {
             display: flex;
             min-height: 100vh;
+        }
+
+        .mobile-topbar {
+            display: none;
+        }
+
+        .sidebar-overlay {
+            display: none;
         }
 
         .sidebar {
@@ -62,7 +75,8 @@
             color: #ffffff;
             overflow-y: auto;
             box-shadow: 16px 0 40px rgba(15, 23, 42, 0.18);
-            z-index: 10;
+            z-index: 20;
+            transition: transform 0.25s ease;
         }
 
         .brand {
@@ -141,7 +155,8 @@
             text-align: center;
         }
 
-        .sidebar-card {
+        .sidebar-card,
+        .account-card {
             display: grid;
             gap: 8px;
             padding: 16px;
@@ -151,10 +166,30 @@
             color: rgba(255, 255, 255, 0.86);
             line-height: 1.5;
             font-size: 13px;
+            margin-bottom: 14px;
         }
 
-        .sidebar-card strong {
+        .sidebar-card strong,
+        .account-card strong {
             color: #ffffff;
+        }
+
+        .account-card form {
+            margin: 0;
+        }
+
+        .sidebar-auth-actions {
+            display: grid;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .sidebar-auth-actions .btn,
+        .sidebar-auth-actions button {
+            width: 100%;
+            min-height: 40px;
+            padding: 10px 12px;
+            font-size: 13px;
         }
 
         .main {
@@ -176,6 +211,37 @@
                 #0f4c81;
             color: #ffffff;
             box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            right: -90px;
+            top: -110px;
+            border-radius: 999px;
+            background: rgba(249, 115, 22, 0.28);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            right: 110px;
+            bottom: -120px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+
+        .hero > * {
+            position: relative;
+            z-index: 1;
         }
 
         .hero-content {
@@ -197,14 +263,19 @@
 
         .hero h1 {
             margin: 0;
-            font-size: 34px;
+            font-size: clamp(28px, 3vw, 38px);
             letter-spacing: -0.04em;
+            line-height: 1.08;
         }
 
         .hero p {
             margin: 10px 0 0;
             color: rgba(255, 255, 255, 0.82);
             line-height: 1.6;
+        }
+
+        .hero-actions {
+            min-width: 250px;
         }
 
         .action-group {
@@ -214,6 +285,31 @@
             justify-content: flex-end;
         }
 
+        .auth-strip {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .user-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 220px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .btn,
         button {
             display: inline-flex;
@@ -221,12 +317,14 @@
             justify-content: center;
             gap: 8px;
             padding: 11px 15px;
+            min-height: 44px;
             border-radius: 14px;
             border: none;
             cursor: pointer;
             font-size: 14px;
             font-weight: 800;
             transition: 0.2s ease;
+            font-family: inherit;
         }
 
         .btn-primary,
@@ -240,10 +338,30 @@
             color: #ffffff;
         }
 
+        .btn-light {
+            background: #ffffff;
+            color: var(--primary-dark);
+            border: 1px solid rgba(229, 231, 235, 0.9);
+        }
+
+        .btn-outline {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: none;
+        }
+
         .btn:hover,
         button:hover {
             transform: translateY(-1px);
             filter: brightness(0.96);
+        }
+
+        .btn:disabled,
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.72;
+            transform: none;
         }
 
         .card,
@@ -272,17 +390,19 @@
             letter-spacing: -0.02em;
         }
 
-        .filter-title span {
+        .filter-title span,
+        .section-subtitle {
             display: block;
             margin-top: 5px;
             color: var(--muted);
             font-size: 14px;
+            line-height: 1.6;
         }
 
         .toolbar {
             display: flex;
             gap: 12px;
-            align-items: center;
+            align-items: end;
             flex-wrap: wrap;
             margin-bottom: 0;
             padding: 0;
@@ -290,13 +410,26 @@
             border: none;
         }
 
-        select {
+        .field-group {
+            display: grid;
+            gap: 7px;
+        }
+
+        .field-group label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        select,
+        input[type="date"] {
             min-width: 220px;
             padding: 11px 14px;
             border-radius: 14px;
             border: 1px solid #d1d5db;
             background: #ffffff;
             font-size: 14px;
+            min-height: 44px;
         }
 
         .messages {
@@ -314,13 +447,26 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 16px;
             margin-bottom: 20px;
         }
 
         .metric {
             margin-bottom: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric::after {
+            content: "";
+            position: absolute;
+            width: 74px;
+            height: 74px;
+            right: -24px;
+            bottom: -30px;
+            border-radius: 999px;
+            background: rgba(15, 76, 129, 0.08);
         }
 
         .metric h3 {
@@ -333,6 +479,123 @@
             margin: 10px 0 0;
             font-size: 28px;
             font-weight: 900;
+        }
+
+        .metric small {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.8fr);
+            gap: 20px;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            margin-bottom: 0;
+        }
+
+        .chart-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .chart-badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .badge-primary {
+            background: rgba(15, 76, 129, 0.12);
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background: rgba(22, 163, 74, 0.12);
+            color: #166534;
+        }
+
+        .badge-accent {
+            background: rgba(249, 115, 22, 0.13);
+            color: #9a3412;
+        }
+
+        .chart-wrap {
+            position: relative;
+            min-height: 380px;
+            height: 420px;
+            margin-top: 14px;
+        }
+
+        .chart-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+            margin-top: 0;
+        }
+
+        .insight-stack {
+            display: grid;
+            gap: 20px;
+        }
+
+        .mini-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .mini-item {
+            display: grid;
+            grid-template-columns: 34px 1fr;
+            gap: 10px;
+            align-items: start;
+            padding: 13px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #fbfdff;
+        }
+
+        .mini-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: rgba(15, 76, 129, 0.10);
+            color: var(--primary);
+        }
+
+        .mini-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .mini-item span {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
         }
 
         .recommendation-list {
@@ -365,20 +628,153 @@
             font-weight: 900;
         }
 
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .feature-item {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: #fbfdff;
+        }
+
+        .feature-item strong {
+            display: block;
+            margin-bottom: 7px;
+        }
+
+        .feature-item span {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .summary-box {
+            margin-top: 14px;
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(15, 76, 129, 0.07);
+            border: 1px solid rgba(15, 76, 129, 0.12);
+            color: var(--primary-dark);
+            line-height: 1.7;
+        }
+
+        .summary-box strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
         .empty-text {
             color: var(--muted);
             line-height: 1.6;
         }
 
-        canvas {
-            margin-top: 16px;
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 14px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            min-width: 680px;
+            border-collapse: collapse;
+            background: #ffffff;
+        }
+
+        th,
+        td {
+            padding: 13px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--muted);
+            background: #f9fafb;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        @media (max-width: 1180px) {
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         @media (max-width: 980px) {
+            .mobile-topbar {
+                position: sticky;
+                top: 0;
+                z-index: 30;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+                background:
+                    linear-gradient(135deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
+                    #0f172a;
+                color: #ffffff;
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+            }
+
+            .mobile-brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 900;
+            }
+
+            .mobile-toggle {
+                min-height: 38px;
+                padding: 9px 12px;
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                color: #ffffff;
+                box-shadow: none;
+            }
+
             .sidebar {
-                position: static;
-                width: 100%;
-                border-radius: 0 0 24px 24px;
+                width: min(320px, 88vw);
+                transform: translateX(-105%);
+                border-radius: 0 24px 24px 0;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                background: rgba(15, 23, 42, 0.44);
+                z-index: 18;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
             }
 
             .layout {
@@ -395,6 +791,12 @@
                 align-items: flex-start;
             }
 
+            .hero-actions {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .auth-strip,
             .action-group {
                 justify-content: flex-start;
             }
@@ -403,9 +805,29 @@
             .recommendation-list {
                 grid-template-columns: 1fr;
             }
+
+            .chart-head {
+                flex-direction: column;
+            }
+
+            .chart-badges {
+                justify-content: flex-start;
+            }
         }
 
-        @media (max-width: 560px) {
+        @media (max-width: 680px) {
+            .main {
+                padding: 14px;
+            }
+
+            .hero,
+            .card,
+            .filter-card,
+            .metric {
+                border-radius: 18px;
+                padding: 17px;
+            }
+
             .hero h1 {
                 font-size: 26px;
             }
@@ -416,21 +838,58 @@
 
             .toolbar {
                 display: grid;
+                align-items: stretch;
+            }
+
+            .toolbar form {
+                display: grid;
+                gap: 10px;
             }
 
             select,
+            input[type="date"],
             button,
             .btn {
                 width: 100%;
+            }
+
+            .grid,
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-wrap {
+                min-height: 320px;
+                height: 340px;
+            }
+
+            .auth-strip {
+                display: grid;
+                justify-content: stretch;
+            }
+
+            .user-pill {
+                max-width: none;
+                justify-content: center;
             }
         }
     </style>
 </head>
 
 <body>
+<div class="mobile-topbar">
+    <div class="mobile-brand">
+        <span>⚽</span>
+        <span>Wearemania</span>
+    </div>
+    <button type="button" class="mobile-toggle" id="sidebarToggle">☰ Menu</button>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 <div class="layout">
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="brand">
             <div class="brand-logo">⚽</div>
             <div>
@@ -456,6 +915,25 @@
             </a>
         </nav>
 
+        <div class="account-card">
+            {% if user.is_authenticated %}
+                <strong>Admin Aktif</strong>
+                <span>Masuk sebagai <b>{{ user.username }}</b>. Gunakan tombol logout kalau sesi admin sudah selesai.</span>
+                <div class="sidebar-auth-actions">
+                    <form method="post" action="{% url 'admin:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-outline">🚪 Logout</button>
+                    </form>
+                </div>
+            {% else %}
+                <strong>Akses Admin</strong>
+                <span>Login dulu untuk mengelola data, menjalankan forecast, dan masuk ke admin panel.</span>
+                <div class="sidebar-auth-actions">
+                    <a href="{% url 'admin:login' %}?next={{ request.path|urlencode }}" class="btn btn-light">🔐 Login</a>
+                </div>
+            {% endif %}
+        </div>
+
         <div class="sidebar-card">
             <strong>Mode Analitik</strong>
             <span>Monitoring traffic aktual, forecast ARIMA, kategori berita, dan riwayat import dalam satu halaman.</span>
@@ -474,20 +952,34 @@
                 </p>
             </div>
 
-            <div class="action-group">
-                <a href="{% url 'upload_raw_data' %}" class="btn btn-primary">⬆️ Upload Raw CSV</a>
+            <div class="hero-actions">
+                <div class="auth-strip">
+                    {% if user.is_authenticated %}
+                        <span class="user-pill">👤 {{ user.username }}</span>
+                        <form method="post" action="{% url 'admin:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-outline">Logout</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'admin:login' %}?next={{ request.path|urlencode }}" class="btn btn-outline">🔐 Login</a>
+                    {% endif %}
+                </div>
 
-                <form method="post" action="{% url 'generate_forecast' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-success">⚡ Generate Forecast</button>
-                </form>
+                <div class="action-group">
+                    <a href="{% url 'upload_raw_data' %}" class="btn btn-primary">⬆️ Upload Raw CSV</a>
+
+                    <form method="post" action="{% url 'generate_forecast' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-success">⚡ Generate Forecast</button>
+                    </form>
+                </div>
             </div>
         </section>
 
         {% if messages %}
             <div class="messages">
                 {% for message in messages %}
-                    <div class="message">
+                    <div class="message {{ message.tags }}">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -498,13 +990,14 @@
             <div class="filter-title">
                 <div>
                     <h2>Filter Data Dashboard</h2>
-                    <span>Pilih kategori untuk melihat performa traffic lebih spesifik.</span>
+                    <span>Pilih kategori dan rentang tanggal untuk melihat performa traffic lebih spesifik.</span>
                 </div>
             </div>
 
-            <div class="toolbar">
-                <form method="get" action="">
-                    <select name="category" onchange="this.form.submit()">
+            <form method="get" action="" class="toolbar">
+                <div class="field-group">
+                    <label for="category">Kategori</label>
+                    <select name="category" id="category">
                         <option value="">Semua Kategori</option>
 
                         {% for category in categories %}
@@ -517,24 +1010,40 @@
                             </option>
                         {% endfor %}
                     </select>
-                </form>
+                </div>
 
-                <form method="post" action="{% url 'generate_forecast' %}">
-                    {% csrf_token %}
-                    <button type="submit">Generate Forecast</button>
-                </form>
-            </div>
+                <div class="field-group">
+                    <label for="start_date">Tanggal Awal</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+
+                <div class="field-group">
+                    <label for="end_date">Tanggal Akhir</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+
+                <button type="submit">Terapkan Filter</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-light">Reset</a>
+            </form>
         </section>
 
         <section class="grid">
             <div class="metric">
                 <h3>Total Actual Views</h3>
-                <p>{{ total_actual_views }}</p>
+                <p>{{ total_actual_views|default:"0" }}</p>
+                <small>Akumulasi traffic aktual dari data historis.</small>
             </div>
 
             <div class="metric">
                 <h3>Total Forecast Views</h3>
-                <p>{{ total_forecast_views }}</p>
+                <p>{{ total_forecast_views|default:"0" }}</p>
+                <small>Estimasi traffic dari hasil forecast ARIMA.</small>
+            </div>
+
+            <div class="metric">
+                <h3>Total Kategori</h3>
+                <p>{{ total_categories|default:"-" }}</p>
+                <small>Kategori berita yang tersedia di database.</small>
             </div>
 
             <div class="metric">
@@ -547,16 +1056,87 @@
                 {% else %}
                     <p style="font-size: 16px;">Belum ada</p>
                 {% endif %}
+                <small>Status waktu terakhir proses forecasting.</small>
+            </div>
+        </section>
+
+        <section class="analytics-grid">
+            <div class="card chart-card">
+                <div class="chart-head">
+                    <div>
+                        <h2>Actual Traffic vs Forecast Traffic</h2>
+                        <span class="section-subtitle">
+                            Grafik membandingkan traffic aktual dengan hasil prediksi, termasuk lower bound dan upper bound.
+                        </span>
+                    </div>
+
+                    <div class="chart-badges">
+                        <span class="badge badge-primary">● Actual</span>
+                        <span class="badge badge-success">● Forecast</span>
+                        <span class="badge badge-accent">● Confidence Range</span>
+                    </div>
+                </div>
+
+                <div class="chart-wrap">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+
+            <div class="insight-stack">
+                <section class="card">
+                    <h2>Kesimpulan Dashboard</h2>
+                    <span class="section-subtitle">
+                        Ringkasan fungsi utama dashboard berdasarkan data yang sedang tampil.
+                    </span>
+
+                    <div class="summary-box">
+                        <strong>Kesimpulan sementara</strong>
+                        Dashboard ini membantu membaca pola traffic historis, membandingkan arah prediksi,
+                        dan menentukan kategori konten yang perlu diprioritaskan oleh redaksi.
+                        {% if selected_category %}
+                            Filter kategori sedang aktif, sehingga insight difokuskan pada kategori yang dipilih.
+                        {% else %}
+                            Saat ini data ditampilkan untuk seluruh kategori.
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Status Analisis</h2>
+                    <div class="mini-list">
+                        <div class="mini-item">
+                            <div class="mini-icon">📈</div>
+                            <div>
+                                <strong>Grafik Prediksi</strong>
+                                <span>Menampilkan perbandingan data aktual dan hasil forecast ARIMA.</span>
+                            </div>
+                        </div>
+
+                        <div class="mini-item">
+                            <div class="mini-icon">🎯</div>
+                            <div>
+                                <strong>Prioritas Redaksi</strong>
+                                <span>Kategori dengan estimasi tinggi bisa menjadi acuan rencana konten.</span>
+                            </div>
+                        </div>
+
+                        <div class="mini-item">
+                            <div class="mini-icon">🧹</div>
+                            <div>
+                                <strong>Data Cleaning</strong>
+                                <span>Data dari CSV perlu sudah bersih agar grafik dan prediksi lebih stabil.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </section>
 
         <section class="card">
-            <h2>Actual Traffic vs Forecast Traffic</h2>
-            <canvas id="trafficChart"></canvas>
-        </section>
-
-        <section class="card">
             <h2>Rekomendasi Kategori Potensial</h2>
+            <span class="section-subtitle">
+                Kategori dengan estimasi traffic tertinggi untuk periode prediksi.
+            </span>
 
             {% if top_forecast_categories %}
                 <div class="recommendation-list">
@@ -575,94 +1155,243 @@
             {% endif %}
         </section>
 
+        <section class="card">
+            <h2>Saran Fitur Tambahan</h2>
+            <span class="section-subtitle">
+                Beberapa fitur ini bisa ditambahkan untuk membuat dashboard lebih kuat saat demo dan pengembangan berikutnya.
+            </span>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <strong>Export Report</strong>
+                    <span>Unduh ringkasan forecast dalam format CSV/PDF untuk kebutuhan laporan redaksi.</span>
+                </div>
+
+                <div class="feature-item">
+                    <strong>Akurasi Model</strong>
+                    <span>Tambahkan metrik MAE, RMSE, atau MAPE agar kualitas prediksi bisa dievaluasi.</span>
+                </div>
+
+                <div class="feature-item">
+                    <strong>Alert Traffic Turun</strong>
+                    <span>Berikan notifikasi ketika prediksi kategori tertentu turun signifikan.</span>
+                </div>
+
+                <div class="feature-item">
+                    <strong>Perbandingan Kategori</strong>
+                    <span>Bandingkan dua atau lebih kategori dalam satu grafik untuk melihat peluang konten.</span>
+                </div>
+            </div>
+        </section>
+
+        {% if predictions %}
+            <section class="card">
+                <h2>Data Prediksi Terbaru</h2>
+                <span class="section-subtitle">
+                    Ringkasan hasil forecast terbaru yang tersimpan di database.
+                </span>
+
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal Prediksi</th>
+                                <th>Kategori</th>
+                                <th>Predicted Views</th>
+                                <th>Lower Bound</th>
+                                <th>Upper Bound</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prediction in predictions %}
+                                <tr>
+                                    <td>{{ prediction.prediction_date }}</td>
+                                    <td>{{ prediction.category.name }}</td>
+                                    <td>{{ prediction.predicted_views|floatformat:0 }}</td>
+                                    <td>{{ prediction.lower_bound|default:"-" }}</td>
+                                    <td>{{ prediction.upper_bound|default:"-" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
+
     </main>
 </div>
 
 <script>
-    const actualLabels = JSON.parse('{{ actual_labels|escapejs }}');
-    const actualViews = JSON.parse('{{ actual_views|escapejs }}');
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
 
-    const forecastLabels = JSON.parse('{{ forecast_labels|escapejs }}');
-    const forecastViews = JSON.parse('{{ forecast_views|escapejs }}');
-    const forecastLower = JSON.parse('{{ forecast_lower|escapejs }}');
-    const forecastUpper = JSON.parse('{{ forecast_upper|escapejs }}');
+    function openSidebar() {
+        sidebar.classList.add("open");
+        sidebarOverlay.classList.add("active");
+        document.body.classList.add("sidebar-open");
+    }
 
-    const combinedLabels = [...actualLabels, ...forecastLabels];
+    function closeSidebar() {
+        sidebar.classList.remove("open");
+        sidebarOverlay.classList.remove("active");
+        document.body.classList.remove("sidebar-open");
+    }
 
-    const actualDataset = [
-        ...actualViews,
-        ...Array(forecastLabels.length).fill(null)
-    ];
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", () => {
+            if (sidebar.classList.contains("open")) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+    }
 
-    const forecastDataset = [
-        ...Array(actualLabels.length).fill(null),
-        ...forecastViews
-    ];
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener("click", closeSidebar);
+    }
 
-    const lowerDataset = [
-        ...Array(actualLabels.length).fill(null),
-        ...forecastLower
-    ];
+    function parseJsonData(rawValue, fallback = []) {
+        try {
+            if (!rawValue || rawValue === "None") return fallback;
+            return JSON.parse(rawValue);
+        } catch (error) {
+            return fallback;
+        }
+    }
 
-    const upperDataset = [
-        ...Array(actualLabels.length).fill(null),
-        ...forecastUpper
-    ];
+    const actualLabels = parseJsonData('{{ actual_labels|default:"[]"|escapejs }}');
+    const actualViews = parseJsonData('{{ actual_views|default:"[]"|escapejs }}');
+
+    const forecastLabels = parseJsonData('{{ forecast_labels|default:"[]"|escapejs }}');
+    const forecastViews = parseJsonData('{{ forecast_views|default:"[]"|escapejs }}');
+    const forecastLower = parseJsonData('{{ forecast_lower|default:"[]"|escapejs }}');
+    const forecastUpper = parseJsonData('{{ forecast_upper|default:"[]"|escapejs }}');
+
+    const combinedLabels = Array.from(new Set([...actualLabels, ...forecastLabels]));
+
+    const actualDataset = combinedLabels.map(label => {
+        const index = actualLabels.indexOf(label);
+        return index !== -1 ? actualViews[index] : null;
+    });
+
+    const forecastDataset = combinedLabels.map(label => {
+        const index = forecastLabels.indexOf(label);
+        return index !== -1 ? forecastViews[index] : null;
+    });
+
+    const lowerDataset = combinedLabels.map(label => {
+        const index = forecastLabels.indexOf(label);
+        return index !== -1 ? forecastLower[index] : null;
+    });
+
+    const upperDataset = combinedLabels.map(label => {
+        const index = forecastLabels.indexOf(label);
+        return index !== -1 ? forecastUpper[index] : null;
+    });
 
     const ctx = document.getElementById('trafficChart');
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: combinedLabels,
-            datasets: [
-                {
-                    label: 'Actual Views',
-                    data: actualDataset,
-                    borderWidth: 2,
-                    tension: 0.3
-                },
-                {
-                    label: 'Forecast Views',
-                    data: forecastDataset,
-                    borderWidth: 2,
-                    borderDash: [6, 6],
-                    tension: 0.3
-                },
-                {
-                    label: 'Lower Bound',
-                    data: lowerDataset,
-                    borderWidth: 1,
-                    borderDash: [3, 3],
-                    tension: 0.3
-                },
-                {
-                    label: 'Upper Bound',
-                    data: upperDataset,
-                    borderWidth: 1,
-                    borderDash: [3, 3],
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            interaction: {
-                mode: 'index',
-                intersect: false
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: combinedLabels,
+                datasets: [
+                    {
+                        label: 'Actual Views',
+                        data: actualDataset,
+                        borderColor: '#0f4c81',
+                        backgroundColor: 'rgba(15, 76, 129, 0.10)',
+                        borderWidth: 3,
+                        tension: 0.35,
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
+                        spanGaps: false
+                    },
+                    {
+                        label: 'Forecast Views',
+                        data: forecastDataset,
+                        borderColor: '#16a34a',
+                        backgroundColor: 'rgba(22, 163, 74, 0.10)',
+                        borderWidth: 3,
+                        borderDash: [6, 6],
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        spanGaps: false
+                    },
+                    {
+                        label: 'Lower Bound',
+                        data: lowerDataset,
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.08)',
+                        borderWidth: 1,
+                        borderDash: [3, 3],
+                        tension: 0.35,
+                        pointRadius: 0,
+                        spanGaps: false
+                    },
+                    {
+                        label: 'Upper Bound',
+                        data: upperDataset,
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.08)',
+                        borderWidth: 1,
+                        borderDash: [3, 3],
+                        tension: 0.35,
+                        pointRadius: 0,
+                        spanGaps: false
+                    }
+                ]
             },
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.raw === null || context.raw === undefined) {
+                                    return null;
+                                }
+
+                                return `${context.dataset.label}: ${Number(context.raw).toLocaleString('id-ID')}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 8
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return Number(value).toLocaleString('id-ID');
+                            }
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 </script>
 </body>
 </html>
