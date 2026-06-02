@@ -399,6 +399,160 @@
             line-height: 1.6;
         }
 
+        .filter-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 24px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #111827;
+}
+
+.section-heading p {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.filter-badge {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.filter-form {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr auto;
+    gap: 14px;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+    background: #ffffff;
+    color: #111827;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-primary,
+.btn-secondary {
+    min-height: 44px;
+    border-radius: 12px;
+    padding: 11px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: #f97316;
+    color: #ffffff;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-primary:hover {
+    background: #ea580c;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+@media (max-width: 1100px) {
+    .filter-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .filter-actions {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .filter-section {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .section-heading {
+        flex-direction: column;
+    }
+
+    .filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}
+
         .toolbar {
             display: flex;
             gap: 12px;
@@ -986,46 +1140,67 @@
             </div>
         {% endif %}
 
-        <section class="filter-card">
-            <div class="filter-title">
-                <div>
-                    <h2>Filter Data Dashboard</h2>
-                    <span>Pilih kategori dan rentang tanggal untuk melihat performa traffic lebih spesifik.</span>
-                </div>
-            </div>
+        <section class="filter-section">
+    <div class="section-heading">
+        <div>
+            <h2>Filter Data Dashboard</h2>
+            <p>Pilih kategori dan rentang tanggal untuk melihat performa traffic lebih spesifik.</p>
+        </div>
 
-            <form method="get" action="" class="toolbar">
-                <div class="field-group">
-                    <label for="category">Kategori</label>
-                    <select name="category" id="category">
-                        <option value="">Semua Kategori</option>
+        {% if is_filter_active %}
+            <span class="filter-badge">Filter Aktif</span>
+        {% endif %}
+    </div>
 
-                        {% for category in categories %}
-                            <option value="{{ category.id }}"
-                                {% if selected_category|stringformat:"s" == category.id|stringformat:"s" %}
-                                    selected
-                                {% endif %}
-                            >
-                                {{ category.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <form method="get" action="{% url 'dashboard' %}" class="filter-form">
+        <div class="filter-group">
+            <label for="category">Kategori</label>
+            <select name="category" id="category">
+                <option value="">Semua Kategori</option>
 
-                <div class="field-group">
-                    <label for="start_date">Tanggal Awal</label>
-                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
-                </div>
+                {% for category in categories %}
+                    <option value="{{ category.id }}"
+                        {% if selected_category == category.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-                <div class="field-group">
-                    <label for="end_date">Tanggal Akhir</label>
-                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
-                </div>
+        <div class="filter-group">
+            <label for="start_date">Tanggal Awal</label>
+            <input
+                type="date"
+                id="start_date"
+                name="start_date"
+                value="{{ selected_start_date }}"
+            >
+        </div>
 
-                <button type="submit">Terapkan Filter</button>
-                <a href="{% url 'dashboard' %}" class="btn btn-light">Reset</a>
-            </form>
-        </section>
+        <div class="filter-group">
+            <label for="end_date">Tanggal Akhir</label>
+            <input
+                type="date"
+                id="end_date"
+                name="end_date"
+                value="{{ selected_end_date }}"
+            >
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn-primary">
+                Terapkan Filter
+            </button>
+
+            <a href="{% url 'dashboard' %}" class="btn-secondary">
+                Reset
+            </a>
+        </div>
+    </form>
+</section>
 
         <section class="grid">
             <div class="metric">
