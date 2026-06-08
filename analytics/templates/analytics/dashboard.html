@@ -42,15 +42,15 @@
             <div class="sidebar-label">Menu Utama</div>
             <nav class="menu">
                 <a href="{% url 'dashboard' %}" class="active"><span class="menu-icon">📊</span><span>Dashboard</span></a>
-                <a href="{% url 'upload_raw_data' %}"><span class="menu-icon">⬆️</span><span>Upload & Cleaning</span></a>
-                <a href="/admin/"><span class="menu-icon">⚙️</span><span>Admin Panel</span></a>
+                <a href="{% url 'upload_raw_data' %}"><span class="menu-icon">⬆️</span><span>Upload & Cleaning Data</span></a>
+                <a href="/admin/"><span class="menu-icon">⚙️</span><span>Panel Admin</span></a>
             </nav>
 
             <div class="sidebar-card">
                 {% if user.is_authenticated %}
                     <span class="sidebar-chip success">Admin Aktif</span>
                     <strong>{{ user.username }}</strong>
-                    <p>Kelola data, upload CSV, dan generate forecast dari satu dashboard.</p>
+                    <p>Kelola data, upload CSV, dan buat prediksi traffic dari satu dashboard.</p>
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
                         <button type="submit" class="sidebar-action">Logout</button>
@@ -58,21 +58,21 @@
                 {% else %}
                     <span class="sidebar-chip warning">Akses Admin</span>
                     <strong>Belum login</strong>
-                    <p>Login dulu untuk mengelola data dan menjalankan forecast.</p>
+                    <p>Login dulu untuk mengelola data dan membuat prediksi traffic.</p>
                     <a href="{% url 'login' %}" class="sidebar-action">Login Admin</a>
                 {% endif %}
             </div>
 
             <div class="sidebar-card muted-card">
                 <span class="sidebar-chip">Mode Analitik</span>
-                <p>CSV Upload → Cleaning Data → ARIMA Forecast → Dashboard Insight.</p>
+                <p>Upload CSV → Cleaning Data → Prediksi ARIMA → Insight Dashboard.</p>
             </div>
         </aside>
 
         <main class="main-content">
             <header class="page-hero">
                 <div>
-                    <span class="eyebrow">Live assets · ARIMA Forecast</span>
+                    <span class="eyebrow">Data traffic · Prediksi ARIMA</span>
                     <h1>Traffic Forecasting Dashboard</h1>
                     <p>Monitoring traffic aktual, prediksi ARIMA, performa kategori berita, dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.</p>
                 </div>
@@ -83,18 +83,18 @@
                     {% else %}
                         <a class="btn ghost" href="{% url 'login' %}">Login</a>
                     {% endif %}
-                    <a class="btn secondary" href="{% url 'upload_raw_data' %}">⬆️ Upload Raw CSV</a>
+                    <a class="btn secondary" href="{% url 'upload_raw_data' %}">⬆️ Upload CSV Mentah</a>
                     <form id="forecastForm" method="post" action="{% url 'generate_forecast' %}" class="forecast-form" aria-label="Form generate prediksi traffic">
                         {% csrf_token %}
                         <label class="forecast-days-field" for="forecastDaysInput">
-                            <span class="forecast-field-label">forecast_days</span>
+                            <span class="forecast-field-label">Jumlah hari prediksi</span>
                             <span class="forecast-input-wrap">
                                 <input id="forecastDaysInput" type="number" name="forecast_days" value="{{ forecast_days|default:'7' }}" min="1" max="30" inputmode="numeric" aria-describedby="forecastDaysHint">
                                 <span class="forecast-unit">hari</span>
                             </span>
                         </label>
-                        <button type="submit" class="btn primary">⚡ Generate Forecast {{ forecast_days|default:'7' }} Hari</button>
-                        <small id="forecastDaysHint" class="forecast-helper">forecast_days = jumlah hari ke depan yang akan dibuat prediksinya. Batas 1-30 hari.</small>
+                        <button type="submit" class="btn primary">⚡ Buat Prediksi {{ forecast_days|default:'7' }} Hari</button>
+                        <small id="forecastDaysHint" class="forecast-helper">Masukkan berapa hari ke depan yang ingin diprediksi. Batas aman: 1 sampai 30 hari.</small>
                     </form>
                 </div>
             </header>
@@ -179,7 +179,7 @@
                             <p>Kategori terakhir: {{ last_prediction.category.name }}</p>
                         {% else %}
                             <strong>Belum ada</strong>
-                            <p>Klik Generate Forecast untuk membuat prediksi pertama.</p>
+                            <p>Klik Buat Prediksi untuk membuat forecast pertama.</p>
                         {% endif %}
                     </div>
                 </article>
@@ -189,14 +189,14 @@
                 <article class="panel chart-card">
                     <div class="panel-head split">
                         <div>
-                            <span class="section-kicker">Actual Traffic vs Forecast Traffic</span>
+                            <span class="section-kicker">Traffic Aktual vs Prediksi Traffic</span>
                             <h2>Grafik Traffic</h2>
                             <p>Grafik membandingkan traffic aktual dengan hasil prediksi, termasuk lower bound dan upper bound.</p>
                         </div>
                         <div class="chart-badges">
-                            <span class="badge primary">● Actual</span>
-                            <span class="badge accent">● Forecast</span>
-                            <span class="badge muted">● Confidence Range</span>
+                            <span class="badge primary">● Aktual</span>
+                            <span class="badge accent">● Prediksi</span>
+                            <span class="badge muted">● Rentang keyakinan</span>
                         </div>
                     </div>
 
@@ -231,7 +231,7 @@
                 <article class="panel quality-panel">
                     <div class="panel-head">
                         <div>
-                            <span class="section-kicker">Forecast Quality</span>
+                            <span class="section-kicker">Kualitas Prediksi</span>
                             <h2>Kualitas Prediksi</h2>
                             <p>Ringkasan apakah hasil forecast cukup stabil untuk dipakai sebagai acuan redaksi.</p>
                         </div>
@@ -281,7 +281,7 @@
                             <div class="category-alert {{ item.tone }}">
                                 <div>
                                     <strong>{{ item.category_name }}</strong>
-                                    <small>Forecast avg {{ item.forecast_average|floatformat:0 }} vs aktual avg {{ item.recent_average|floatformat:0 }}</small>
+                                    <small>Rata-rata prediksi {{ item.forecast_average|floatformat:0 }} vs rata-rata aktual {{ item.recent_average|floatformat:0 }}</small>
                                 </div>
                                 <span>
                                     {{ item.label }}
@@ -327,14 +327,14 @@
                         <div class="suggested-chart-head">
                             <span class="suggested-chart-icon">01</span>
                             <div>
-                                <h3>Top Actual Views</h3>
+                                <h3>Traffic Aktual Teratas</h3>
                                 <p>Bar chart kategori dengan performa historis tertinggi.</p>
                             </div>
                         </div>
                         <div class="suggested-chart-wrap">
                             <canvas id="topActualChart" aria-label="Grafik top kategori berdasarkan actual views"></canvas>
                             <div id="topActualChartEmpty" class="chart-empty compact">
-                                <strong>Actual belum tersedia</strong>
+                                <strong>Data aktual belum tersedia</strong>
                                 Upload CSV agar kategori historis bisa dibandingkan.
                             </div>
                         </div>
@@ -344,15 +344,15 @@
                         <div class="suggested-chart-head">
                             <span class="suggested-chart-icon accent">02</span>
                             <div>
-                                <h3>Top Forecast Views</h3>
+                                <h3>Prediksi Traffic Teratas</h3>
                                 <p>Bar chart kategori yang diprediksi paling potensial.</p>
                             </div>
                         </div>
                         <div class="suggested-chart-wrap">
                             <canvas id="topForecastChart" aria-label="Grafik top kategori berdasarkan forecast views"></canvas>
                             <div id="topForecastChartEmpty" class="chart-empty compact">
-                                <strong>Forecast belum tersedia</strong>
-                                Jalankan Generate Forecast untuk melihat kategori potensial.
+                                <strong>Prediksi belum tersedia</strong>
+                                Jalankan Buat Prediksi untuk melihat kategori potensial.
                             </div>
                         </div>
                     </article>
@@ -380,7 +380,7 @@
                 <article class="panel">
                     <div class="panel-head">
                         <div>
-                            <span class="section-kicker">Top Kategori Berdasarkan Actual Views</span>
+                            <span class="section-kicker">Kategori Teratas Berdasarkan Traffic Aktual</span>
                             <h2>Performa Historis</h2>
                             <p>Kategori yang paling banyak menarik traffic pada data aktual.</p>
                         </div>
@@ -395,7 +395,7 @@
                                 </div>
                             </div>
                         {% empty %}
-                            <p class="empty-text">Belum ada data aktual. Upload CSV dulu wak.</p>
+                            <p class="empty-text">Belum ada data aktual. Upload CSV terlebih dahulu.</p>
                         {% endfor %}
                     </div>
                 </article>
@@ -403,7 +403,7 @@
                 <article class="panel">
                     <div class="panel-head">
                         <div>
-                            <span class="section-kicker">Ranking Forecast Kategori</span>
+                            <span class="section-kicker">Ranking Prediksi Kategori</span>
                             <h2>Rekomendasi Kategori Potensial</h2>
                             <p>Kategori dengan estimasi traffic tertinggi untuk periode prediksi.</p>
                         </div>
@@ -418,7 +418,7 @@
                                 </div>
                             </div>
                         {% empty %}
-                            <p class="empty-text">Belum ada hasil prediksi. Klik Generate Forecast terlebih dahulu.</p>
+                            <p class="empty-text">Belum ada hasil prediksi. Klik Buat Prediksi terlebih dahulu.</p>
                         {% endfor %}
                     </div>
                 </article>
@@ -445,7 +445,7 @@
                     <div class="panel-head">
                         <div>
                             <span class="section-kicker">Data Prediksi Terbaru</span>
-                            <h2>Tabel Forecast</h2>
+                            <h2>Tabel Prediksi</h2>
                             <p>Ringkasan hasil forecast terbaru yang tersimpan di database.</p>
                         </div>
                     </div>
@@ -479,9 +479,9 @@
             <section class="panel history-panel">
                 <div class="panel-head">
                     <div>
-                        <span class="section-kicker">Forecast History</span>
-                        <h2>Riwayat Generate Forecast</h2>
-                        <p>Run terakhir yang tersimpan, termasuk status, periode forecast_days, dan jumlah prediksi.</p>
+                        <span class="section-kicker">Riwayat Prediksi</span>
+                        <h2>Riwayat Buat Prediksi</h2>
+                        <p>Run terakhir yang tersimpan, termasuk status, jumlah hari prediksi, dan total data prediksi.</p>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -490,7 +490,7 @@
                             <tr>
                                 <th>Run</th>
                                 <th>Status</th>
-                                <th>forecast_days</th>
+                                <th>Hari Prediksi</th>
                                 <th>Total Prediksi</th>
                                 <th>Mulai</th>
                                 <th>Selesai</th>
@@ -523,7 +523,7 @@
     <div id="forecastModal" class="process-modal" aria-hidden="true">
         <div class="process-card" role="status" aria-live="polite">
             <div class="loader-ring"></div>
-            <h2>Generate Forecast Sedang Diproses</h2>
+            <h2>Prediksi Traffic Sedang Diproses</h2>
             <p>Sistem sedang membaca data historis, menyusun time series, menjalankan model ARIMA, lalu menyimpan hasil prediksi ke database.</p>
             <span id="forecastProgressText" class="progress-text">Menyiapkan forecast...</span>
             <ol class="process-steps">

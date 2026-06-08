@@ -28,7 +28,7 @@
             </a>
 
             <div class="login-copy">
-                <span class="eyebrow light">Secure Access</span>
+                <span class="eyebrow light">Akses Internal</span>
                 <h1>Masuk ke dashboard analitik internal.</h1>
                 <p>Login digunakan untuk membatasi akses dashboard, upload data mentah, cleaning data, dan proses forecasting traffic Wearemania.</p>
             </div>
@@ -39,20 +39,20 @@
                 <div><span>⚡</span><strong>Forecast ARIMA</strong><small>Prediksi traffic kategori untuk membantu keputusan konten redaksi.</small></div>
             </div>
 
-            <div class="login-footnote">Internal dashboard · Digtive Global Media <span>● System ready</span></div>
+            <div class="login-footnote">Dashboard internal · Digtive Global Media <span>● Sistem siap</span></div>
         </section>
 
         <section class="login-panel" aria-label="Form login">
             <div class="login-panel-head">
                 <div>
                     <span class="panel-logo">⚽</span>
-                    <span class="login-status">● Secure Login</span>
+                    <span class="login-status">● Login aman</span>
                 </div>
-                <a href="/admin/" class="admin-link">Admin Panel</a>
+                <a href="/admin/" class="admin-link">Panel Admin</a>
             </div>
 
             <div class="form-title">
-                <span class="section-kicker">Welcome Back</span>
+                <span class="section-kicker">Login Pengelola</span>
                 <h2>Login Dashboard</h2>
                 <p>Masukkan username dan password akun Django untuk mengakses halaman dashboard, upload raw data, dan panel administrasi.</p>
             </div>
@@ -100,14 +100,14 @@
                 </div>
 
                 <button type="submit" class="btn primary full">Masuk Dashboard</button>
-                <a href="{% url 'dashboard' %}" class="btn ghost full">Lihat Dashboard</a>
+                
             </form>
 
             <p class="login-help">Catatan: kalau belum punya akun, buat superuser lewat terminal dengan <code>python manage.py createsuperuser</code>, lalu login memakai akun tersebut.</p>
 
             <div class="login-metrics">
                 <div><strong>CSV</strong><span>Upload data manual</span></div>
-                <div><strong>ARIMA</strong><span>Forecast traffic</span></div>
+                <div><strong>ARIMA</strong><span>Prediksi traffic</span></div>
                 <div><strong>Admin</strong><span>Kelola database</span></div>
             </div>
         </section>

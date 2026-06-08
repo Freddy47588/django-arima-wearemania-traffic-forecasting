@@ -231,7 +231,7 @@
         }
 
         if (!forecastTotal) {
-            target.textContent = `Data aktual sudah tersedia dengan total ${numberFormat(actualTotal)} views. Jalankan Generate Forecast agar dashboard bisa membandingkan arah traffic ke depan.`;
+            target.textContent = `Data aktual sudah tersedia dengan total ${numberFormat(actualTotal)} views. Jalankan Buat Prediksi agar dashboard bisa membandingkan arah traffic ke depan.`;
             return;
         }
 
@@ -285,7 +285,7 @@
                 labels,
                 datasets: [
                     {
-                        label: 'Actual Views',
+                        label: 'Traffic Aktual',
                         data: actualData,
                         borderWidth: 3,
                         pointRadius: 2,
@@ -293,7 +293,7 @@
                         spanGaps: true
                     },
                     {
-                        label: 'Forecast Views',
+                        label: 'Prediksi Traffic',
                         data: forecastData,
                         borderWidth: 3,
                         pointRadius: 3,
@@ -423,7 +423,7 @@
 
         function updateButtonLabel() {
             const value = Math.min(Math.max(Number(input.value || 7), 1), 30);
-            button.textContent = `⚡ Generate Forecast ${value} Hari`;
+            button.textContent = `⚡ Buat Prediksi ${value} Hari`;
         }
 
         input.addEventListener('input', updateButtonLabel);

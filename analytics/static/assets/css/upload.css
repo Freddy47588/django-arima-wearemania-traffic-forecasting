@@ -40,6 +40,12 @@
     line-height: 1.7;
 }
 
+.upload-card code,
+.side-panel code {
+    max-width: 100%;
+    white-space: normal;
+}
+
 .format-note {
     display: grid;
     grid-template-columns: 42px 1fr;
@@ -111,6 +117,10 @@
     letter-spacing: -0.03em;
 }
 
+.drop-zone h3 label {
+    font-weight: 900;
+}
+
 .drop-zone label {
     cursor: pointer;
 }
@@ -130,6 +140,17 @@
     border-radius: 15px;
     background: #ffffff;
     color: var(--text-soft);
+}
+
+.drop-zone input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 900;
+    cursor: pointer;
 }
 
 .file-preview {
@@ -252,6 +273,7 @@
     display: flex;
     gap: 9px;
     align-items: center;
+    min-height: 58px;
     padding: 11px;
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -425,9 +447,17 @@
 }
 
 @media (max-width: 520px) {
+    .format-note {
+        grid-template-columns: 1fr;
+    }
+
     .drop-zone {
         min-height: 220px;
-        padding: 22px;
+        padding: 20px 16px;
+    }
+
+    .drop-zone input[type="file"] {
+        font-size: 13px;
     }
 
     .step-list {

@@ -38,7 +38,7 @@
         if (!file) return;
 
         if (!file.name.toLowerCase().endsWith('.csv')) {
-            alert('File harus berformat CSV wak. Pilih file dengan ekstensi .csv.');
+            alert('File harus berformat CSV. Pilih file dengan ekstensi .csv.');
             clearFile();
             return;
         }
@@ -148,7 +148,7 @@
 
             if (submitButton) {
                 submitButton.disabled = true;
-                submitButton.textContent = 'Memproses data...';
+                submitButton.textContent = 'Mengupload dan mengimpor data...';
             }
 
             const stages = [

@@ -42,13 +42,30 @@
             <div class="sidebar-label">Menu Utama</div>
             <nav class="menu">
                 <a href="{% url 'dashboard' %}"><span class="menu-icon">📊</span><span>Dashboard</span></a>
-                <a href="{% url 'upload_raw_data' %}" class="active"><span class="menu-icon">⬆️</span><span>Upload & Cleaning</span></a>
-                <a href="/admin/"><span class="menu-icon">⚙️</span><span>Admin Panel</span></a>
+                <a href="{% url 'upload_raw_data' %}" class="active"><span class="menu-icon">⬆️</span><span>Upload & Cleaning Data</span></a>
+                <a href="/admin/"><span class="menu-icon">⚙️</span><span>Panel Admin</span></a>
             </nav>
 
             <div class="sidebar-card">
                 <span class="sidebar-chip">Import Pipeline</span>
                 <p>Upload CSV, validasi kolom, cleaning data, mapping kategori, lalu simpan hasil agregasi ke database.</p>
+            </div>
+
+            <div class="sidebar-card muted-card">
+                {% if user.is_authenticated %}
+                    <span class="sidebar-chip success">Admin Aktif</span>
+                    <strong>{{ user.username }}</strong>
+                    <p>Pastikan file CSV sudah sesuai sebelum menjalankan import data.</p>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="sidebar-action">Logout</button>
+                    </form>
+                {% else %}
+                    <span class="sidebar-chip warning">Akses Admin</span>
+                    <strong>Belum login</strong>
+                    <p>Login dulu untuk upload CSV dan mengimpor data.</p>
+                    <a href="{% url 'login' %}" class="sidebar-action">Login Admin</a>
+                {% endif %}
             </div>
         </aside>
 
@@ -60,8 +77,8 @@
                     <p>Halaman ini dipakai untuk mengimpor data mentah dari GA4 / Looker Studio, membersihkan data, memetakan <code>Page path</code> ke kategori, dan menyimpan data harian ke database.</p>
                 </div>
                 <div class="hero-actions">
-                    <a class="btn ghost" href="{% url 'dashboard' %}">← Dashboard</a>
-                    <a class="btn secondary" href="/admin/">Admin Panel</a>
+                    <a class="btn ghost" href="{% url 'dashboard' %}">← Kembali ke Dashboard</a>
+                    <a class="btn secondary" href="/admin/">Panel Admin</a>
                 </div>
             </header>
 
@@ -127,8 +144,8 @@
                         </div>
 
                         <div class="form-actions">
-                            <button id="submitUploadBtn" class="btn primary" type="submit" disabled>Upload, Clean & Import</button>
-                            <a class="btn ghost" href="{% url 'dashboard' %}">Kembali</a>
+                            <button id="submitUploadBtn" class="btn primary" type="submit" disabled>Upload CSV dan Import Data</button>
+                            <a class="btn ghost" href="{% url 'dashboard' %}">Kembali ke Dashboard</a>
                         </div>
                         <p class="small-note">Catatan: progress bar ini menunjukkan tahapan proses dari sisi tampilan. Halaman akan otomatis berpindah atau menampilkan pesan ketika server Django selesai memproses upload.</p>
                     </form>

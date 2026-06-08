@@ -378,6 +378,8 @@ code {
     border-radius: 14px;
     font-size: 14px;
     font-weight: 900;
+    line-height: 1.2;
+    text-align: center;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
@@ -451,6 +453,7 @@ code {
     color: #1e3a8a;
     font-weight: 750;
     line-height: 1.55;
+    overflow-wrap: anywhere;
 }
 
 .alert-success {
@@ -501,6 +504,8 @@ code {
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    border-radius: 16px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .empty-text {
@@ -525,6 +530,7 @@ code {
     .hero-actions {
         justify-content: flex-start;
         min-width: 0;
+        width: 100%;
     }
 }
 
@@ -624,6 +630,7 @@ code {
 
     .page-hero h1 {
         font-size: 30px;
+        letter-spacing: -0.035em;
     }
 }
 
@@ -643,5 +650,18 @@ code {
 
     .panel-head {
         gap: 12px;
+    }
+
+    .brand strong,
+    .login-brand strong,
+    .mobile-brand span:last-child {
+        font-size: 16px;
+        letter-spacing: 0;
+    }
+
+    .page-hero p,
+    .panel-head p {
+        font-size: 13px;
+        line-height: 1.6;
     }
 }
