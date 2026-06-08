@@ -314,6 +314,86 @@
     line-height: 1.55;
 }
 
+.suggested-chart-panel {
+    margin-bottom: 20px;
+}
+
+.suggested-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.suggested-chart-card {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.suggested-chart-head {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 14px;
+}
+
+.suggested-chart-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+    background: rgba(15, 76, 129, 0.10);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 950;
+}
+
+.suggested-chart-icon.accent {
+    background: rgba(249, 115, 22, 0.13);
+    color: #9a3412;
+}
+
+.suggested-chart-icon.success {
+    background: rgba(22, 163, 74, 0.12);
+    color: #166534;
+}
+
+.suggested-chart-head h3 {
+    margin: 0 0 5px;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+}
+
+.suggested-chart-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.suggested-chart-wrap {
+    position: relative;
+    height: 280px;
+    min-height: 260px;
+}
+
+.suggested-chart-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.chart-empty.compact {
+    padding: 18px;
+    border-radius: 16px;
+    font-size: 13px;
+}
+
 .dual-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -518,7 +598,8 @@ td {
 
 @media (max-width: 1180px) {
     .stats-grid,
-    .feature-grid {
+    .feature-grid,
+    .suggested-chart-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -536,7 +617,8 @@ td {
 
 @media (max-width: 560px) {
     .stats-grid,
-    .feature-grid {
+    .feature-grid,
+    .suggested-chart-grid {
         grid-template-columns: 1fr;
     }
 
@@ -556,5 +638,10 @@ td {
     .chart-wrap {
         height: 330px;
         min-height: 300px;
+    }
+
+    .suggested-chart-wrap {
+        height: 250px;
+        min-height: 230px;
     }
 }

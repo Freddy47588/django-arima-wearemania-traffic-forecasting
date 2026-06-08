@@ -30,6 +30,194 @@
         });
     }
 
+    function hasPositiveValues(values) {
+        return (values || []).some(function (value) {
+            return Number(value || 0) > 0;
+        });
+    }
+
+    function showEmptyState(emptyState, isEmpty) {
+        if (!emptyState) return;
+        emptyState.classList.toggle('active', isEmpty);
+    }
+
+    function buildChartColors(count) {
+        const colors = [
+            '#0f4c81',
+            '#f97316',
+            '#16a34a',
+            '#7c3aed',
+            '#0891b2',
+            '#e11d48',
+        ];
+
+        return Array.from({ length: count }, function (_, index) {
+            return colors[index % colors.length];
+        });
+    }
+
+    function getChartFont() {
+        return 'Inter, Segoe UI, Roboto, Helvetica Neue, Noto Sans, sans-serif';
+    }
+
+    function renderHorizontalBarChart(config) {
+        const canvas = document.getElementById(config.canvasId);
+        const emptyState = document.getElementById(config.emptyId);
+
+        if (!canvas) return;
+
+        const labels = readJson(config.labelsId, []);
+        const values = readJson(config.valuesId, []);
+        const hasData = labels.length > 0 && hasPositiveValues(values) && typeof Chart !== 'undefined';
+
+        showEmptyState(emptyState, !hasData);
+
+        if (!hasData) return;
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: config.label,
+                        data: values,
+                        borderWidth: 0,
+                        borderRadius: 10,
+                        backgroundColor: config.color
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return `${config.label}: ${numberFormat(context.parsed.x)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return numberFormat(value);
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.22)'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            font: {
+                                family: getChartFont(),
+                                weight: '700',
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderCategoryShareChart() {
+        const canvas = document.getElementById('categoryShareChart');
+        const emptyState = document.getElementById('categoryShareChartEmpty');
+
+        if (!canvas) return;
+
+        const labels = readJson('category-share-labels', []);
+        const values = readJson('category-share-values', []);
+        const hasData = labels.length > 0 && hasPositiveValues(values) && typeof Chart !== 'undefined';
+
+        showEmptyState(emptyState, !hasData);
+
+        if (!hasData) return;
+
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        data: values,
+                        backgroundColor: buildChartColors(labels.length),
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverOffset: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            padding: 14,
+                            font: {
+                                family: getChartFont(),
+                                weight: '700',
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const total = context.dataset.data.reduce(function (sum, value) {
+                                    return sum + Number(value || 0);
+                                }, 0);
+                                const value = Number(context.parsed || 0);
+                                const percent = total ? Math.round((value / total) * 100) : 0;
+                                return `${context.label}: ${numberFormat(value)} views (${percent}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderSuggestedCharts() {
+        renderHorizontalBarChart({
+            canvasId: 'topActualChart',
+            emptyId: 'topActualChartEmpty',
+            labelsId: 'top-actual-labels',
+            valuesId: 'top-actual-values',
+            label: 'Actual Views',
+            color: 'rgba(15, 76, 129, 0.84)'
+        });
+
+        renderHorizontalBarChart({
+            canvasId: 'topForecastChart',
+            emptyId: 'topForecastChartEmpty',
+            labelsId: 'top-forecast-labels',
+            valuesId: 'top-forecast-values',
+            label: 'Forecast Views',
+            color: 'rgba(249, 115, 22, 0.86)'
+        });
+
+        renderCategoryShareChart();
+    }
+
     function generateInsight(actualViews, forecastViews) {
         const target = document.getElementById('autoInsight');
         if (!target) return;
@@ -218,6 +406,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         renderTrafficChart();
+        renderSuggestedCharts();
         setupForecastProgress();
     });
 })();

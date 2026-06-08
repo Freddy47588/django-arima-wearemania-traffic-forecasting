@@ -227,6 +227,69 @@
                 </aside>
             </section>
 
+            <section class="panel suggested-chart-panel">
+                <div class="panel-head">
+                    <div>
+                        <span class="section-kicker">Saran Grafik Dashboard</span>
+                        <h2>Grafik Pendukung Analisis</h2>
+                        <p>Tambahan visual untuk membaca kategori yang kuat secara historis, kategori potensial dari forecast, dan komposisi kontribusi traffic.</p>
+                    </div>
+                </div>
+
+                <div class="suggested-chart-grid">
+                    <article class="suggested-chart-card">
+                        <div class="suggested-chart-head">
+                            <span class="suggested-chart-icon">01</span>
+                            <div>
+                                <h3>Top Actual Views</h3>
+                                <p>Bar chart kategori dengan performa historis tertinggi.</p>
+                            </div>
+                        </div>
+                        <div class="suggested-chart-wrap">
+                            <canvas id="topActualChart" aria-label="Grafik top kategori berdasarkan actual views"></canvas>
+                            <div id="topActualChartEmpty" class="chart-empty compact">
+                                <strong>Actual belum tersedia</strong>
+                                Upload CSV agar kategori historis bisa dibandingkan.
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="suggested-chart-card">
+                        <div class="suggested-chart-head">
+                            <span class="suggested-chart-icon accent">02</span>
+                            <div>
+                                <h3>Top Forecast Views</h3>
+                                <p>Bar chart kategori yang diprediksi paling potensial.</p>
+                            </div>
+                        </div>
+                        <div class="suggested-chart-wrap">
+                            <canvas id="topForecastChart" aria-label="Grafik top kategori berdasarkan forecast views"></canvas>
+                            <div id="topForecastChartEmpty" class="chart-empty compact">
+                                <strong>Forecast belum tersedia</strong>
+                                Jalankan Generate Forecast untuk melihat kategori potensial.
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="suggested-chart-card">
+                        <div class="suggested-chart-head">
+                            <span class="suggested-chart-icon success">03</span>
+                            <div>
+                                <h3>Share Traffic Kategori</h3>
+                                <p>Doughnut chart kontribusi kategori terhadap total actual views.</p>
+                            </div>
+                        </div>
+                        <div class="suggested-chart-wrap">
+                            <canvas id="categoryShareChart" aria-label="Grafik proporsi traffic kategori"></canvas>
+                            <div id="categoryShareChartEmpty" class="chart-empty compact">
+                                <strong>Proporsi belum tersedia</strong>
+                                Data actual dibutuhkan untuk menghitung share kategori.
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
             <section class="dual-grid">
                 <article class="panel">
                     <div class="panel-head">
@@ -278,16 +341,16 @@
             <section class="panel feature-panel">
                 <div class="panel-head">
                     <div>
-                        <span class="section-kicker">Fitur Pendukung Dashboard</span>
-                        <h2>Modul Development</h2>
-                        <p>Modul utama yang membuat dashboard siap digunakan untuk kebutuhan development dan demo project.</p>
+                        <span class="section-kicker">Dukungan Analisis</span>
+                        <h2>Fitur Pendukung</h2>
+                        <p>Fitur-fitur ini membantu menyediakan data, filter, prediksi, dan rekomendasi konten secara langsung di dashboard.</p>
                     </div>
                 </div>
                 <div class="feature-grid">
-                    <div class="feature-item"><span>⬆️</span><strong>Upload CSV Manual</strong><p>Data traffic dapat dimasukkan dari file CSV hasil export assets.</p></div>
-                    <div class="feature-item"><span>🔎</span><strong>Filtering Data</strong><p>Filter berdasarkan kategori dan tanggal untuk analisis lebih spesifik.</p></div>
-                    <div class="feature-item"><span>⚡</span><strong>Forecast ARIMA</strong><p>Prediksi traffic ke depan berdasarkan pola data historis.</p></div>
-                    <div class="feature-item"><span>💡</span><strong>Insight Redaksi</strong><p>Rekomendasi kategori potensial untuk mendukung strategi konten.</p></div>
+                    <div class="feature-item"><span>⬆️</span><strong>Upload Data CSV</strong><p>Masukkan data traffic dari file CSV untuk memulai analisis.</p></div>
+                    <div class="feature-item"><span>🔎</span><strong>Filter & Pilih Data</strong><p>Persempit data berdasarkan kategori dan periode untuk insight yang lebih tepat.</p></div>
+                    <div class="feature-item"><span>⚡</span><strong>Prediksi Traffic</strong><p>Hasil forecast membantu memperkirakan performa trafik di periode mendatang.</p></div>
+                    <div class="feature-item"><span>💡</span><strong>Rekomendasi Konten</strong><p>Saran topik kategori yang berpotensi mendukung strategi editorial.</p></div>
                 </div>
             </section>
 
@@ -353,6 +416,12 @@
     <script type="application/json" id="forecast-views">{{ forecast_views|default:"[]"|safe }}</script>
     <script type="application/json" id="forecast-lower">{{ forecast_lower|default:"[]"|safe }}</script>
     <script type="application/json" id="forecast-upper">{{ forecast_upper|default:"[]"|safe }}</script>
+    <script type="application/json" id="top-actual-labels">{{ top_actual_labels|default:"[]"|safe }}</script>
+    <script type="application/json" id="top-actual-values">{{ top_actual_values|default:"[]"|safe }}</script>
+    <script type="application/json" id="top-forecast-labels">{{ top_forecast_labels|default:"[]"|safe }}</script>
+    <script type="application/json" id="top-forecast-values">{{ top_forecast_values|default:"[]"|safe }}</script>
+    <script type="application/json" id="category-share-labels">{{ category_share_labels|default:"[]"|safe }}</script>
+    <script type="application/json" id="category-share-values">{{ category_share_values|default:"[]"|safe }}</script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'assets/js/common.js' %}" defer></script>
