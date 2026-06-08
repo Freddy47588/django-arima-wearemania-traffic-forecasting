@@ -87,14 +87,14 @@
                     <form id="forecastForm" method="post" action="{% url 'generate_forecast' %}" class="forecast-form" aria-label="Form generate prediksi traffic">
                         {% csrf_token %}
                         <label class="forecast-days-field" for="forecastDaysInput">
-                            <span class="forecast-field-label">Periode prediksi</span>
+                            <span class="forecast-field-label">forecast_days</span>
                             <span class="forecast-input-wrap">
                                 <input id="forecastDaysInput" type="number" name="forecast_days" value="{{ forecast_days|default:'7' }}" min="1" max="30" inputmode="numeric" aria-describedby="forecastDaysHint">
                                 <span class="forecast-unit">hari</span>
                             </span>
                         </label>
-                        <button type="submit" class="btn primary">⚡ Generate Forecast</button>
-                        <small id="forecastDaysHint" class="forecast-helper">Jumlah hari ke depan yang akan diprediksi ARIMA.</small>
+                        <button type="submit" class="btn primary">⚡ Generate Forecast {{ forecast_days|default:'7' }} Hari</button>
+                        <small id="forecastDaysHint" class="forecast-helper">forecast_days = jumlah hari ke depan yang akan dibuat prediksinya. Batas 1-30 hari.</small>
                     </form>
                 </div>
             </header>
@@ -225,6 +225,92 @@
                         </div>
                     </article>
                 </aside>
+            </section>
+
+            <section class="analytics-grid">
+                <article class="panel quality-panel">
+                    <div class="panel-head">
+                        <div>
+                            <span class="section-kicker">Forecast Quality</span>
+                            <h2>Kualitas Prediksi</h2>
+                            <p>Ringkasan apakah hasil forecast cukup stabil untuk dipakai sebagai acuan redaksi.</p>
+                        </div>
+                    </div>
+                    <div class="quality-list">
+                        {% for item in forecast_quality_items %}
+                            <div class="quality-item">
+                                <span>{{ item.label }}</span>
+                                <strong>{{ item.value }}</strong>
+                                <small>{{ item.detail }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="panel data-quality-panel">
+                    <div class="panel-head">
+                        <div>
+                            <span class="section-kicker">Data Quality</span>
+                            <h2>{{ data_quality_status }}</h2>
+                            <p>{{ data_quality_note }}</p>
+                        </div>
+                    </div>
+                    <div class="data-quality-grid">
+                        <div><span>Rentang data</span><strong>{{ data_days_covered }}</strong><small>hari</small></div>
+                        <div><span>Baris data</span><strong>{{ data_total_rows }}</strong><small>traffic rows</small></div>
+                        <div><span>Kategori aktif</span><strong>{{ data_categories_with_data }}</strong><small>kategori</small></div>
+                        <div><span>Zero views</span><strong>{{ data_zero_view_rows }}</strong><small>baris</small></div>
+                    </div>
+                    {% if data_first_date and data_last_date %}
+                        <p class="quality-footnote">Periode data: {{ data_first_date }} sampai {{ data_last_date }}.</p>
+                    {% endif %}
+                </article>
+            </section>
+
+            <section class="dual-grid">
+                <article class="panel alert-panel">
+                    <div class="panel-head">
+                        <div>
+                            <span class="section-kicker">Alert Kategori Naik/Turun</span>
+                            <h2>Arah Kategori</h2>
+                            <p>Perbandingan rata-rata forecast per hari dengan rata-rata aktual 7 data terakhir per kategori.</p>
+                        </div>
+                    </div>
+                    <div class="alert-list">
+                        {% for item in category_alerts %}
+                            <div class="category-alert {{ item.tone }}">
+                                <div>
+                                    <strong>{{ item.category_name }}</strong>
+                                    <small>Forecast avg {{ item.forecast_average|floatformat:0 }} vs aktual avg {{ item.recent_average|floatformat:0 }}</small>
+                                </div>
+                                <span>
+                                    {{ item.label }}
+                                    {{ item.change_display }}
+                                </span>
+                            </div>
+                        {% empty %}
+                            <p class="empty-text">Belum ada alert. Jalankan forecast setelah data aktual tersedia.</p>
+                        {% endfor %}
+                    </div>
+                </article>
+
+                <article class="panel recommendation-panel">
+                    <div class="panel-head">
+                        <div>
+                            <span class="section-kicker">Rekomendasi Aksi Redaksi</span>
+                            <h2>Langkah Berikutnya</h2>
+                            <p>Saran operasional ringan berdasarkan kategori yang diprediksi naik, turun, atau paling potensial.</p>
+                        </div>
+                    </div>
+                    <div class="editorial-list">
+                        {% for item in editorial_recommendations %}
+                            <div class="editorial-item">
+                                <strong>{{ item.title }}</strong>
+                                <small>{{ item.description }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </article>
             </section>
 
             <section class="panel suggested-chart-panel">
@@ -390,6 +476,46 @@
                 </section>
             {% endif %}
 
+            <section class="panel history-panel">
+                <div class="panel-head">
+                    <div>
+                        <span class="section-kicker">Forecast History</span>
+                        <h2>Riwayat Generate Forecast</h2>
+                        <p>Run terakhir yang tersimpan, termasuk status, periode forecast_days, dan jumlah prediksi.</p>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Run</th>
+                                <th>Status</th>
+                                <th>forecast_days</th>
+                                <th>Total Prediksi</th>
+                                <th>Mulai</th>
+                                <th>Selesai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for run in forecast_history %}
+                                <tr>
+                                    <td>#{{ run.id }}</td>
+                                    <td>{{ run.get_status_display|default:run.status }}</td>
+                                    <td>{{ run.forecast_days }} hari</td>
+                                    <td>{{ run.total_predictions }}</td>
+                                    <td>{{ run.started_at|date:"d M Y H:i" }}</td>
+                                    <td>{% if run.finished_at %}{{ run.finished_at|date:"d M Y H:i" }}{% else %}-{% endif %}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6">Belum ada riwayat forecast.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <footer class="page-footer">Wearemania Traffic Forecasting Dashboard · Django · ARIMA · Chart.js</footer>
         </main>
     </div>
@@ -399,13 +525,13 @@
             <div class="loader-ring"></div>
             <h2>Generate Forecast Sedang Diproses</h2>
             <p>Sistem sedang membaca data historis, menyusun time series, menjalankan model ARIMA, lalu menyimpan hasil prediksi ke database.</p>
-            <div class="progress-track"><div id="forecastProgressBar" class="progress-bar"></div></div>
-            <span id="forecastProgressText" class="progress-text">Menyiapkan data... 0%</span>
+            <span id="forecastProgressText" class="progress-text">Menyiapkan forecast...</span>
             <ol class="process-steps">
-                <li>Membaca data historis</li>
+                <li class="active">Membaca data historis</li>
                 <li>Cleaning time series</li>
-                <li>Menjalankan ARIMA</li>
+                <li>Menjalankan ARIMA / fallback</li>
                 <li>Menyimpan prediksi</li>
+                <li>Memuat ulang dashboard</li>
             </ol>
         </div>
     </div>

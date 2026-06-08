@@ -19,6 +19,15 @@ def safe_positive_int(value):
     return max(0, value)
 
 
+def normalize_forecast_days(value, default=7, minimum=1, maximum=30):
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        value = default
+
+    return max(minimum, min(value, maximum))
+
+
 def get_model_field_names(model_class):
     return {field.name for field in model_class._meta.fields}
 
@@ -172,6 +181,7 @@ def generate_forecast_for_category(category, forecast_days=7, forecast_run=None)
 
 
 def generate_all_forecasts(forecast_days=7, forecast_run=None):
+    forecast_days = normalize_forecast_days(forecast_days)
     total_created = 0
 
     categories = Category.objects.all().order_by("name")
@@ -189,6 +199,7 @@ def generate_all_forecasts(forecast_days=7, forecast_run=None):
 
 
 def create_forecast_run_and_generate(forecast_days=7):
+    forecast_days = normalize_forecast_days(forecast_days)
     forecast_run_fields = get_model_field_names(ForecastRun)
 
     running_status = getattr(ForecastRun, "STATUS_RUNNING", "running")

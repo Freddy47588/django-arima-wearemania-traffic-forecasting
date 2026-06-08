@@ -6,13 +6,16 @@ from urllib.parse import urlparse
 import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
+from django.db.models import Count, Max, Min, Sum
 from django.shortcuts import redirect, render
 from django.utils.text import slugify
 
 from analytics.forms import CSVUploadForm
 from analytics.models import Category, ForecastRun, Prediction, TrafficData
-from analytics.services.forecasting import create_forecast_run_and_generate
+from analytics.services.forecasting import (
+    create_forecast_run_and_generate,
+    normalize_forecast_days,
+)
 
 
 EXCLUDED_FORECAST_CATEGORIES = [
@@ -342,6 +345,32 @@ def get_trend_label(change_percentage):
         return "Naik"
 
     if change_percentage < -5:
+        return "Turun"
+
+    return "Stabil"
+
+
+def get_alert_tone(change_percentage):
+    if change_percentage is None:
+        return "neutral"
+
+    if change_percentage > 10:
+        return "up"
+
+    if change_percentage < -10:
+        return "down"
+
+    return "stable"
+
+
+def get_alert_label(change_percentage):
+    if change_percentage is None:
+        return "Data kurang"
+
+    if change_percentage > 10:
+        return "Naik"
+
+    if change_percentage < -10:
         return "Turun"
 
     return "Stabil"
@@ -764,6 +793,191 @@ def dashboard(request):
         category_share_labels.append("Kategori Lainnya")
         category_share_values.append(other_actual_views)
 
+    traffic_dates = traffic_queryset.aggregate(
+        first_date=Min("date"),
+        last_date=Max("date"),
+        total_rows=Count("id"),
+        categories_with_data=Count("category", distinct=True),
+    )
+
+    data_first_date = traffic_dates["first_date"]
+    data_last_date = traffic_dates["last_date"]
+    data_total_rows = traffic_dates["total_rows"] or 0
+    data_categories_with_data = traffic_dates["categories_with_data"] or 0
+    data_zero_view_rows = traffic_queryset.filter(views=0).count()
+    data_days_covered = 0
+
+    if data_first_date and data_last_date:
+        data_days_covered = (data_last_date - data_first_date).days + 1
+
+    data_quality_status = "Belum ada data"
+    data_quality_note = "Upload CSV traffic agar kualitas data bisa dibaca."
+
+    if data_total_rows > 0:
+        if data_days_covered >= 30 and data_categories_with_data >= 3:
+            data_quality_status = "Cukup kuat"
+            data_quality_note = (
+                "Rentang data sudah memadai untuk membaca pola kategori utama."
+            )
+        elif data_days_covered >= 10:
+            data_quality_status = "Perlu dipantau"
+            data_quality_note = (
+                "Data sudah bisa dipakai, tetapi forecast akan lebih stabil dengan histori lebih panjang."
+            )
+        else:
+            data_quality_status = "Masih tipis"
+            data_quality_note = (
+                "Histori masih pendek. Tambahkan data harian agar prediksi tidak terlalu rapuh."
+            )
+
+    forecast_category_count = (
+        prediction_queryset
+        .values("category_id")
+        .distinct()
+        .count()
+    )
+
+    forecast_model_names = list(
+        prediction_queryset
+        .values_list("model_name", flat=True)
+        .distinct()
+        .order_by("model_name")
+    )
+
+    forecast_quality_items = [
+        {
+            "label": "Status forecast",
+            "value": confidence_status,
+            "detail": (
+                f"Rata-rata rentang confidence {confidence_width_average}%."
+                if confidence_width_average else
+                "Belum ada confidence range yang bisa dihitung."
+            ),
+        },
+        {
+            "label": "Cakupan kategori",
+            "value": f"{forecast_category_count}/{data_categories_with_data}",
+            "detail": "Kategori dengan data aktual yang ikut memiliki prediksi.",
+        },
+        {
+            "label": "Model aktif",
+            "value": ", ".join(forecast_model_names) if forecast_model_names else "Belum ada",
+            "detail": "ARIMA dipakai saat data cukup, fallback dipakai saat histori tipis atau datar.",
+        },
+    ]
+
+    actual_by_category_date = {}
+
+    for item in traffic_queryset.values("category__name", "date", "views").order_by("date"):
+        category_name = item["category__name"]
+        actual_by_category_date.setdefault(category_name, {})
+        actual_by_category_date[category_name][item["date"]] = (
+            actual_by_category_date[category_name].get(item["date"], 0) +
+            item["views"]
+        )
+
+    actual_by_category = {
+        category_name: [
+            views
+            for _, views in sorted(date_map.items())
+        ]
+        for category_name, date_map in actual_by_category_date.items()
+    }
+
+    forecast_alerts = []
+
+    forecast_category_rows = (
+        prediction_queryset
+        .values("category__name")
+        .annotate(
+            total_predicted_views=Sum("predicted_views"),
+            forecast_points=Count("id"),
+        )
+        .order_by("-total_predicted_views")
+    )
+
+    for item in forecast_category_rows:
+        category_name = item["category__name"]
+        forecast_points = item["forecast_points"] or 1
+        forecast_average_per_day = (
+            (item["total_predicted_views"] or 0) / forecast_points
+        )
+        recent_values = actual_by_category.get(category_name, [])[-7:]
+        recent_average = (
+            sum(recent_values) / len(recent_values)
+            if recent_values else 0
+        )
+        change_percentage = percentage_change(
+            forecast_average_per_day,
+            recent_average,
+        )
+
+        forecast_alerts.append({
+            "category_name": category_name,
+            "label": get_alert_label(change_percentage),
+            "tone": get_alert_tone(change_percentage),
+            "change_percentage": change_percentage,
+            "change_display": (
+                f"{change_percentage}%"
+                if change_percentage is not None else
+                ""
+            ),
+            "forecast_average": round(forecast_average_per_day, 1),
+            "recent_average": round(recent_average, 1),
+            "total_predicted_views": item["total_predicted_views"] or 0,
+        })
+
+    category_alerts = forecast_alerts[:8]
+
+    upward_alerts = [
+        item for item in forecast_alerts
+        if item["tone"] == "up"
+    ][:3]
+
+    downward_alerts = [
+        item for item in forecast_alerts
+        if item["tone"] == "down"
+    ][:3]
+
+    editorial_recommendations = []
+
+    for item in upward_alerts:
+        editorial_recommendations.append({
+            "title": f"Dorong liputan {item['category_name']}",
+            "description": (
+                f"Forecast naik {item['change_percentage']}% dari rata-rata aktual terbaru. "
+                "Siapkan angle lanjutan, update cepat, dan distribusi sosial lebih awal."
+            ),
+        })
+
+    for item in downward_alerts:
+        editorial_recommendations.append({
+            "title": f"Siapkan booster untuk {item['category_name']}",
+            "description": (
+                f"Forecast turun {abs(item['change_percentage'])}% dari rata-rata aktual terbaru. "
+                "Pertimbangkan artikel evergreen, rangkuman, atau konteks tambahan."
+            ),
+        })
+
+    if not editorial_recommendations and top_forecast_category:
+        editorial_recommendations.append({
+            "title": f"Prioritaskan {top_forecast_category['category__name']}",
+            "description": (
+                "Kategori ini punya estimasi forecast tertinggi. Jadikan sebagai slot utama "
+                "untuk agenda editorial periode prediksi."
+            ),
+        })
+
+    if not editorial_recommendations:
+        editorial_recommendations.append({
+            "title": "Jalankan forecast untuk rekomendasi",
+            "description": (
+                "Rekomendasi aksi redaksi akan muncul setelah prediksi kategori tersedia."
+            ),
+        })
+
+    forecast_history = ForecastRun.objects.all().order_by("-started_at")[:5]
+
     predictions = (
         prediction_queryset
         .select_related("category")
@@ -778,6 +992,7 @@ def dashboard(request):
         "selected_start_date": start_date,
         "selected_end_date": end_date,
         "is_filter_active": is_filter_active,
+        "forecast_days": getattr(latest_forecast_run, "forecast_days", 7) if latest_forecast_run else 7,
 
         "actual_labels": json.dumps(actual_labels),
         "actual_views": json.dumps(actual_views),
@@ -800,9 +1015,21 @@ def dashboard(request):
         "latest_forecast_total_predictions": get_forecast_run_total_predictions(latest_forecast_run),
         "last_prediction": last_prediction,
         "predictions": predictions,
+        "forecast_history": forecast_history,
 
         "insight_cards": insight_cards,
         "insight_summary": insight_summary,
+        "forecast_quality_items": forecast_quality_items,
+        "category_alerts": category_alerts,
+        "editorial_recommendations": editorial_recommendations,
+        "data_quality_status": data_quality_status,
+        "data_quality_note": data_quality_note,
+        "data_first_date": data_first_date,
+        "data_last_date": data_last_date,
+        "data_days_covered": data_days_covered,
+        "data_total_rows": data_total_rows,
+        "data_zero_view_rows": data_zero_view_rows,
+        "data_categories_with_data": data_categories_with_data,
 
         "top_actual_labels": json.dumps(top_actual_labels),
         "top_actual_values": json.dumps(top_actual_values),
@@ -1091,14 +1318,7 @@ def generate_forecast_view(request):
         )
         return redirect("dashboard")
 
-    forecast_days = request.POST.get("forecast_days", 7)
-
-    try:
-        forecast_days = int(forecast_days)
-    except (TypeError, ValueError):
-        forecast_days = 7
-
-    forecast_days = max(1, min(forecast_days, 30))
+    forecast_days = normalize_forecast_days(request.POST.get("forecast_days", 7))
 
     try:
         forecast_run = create_forecast_run_and_generate(

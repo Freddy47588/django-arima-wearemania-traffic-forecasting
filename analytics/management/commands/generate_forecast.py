@@ -1,6 +1,10 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
-from analytics.services.forecasting import create_forecast_run_and_generate
+from analytics.models import TrafficData
+from analytics.services.forecasting import (
+    create_forecast_run_and_generate,
+    normalize_forecast_days,
+)
 
 
 class Command(BaseCommand):
@@ -15,13 +19,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        forecast_days = options["days"]
+        forecast_days = normalize_forecast_days(options["days"])
 
-        if forecast_days < 1:
-            forecast_days = 7
-
-        if forecast_days > 30:
-            forecast_days = 30
+        if not TrafficData.objects.exists():
+            raise CommandError(
+                "Data traffic belum tersedia. Upload CSV terlebih dahulu sebelum generate forecast."
+            )
 
         self.stdout.write(
             self.style.WARNING(
@@ -43,8 +46,6 @@ class Command(BaseCommand):
             )
 
         except Exception as error:
-            self.stdout.write(
-                self.style.ERROR(
-                    f"Forecast generation failed: {error}"
-                )
+            raise CommandError(
+                f"Forecast generation failed: {error}"
             )

@@ -375,10 +375,9 @@
     function setupForecastProgress() {
         const form = document.getElementById('forecastForm');
         const modal = document.getElementById('forecastModal');
-        const bar = document.getElementById('forecastProgressBar');
         const text = document.getElementById('forecastProgressText');
 
-        if (!form || !modal || !bar || !text) return;
+        if (!form || !modal || !text) return;
 
         form.addEventListener('submit', function () {
             modal.classList.add('active');
@@ -386,27 +385,55 @@
 
             const forecastDaysInput = form.querySelector('[name="forecast_days"]');
             const forecastDays = forecastDaysInput ? Number(forecastDaysInput.value || 7) : 7;
-            let progress = 0;
+            const steps = Array.from(modal.querySelectorAll('.process-steps li'));
             const labels = [
-                `Menyiapkan prediksi ${forecastDays} hari ke depan...`,
-                'Membaca data historis...',
-                'Menyusun time series...',
-                'Menjalankan model ARIMA...',
-                'Menyimpan hasil prediksi...'
+                `Membaca data historis untuk prediksi ${forecastDays} hari ke depan...`,
+                'Membersihkan dan merapikan time series per kategori...',
+                'Menjalankan ARIMA. Jika data terlalu tipis, sistem memakai moving average fallback...',
+                'Menyimpan prediksi dan metadata forecast run...',
+                'Menunggu server selesai lalu dashboard akan dimuat ulang...'
             ];
+            let stepIndex = 0;
+
+            function renderStep() {
+                steps.forEach(function (step, index) {
+                    step.classList.toggle('done', index < stepIndex);
+                    step.classList.toggle('active', index === stepIndex);
+                });
+
+                text.textContent = labels[stepIndex] || labels[labels.length - 1];
+            }
+
+            renderStep();
 
             window.setInterval(function () {
-                progress = Math.min(progress + Math.floor(Math.random() * 12) + 6, 94);
-                const stepIndex = Math.min(Math.floor(progress / 25), labels.length - 1);
-                bar.style.width = `${progress}%`;
-                text.textContent = `${labels[stepIndex]} ${progress}%`;
-            }, 450);
+                stepIndex = Math.min(stepIndex + 1, labels.length - 1);
+                renderStep();
+            }, 1200);
         });
+    }
+
+    function setupForecastDaysLabel() {
+        const form = document.getElementById('forecastForm');
+        if (!form) return;
+
+        const input = form.querySelector('[name="forecast_days"]');
+        const button = form.querySelector('button[type="submit"]');
+        if (!input || !button) return;
+
+        function updateButtonLabel() {
+            const value = Math.min(Math.max(Number(input.value || 7), 1), 30);
+            button.textContent = `⚡ Generate Forecast ${value} Hari`;
+        }
+
+        input.addEventListener('input', updateButtonLabel);
+        updateButtonLabel();
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         renderTrafficChart();
         renderSuggestedCharts();
+        setupForecastDaysLabel();
         setupForecastProgress();
     });
 })();
