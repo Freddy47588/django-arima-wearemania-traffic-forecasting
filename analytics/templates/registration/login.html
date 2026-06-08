@@ -8,921 +8,111 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <style>
-        :root {
-            --bg: #f5f7fb;
-            --surface: #ffffff;
-            --surface-soft: #f8fafc;
-            --text: #0f172a;
-            --muted: #64748b;
-            --muted-soft: #94a3b8;
-            --line: #e2e8f0;
-            --primary: #0f4c81;
-            --primary-dark: #0b355f;
-            --primary-soft: #e0f2fe;
-            --accent: #f97316;
-            --green: #16a34a;
-            --green-soft: #dcfce7;
-            --red: #dc2626;
-            --red-soft: #fee2e2;
-            --yellow-soft: #fef3c7;
-            --orange-soft: #fff7ed;
-            --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
-            --shadow-soft: 0 8px 28px rgba(15, 23, 42, 0.06);
-            --radius-xl: 24px;
-            --radius-lg: 18px;
-            --radius-md: 14px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            min-height: 100vh;
-            background:
-                radial-gradient(circle at top left, rgba(15, 76, 129, 0.14), transparent 32%),
-                radial-gradient(circle at top right, rgba(249, 115, 22, 0.12), transparent 34%),
-                var(--bg);
-            color: var(--text);
-            font-family: "Inter", Arial, Helvetica, sans-serif;
-        }
-
-        a {
-            color: inherit;
-        }
-
-        .auth-page {
-            min-height: 100vh;
-            display: grid;
-            place-items: center;
-            padding: 28px;
-        }
-
-        .auth-shell {
-            width: min(1180px, 100%);
-            display: grid;
-            grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
-            gap: 22px;
-            align-items: stretch;
-        }
-
-        .brand-panel,
-        .login-panel {
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .brand-panel {
-            position: relative;
-            min-height: 680px;
-            padding: 28px;
-            background:
-                linear-gradient(160deg, rgba(15, 76, 129, 0.98), rgba(15, 23, 42, 0.98)),
-                #0f172a;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            isolation: isolate;
-        }
-
-        .brand-panel::before,
-        .brand-panel::after {
-            content: "";
-            position: absolute;
-            border-radius: 999px;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .brand-panel::before {
-            width: 280px;
-            height: 280px;
-            top: -105px;
-            right: -92px;
-            background: rgba(249, 115, 22, 0.34);
-        }
-
-        .brand-panel::after {
-            width: 250px;
-            height: 250px;
-            left: -110px;
-            bottom: 58px;
-            background: rgba(56, 189, 248, 0.16);
-        }
-
-        .brand {
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            width: fit-content;
-            padding: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 22px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-        }
-
-        .brand-logo {
-            width: 46px;
-            height: 46px;
-            display: grid;
-            place-items: center;
-            flex: 0 0 46px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #f97316, #facc15);
-            color: #111827;
-            font-size: 22px;
-            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.32);
-        }
-
-        .brand h2 {
-            font-size: 19px;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-        }
-
-        .brand p {
-            color: rgba(226, 232, 240, 0.86);
-            font-size: 12px;
-            line-height: 1.45;
-            margin-top: 5px;
-        }
-
-        .hero-copy {
-            margin: 56px 0 36px;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            color: #ffffff;
-            font-size: 13px;
-            font-weight: 800;
-            margin-bottom: 16px;
-        }
-
-        .hero-copy h1 {
-            max-width: 560px;
-            font-size: clamp(32px, 4vw, 54px);
-            line-height: 1.03;
-            letter-spacing: -0.055em;
-            margin-bottom: 16px;
-        }
-
-        .hero-copy p {
-            max-width: 560px;
-            color: #dbeafe;
-            font-size: 15px;
-            line-height: 1.75;
-        }
-
-        .feature-list {
-            display: grid;
-            gap: 12px;
-            margin-top: 26px;
-        }
-
-        .feature-item {
-            display: grid;
-            grid-template-columns: 38px 1fr;
-            gap: 12px;
-            align-items: start;
-            padding: 14px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .feature-icon {
-            width: 38px;
-            height: 38px;
-            display: grid;
-            place-items: center;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.13);
-            font-size: 16px;
-        }
-
-        .feature-item strong {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-
-        .feature-item span {
-            display: block;
-            color: rgba(226, 232, 240, 0.78);
-            font-size: 12px;
-            line-height: 1.55;
-        }
-
-        .brand-footer {
-            display: flex;
-            justify-content: space-between;
-            gap: 14px;
-            align-items: center;
-            color: rgba(226, 232, 240, 0.78);
-            font-size: 12px;
-            line-height: 1.55;
-        }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            width: fit-content;
-            padding: 8px 11px;
-            border-radius: 999px;
-            background: rgba(22, 163, 74, 0.18);
-            border: 1px solid rgba(187, 247, 208, 0.24);
-            color: #dcfce7;
-            font-size: 12px;
-            font-weight: 850;
-            white-space: nowrap;
-        }
-
-        .login-panel {
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            display: grid;
-        }
-
-        .login-inner {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: clamp(24px, 4vw, 44px);
-        }
-
-        .top-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 32px;
-        }
-
-        .btn,
-        button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-            min-height: 46px;
-            padding: 12px 17px;
-            border-radius: 15px;
-            border: 0;
-            outline: 0;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: 0.22s ease;
-            white-space: nowrap;
-            font-family: inherit;
-        }
-
-        .btn-primary,
-        button[type="submit"] {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 12px 22px rgba(15, 76, 129, 0.18);
-        }
-
-        .btn-primary:hover,
-        button[type="submit"]:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .btn-light {
-            background: white;
-            color: var(--text);
-            border: 1px solid var(--line);
-        }
-
-        .btn-light:hover {
-            background: #f1f5f9;
-            transform: translateY(-1px);
-        }
-
-        .login-header {
-            margin-bottom: 24px;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            padding: 7px 11px;
-            border-radius: 999px;
-            background: var(--primary-soft);
-            color: var(--primary-dark);
-            font-size: 12px;
-            font-weight: 800;
-        }
-
-        .login-header h2 {
-            color: var(--text);
-            font-size: clamp(28px, 3vw, 40px);
-            line-height: 1.08;
-            letter-spacing: -0.04em;
-            margin-bottom: 10px;
-        }
-
-        .login-header p {
-            max-width: 620px;
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        .messages,
-        .error-list {
-            display: grid;
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-
-        .message,
-        .form-error-box {
-            padding: 14px 16px;
-            border-radius: 16px;
-            font-weight: 750;
-            border: 1px solid transparent;
-            line-height: 1.55;
-            font-size: 14px;
-        }
-
-        .success {
-            background: var(--green-soft);
-            color: #166534;
-            border-color: #bbf7d0;
-        }
-
-        .error,
-        .form-error-box {
-            background: var(--red-soft);
-            color: #991b1b;
-            border-color: #fecaca;
-        }
-
-        .warning {
-            background: var(--yellow-soft);
-            color: #92400e;
-            border-color: #fde68a;
-        }
-
-        .info {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 12px;
-            align-items: start;
-            margin-bottom: 20px;
-            padding: 16px;
-            border-radius: 18px;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e40af;
-        }
-
-        .info-icon {
-            width: 36px;
-            height: 36px;
-            display: grid;
-            place-items: center;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
-        }
-
-        .info strong {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .info p {
-            line-height: 1.65;
-            font-size: 13px;
-        }
-
-        .login-form {
-            padding: 22px;
-            background: var(--surface-soft);
-            border: 1px solid var(--line);
-            border-radius: 22px;
-        }
-
-        .form-grid {
-            display: grid;
-            gap: 16px;
-        }
-
-        .field-group {
-            display: grid;
-            gap: 8px;
-        }
-
-        .field-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .field-group label {
-            color: var(--text);
-            font-size: 13px;
-            font-weight: 850;
-        }
-
-        .help-text {
-            color: var(--muted-soft);
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .input-shell {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 14px;
-            width: 30px;
-            height: 30px;
-            display: grid;
-            place-items: center;
-            border-radius: 11px;
-            background: var(--primary-soft);
-            color: var(--primary-dark);
-            font-size: 14px;
-            pointer-events: none;
-        }
-
-        .login-form input[type="text"],
-        .login-form input[type="password"],
-        .login-form input[type="email"] {
-            width: 100%;
-            min-height: 52px;
-            padding: 13px 46px 13px 56px;
-            background: white;
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            color: #334155;
-            outline: 0;
-            font-size: 14px;
-            font-weight: 650;
-            font-family: inherit;
-            transition: 0.22s ease;
-        }
-
-        .login-form input:focus {
-            border-color: #bfdbfe;
-            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
-        }
-
-        .login-form input::placeholder {
-            color: #94a3b8;
-            font-weight: 600;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 9px;
-            width: 38px;
-            height: 38px;
-            min-height: 38px;
-            padding: 0;
-            border-radius: 13px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-            color: var(--muted);
-            box-shadow: none;
-            font-size: 15px;
-        }
-
-        .password-toggle:hover {
-            background: #f1f5f9;
-            transform: translateY(-1px);
-        }
-
-        .field-error {
-            color: #991b1b;
-            font-size: 12px;
-            font-weight: 750;
-            line-height: 1.45;
-        }
-
-        .login-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 6px;
-        }
-
-        .remember-note {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .remember-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: var(--green);
-            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
-        }
-
-        .login-actions {
-            display: grid;
-            gap: 10px;
-            margin-top: 18px;
-        }
-
-        .login-actions button {
-            width: 100%;
-        }
-
-        .small-note {
-            margin-top: 16px;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.65;
-        }
-
-        .mini-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .mini-card {
-            padding: 14px;
-            border-radius: 17px;
-            background: white;
-            border: 1px solid var(--line);
-        }
-
-        .mini-card strong {
-            display: block;
-            font-size: 18px;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .mini-card span {
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.45;
-        }
-
-        .mobile-brand {
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 18px;
-            padding: 14px;
-            border-radius: 22px;
-            background: rgba(15, 76, 129, 0.98);
-            color: white;
-            box-shadow: var(--shadow-soft);
-        }
-
-        .mobile-brand .brand {
-            padding: 0;
-            border: 0;
-            background: transparent;
-            backdrop-filter: none;
-        }
-
-        .mobile-brand .status-pill {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.16);
-            color: #ffffff;
-        }
-
-        @media (max-width: 1040px) {
-            .auth-shell {
-                grid-template-columns: 1fr;
-            }
-
-            .brand-panel {
-                min-height: auto;
-            }
-
-            .hero-copy {
-                margin: 40px 0 24px;
-            }
-
-            .feature-list {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 760px) {
-            .auth-page {
-                display: block;
-                padding: 18px;
-            }
-
-            .auth-shell {
-                gap: 18px;
-            }
-
-            .brand-panel {
-                display: none;
-            }
-
-            .mobile-brand {
-                display: flex;
-            }
-
-            .login-inner {
-                padding: 22px;
-            }
-
-            .top-actions {
-                justify-content: flex-start;
-                margin-bottom: 22px;
-            }
-
-            .mini-stats {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 560px) {
-            .auth-page {
-                padding: 14px;
-            }
-
-            .mobile-brand {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .login-inner,
-            .login-form {
-                padding: 18px;
-            }
-
-            .top-actions,
-            .login-options {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .btn,
-            button {
-                width: 100%;
-            }
-
-            .info {
-                grid-template-columns: 1fr;
-            }
-
-            .feature-list {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'assets/css/common.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/login.css' %}">
 </head>
-<body>
-    <main class="auth-page">
-        <div class="auth-shell">
-            <section class="brand-panel" aria-label="Informasi dashboard">
+<body class="login-body">
+    <main class="login-wrapper">
+        <section class="login-info">
+            <a href="{% url 'dashboard' %}" class="login-brand">
+                <span class="brand-logo">
+                    <img src="{% static 'assets/logo1.png' %}" alt="Logo Wearemania">
+                    <span class="brand-logo-emoji">⚽</span>
+                </span>
+                <span>
+                    <strong>Wearemania</strong>
+                    <small>Traffic Forecasting Dashboard</small>
+                </span>
+            </a>
+
+            <div class="login-copy">
+                <span class="eyebrow light">Secure Access</span>
+                <h1>Masuk ke dashboard analitik internal.</h1>
+                <p>Login digunakan untuk membatasi akses dashboard, upload data mentah, cleaning data, dan proses forecasting traffic Wearemania.</p>
+            </div>
+
+            <div class="login-feature-list">
+                <div><span>📈</span><strong>Traffic aktual</strong><small>Monitoring performa harian dari data CSV/GA4 yang sudah dibersihkan.</small></div>
+                <div><span>⬆️</span><strong>Upload & cleaning</strong><small>Validasi kolom, mapping kategori, dan import data ke database Django.</small></div>
+                <div><span>⚡</span><strong>Forecast ARIMA</strong><small>Prediksi traffic kategori untuk membantu keputusan konten redaksi.</small></div>
+            </div>
+
+            <div class="login-footnote">Internal dashboard · Digtive Global Media <span>● System ready</span></div>
+        </section>
+
+        <section class="login-panel" aria-label="Form login">
+            <div class="login-panel-head">
                 <div>
-                    <div class="brand">
-                        <div class="brand-logo">📈</div>
-                        <div>
-                            <h2>Wearemania</h2>
-                            <p>Traffic Forecasting Dashboard</p>
-                        </div>
+                    <span class="panel-logo">⚽</span>
+                    <span class="login-status">● Secure Login</span>
+                </div>
+                <a href="/admin/" class="admin-link">Admin Panel</a>
+            </div>
+
+            <div class="form-title">
+                <span class="section-kicker">Welcome Back</span>
+                <h2>Login Dashboard</h2>
+                <p>Masukkan username dan password akun Django untuk mengakses halaman dashboard, upload raw data, dan panel administrasi.</p>
+            </div>
+
+            {% if messages %}
+                <div class="message-stack compact">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="login-note">
+                <span>ℹ️</span>
+                <p><strong>Akses khusus pengelola.</strong> Gunakan akun yang sudah dibuat lewat Django Admin atau superuser. Setelah login berhasil, kamu akan diarahkan ke halaman yang diminta sebelumnya.</p>
+            </div>
+
+            <form method="post" class="login-form" novalidate>
+                {% csrf_token %}
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+                <label class="field-group">
+                    <span>Username <small>Akun Django</small></span>
+                    {{ form.username }}
+                    {% for error in form.username.errors %}<em>{{ error }}</em>{% endfor %}
+                </label>
+
+                <label class="field-group password-group">
+                    <span>Password <small>Rahasia akun</small></span>
+                    <div class="password-wrap">
+                        {{ form.password }}
+                        <button id="togglePassword" type="button" aria-label="Tampilkan password">👁️</button>
                     </div>
+                    {% for error in form.password.errors %}<em>{{ error }}</em>{% endfor %}
+                </label>
 
-                    <div class="hero-copy">
-                        <div class="hero-badge">🔐 Secure Access</div>
-                        <h1>Masuk ke dashboard analitik internal.</h1>
-                        <p>
-                            Login digunakan untuk membatasi akses dashboard, upload data mentah,
-                            cleaning data, dan proses forecasting traffic Wearemania.
-                        </p>
-                    </div>
-
-                    <div class="feature-list">
-                        <div class="feature-item">
-                            <div class="feature-icon">📊</div>
-                            <div>
-                                <strong>Traffic aktual</strong>
-                                <span>Monitoring performa harian dari data CSV/GA4 yang sudah dibersihkan.</span>
-                            </div>
-                        </div>
-
-                        <div class="feature-item">
-                            <div class="feature-icon">⬆️</div>
-                            <div>
-                                <strong>Upload & cleaning</strong>
-                                <span>Validasi kolom, mapping kategori, dan import data ke database Django.</span>
-                            </div>
-                        </div>
-
-                        <div class="feature-item">
-                            <div class="feature-icon">🤖</div>
-                            <div>
-                                <strong>Forecast ARIMA</strong>
-                                <span>Prediksi traffic kategori untuk membantu keputusan konten redaksi.</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="login-extra">
+                    <span>Pastikan login dari perangkat yang aman.</span>
                 </div>
 
-                <div class="brand-footer">
-                    <span>Internal dashboard · Digtive Global Media</span>
-                    <span class="status-pill">● System ready</span>
-                </div>
-            </section>
+                <button type="submit" class="btn primary full">Masuk Dashboard</button>
+                <a href="{% url 'dashboard' %}" class="btn ghost full">Lihat Dashboard</a>
+            </form>
 
-            <section class="login-panel" aria-label="Form login">
-                <div class="login-inner">
-                    <div class="mobile-brand">
-                        <div class="brand">
-                            <div class="brand-logo">📈</div>
-                            <div>
-                                <h2>Wearemania</h2>
-                                <p>Traffic Forecasting Dashboard</p>
-                            </div>
-                        </div>
-                        <span class="status-pill">● Secure Login</span>
-                    </div>
+            <p class="login-help">Catatan: kalau belum punya akun, buat superuser lewat terminal dengan <code>python manage.py createsuperuser</code>, lalu login memakai akun tersebut.</p>
 
-                    <div class="top-actions">
-                        <a href="/admin/" class="btn btn-primary">Admin Panel</a>
-                    </div>
-
-                    <header class="login-header">
-                        <div class="eyebrow">👋 Welcome Back</div>
-                        <h2>Login Dashboard</h2>
-                        <p>
-                            Masukkan username dan password akun Django untuk mengakses halaman dashboard,
-                            upload raw data, dan panel administrasi.
-                        </p>
-                    </header>
-
-                    {% if messages %}
-                        <div class="messages">
-                            {% for message in messages %}
-                                <div class="message {{ message.tags }}">
-                                    {{ message }}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    {% if form.non_field_errors %}
-                        <div class="error-list">
-                            {% for error in form.non_field_errors %}
-                                <div class="form-error-box">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <div class="info">
-                        <div class="info-icon">ℹ️</div>
-                        <div>
-                            <strong>Akses khusus pengelola</strong>
-                            <p>
-                                Gunakan akun yang sudah dibuat lewat Django Admin atau superuser.
-                                Setelah login berhasil, kamu akan diarahkan ke halaman yang diminta sebelumnya.
-                            </p>
-                        </div>
-                    </div>
-
-                    <form method="post" class="login-form" novalidate>
-                        {% csrf_token %}
-
-                        {% if next %}
-                            <input type="hidden" name="next" value="{{ next }}">
-                        {% endif %}
-
-                        <div class="form-grid">
-                            <div class="field-group">
-                                <div class="field-head">
-                                    <label for="{{ form.username.id_for_label }}">Username</label>
-                                    <span class="help-text">Akun Django</span>
-                                </div>
-                                <div class="input-shell">
-                                    <span class="input-icon">👤</span>
-                                    {{ form.username }}
-                                </div>
-                                {% for error in form.username.errors %}
-                                    <div class="field-error">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-
-                            <div class="field-group">
-                                <div class="field-head">
-                                    <label for="{{ form.password.id_for_label }}">Password</label>
-                                    <span class="help-text">Rahasia akun</span>
-                                </div>
-                                <div class="input-shell">
-                                    <span class="input-icon">🔒</span>
-                                    {{ form.password }}
-                                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Tampilkan atau sembunyikan password">👁️</button>
-                                </div>
-                                {% for error in form.password.errors %}
-                                    <div class="field-error">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-
-                            <div class="login-options">
-                                <div class="remember-note">
-                                    <span class="remember-dot"></span>
-                                    <span>Pastikan login dari perangkat yang aman.</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="login-actions">
-                            <button type="submit">Masuk Dashboard</button>
-                        </div>
-
-                        <p class="small-note">
-                            Catatan: kalau belum punya akun, buat superuser lewat terminal dengan
-                            <strong>python manage.py createsuperuser</strong>, lalu login memakai akun tersebut.
-                        </p>
-
-                        <div class="mini-stats">
-                            <div class="mini-card">
-                                <strong>CSV</strong>
-                                <span>Upload data manual</span>
-                            </div>
-                            <div class="mini-card">
-                                <strong>ARIMA</strong>
-                                <span>Forecast traffic</span>
-                            </div>
-                            <div class="mini-card">
-                                <strong>Admin</strong>
-                                <span>Kelola database</span>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </section>
-        </div>
+            <div class="login-metrics">
+                <div><strong>CSV</strong><span>Upload data manual</span></div>
+                <div><strong>ARIMA</strong><span>Forecast traffic</span></div>
+                <div><strong>Admin</strong><span>Kelola database</span></div>
+            </div>
+        </section>
     </main>
 
-    <script>
-        const usernameInput = document.querySelector('input[name="username"]');
-        const passwordInput = document.querySelector('input[name="password"]');
-        const togglePassword = document.getElementById("togglePassword");
-
-        if (usernameInput) {
-            usernameInput.setAttribute("placeholder", "Masukkan username");
-            usernameInput.setAttribute("autocomplete", "username");
-        }
-
-        if (passwordInput) {
-            passwordInput.setAttribute("placeholder", "Masukkan password");
-            passwordInput.setAttribute("autocomplete", "current-password");
-        }
-
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener("click", () => {
-                const isPassword = passwordInput.getAttribute("type") === "password";
-                passwordInput.setAttribute("type", isPassword ? "text" : "password");
-                togglePassword.textContent = isPassword ? "🙈" : "👁️";
-            });
-        }
-    </script>
+    <script src="{% static 'assets/js/login.js' %}" defer></script>
 </body>
 </html>

@@ -1,5 +1,4 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -11,1801 +10,297 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        :root {
-            --bg: #f5f7fb;
-            --bg-soft: #eef4fb;
-            --text: #111827;
-            --muted: #6b7280;
-            --primary: #0f4c81;
-            --primary-dark: #0a1d35;
-            --accent: #f97316;
-            --accent-dark: #ea580c;
-            --success: #16a34a;
-            --success-dark: #15803d;
-            --danger: #dc2626;
-            --warning: #f59e0b;
-            --card: #ffffff;
-            --border: #e5e7eb;
-            --shadow: 0 16px 42px rgba(15, 23, 42, 0.10);
-            --shadow-soft: 0 10px 26px rgba(15, 23, 42, 0.07);
-            --radius-xl: 26px;
-            --radius-lg: 20px;
-            --radius-md: 16px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            min-height: 100vh;
-            margin: 0;
-            background:
-                radial-gradient(circle at top left, rgba(15, 76, 129, 0.13), transparent 32%),
-                radial-gradient(circle at top right, rgba(249, 115, 22, 0.10), transparent 30%),
-                var(--bg);
-            color: var(--text);
-            font-family: "Inter", Arial, Helvetica, sans-serif;
-        }
-
-        body.sidebar-open {
-            overflow: hidden;
-        }
-
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        button,
-        input,
-        select {
-            font-family: inherit;
-        }
-
-        .layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .mobile-topbar {
-            display: none;
-        }
-
-        .sidebar-overlay {
-            display: none;
-        }
-
-        .sidebar-close {
-            display: none;
-            width: 38px;
-            height: 38px;
-            min-height: 38px;
-            margin-left: auto;
-            margin-bottom: 12px;
-            padding: 0;
-            border-radius: 14px;
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: none;
-        }
-
-        .sidebar {
-            width: 286px;
-            padding: 22px;
-            position: fixed;
-            inset: 0 auto 0 0;
-            z-index: 20;
-            overflow-y: auto;
-            color: #ffffff;
-            background:
-                linear-gradient(180deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
-                #0f172a;
-            box-shadow: 16px 0 42px rgba(15, 23, 42, 0.18);
-            transition: transform 0.25s ease;
-        }
-
-        .brand {
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            margin-bottom: 26px;
-            padding: 14px;
-            border-radius: 22px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .brand-logo,
-        .mobile-logo {
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #f97316, #facc15);
-            color: #111827;
-            font-weight: 900;
-            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.30);
-        }
-
-        .brand-logo {
-            width: 48px;
-            height: 48px;
-            font-size: 23px;
-        }
-
-        .mobile-logo {
-            width: 36px;
-            height: 36px;
-            font-size: 18px;
-        }
-
-        .brand h2 {
-            margin: 0;
-            font-size: 19px;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-        }
-
-        .brand p {
-            margin: 5px 0 0;
-            color: rgba(226, 232, 240, 0.86);
-            font-size: 12px;
-            line-height: 1.45;
-        }
-
-        .sidebar-label {
-            margin: 0 8px 10px;
-            color: rgba(226, 232, 240, 0.68);
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-        }
-
-        .menu {
-            display: grid;
-            gap: 8px;
-            margin-bottom: 22px;
-        }
-
-        .menu a {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
-            border-radius: 16px;
-            color: rgba(255, 255, 255, 0.86);
-            font-weight: 800;
-            transition: 0.2s ease;
-        }
-
-        .menu a:hover,
-        .menu a.active {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.12);
-        }
-
-        .menu-icon {
-            width: 29px;
-            height: 29px;
-            display: grid;
-            place-items: center;
-            flex: 0 0 29px;
-            border-radius: 11px;
-            background: rgba(255, 255, 255, 0.12);
-            font-size: 14px;
-        }
-
-        .sidebar-card,
-        .account-card {
-            display: grid;
-            gap: 8px;
-            padding: 16px;
-            margin-bottom: 14px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: rgba(255, 255, 255, 0.86);
-            line-height: 1.5;
-            font-size: 13px;
-        }
-
-        .sidebar-card strong,
-        .account-card strong {
-            color: #ffffff;
-        }
-
-        .account-card form {
-            margin: 0;
-        }
-
-        .sidebar-auth-actions {
-            display: grid;
-            gap: 8px;
-            margin-top: 4px;
-        }
-
-        .main {
-            width: calc(100% - 286px);
-            max-width: 100%;
-            margin-left: 286px;
-            padding: 28px;
-        }
-
-        .btn,
-        button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-height: 44px;
-            padding: 11px 15px;
-            border: 0;
-            border-radius: 14px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 900;
-            line-height: 1;
-            transition: 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .btn:hover,
-        button:hover {
-            transform: translateY(-1px);
-            filter: brightness(0.97);
-        }
-
-        .btn:disabled,
-        button:disabled {
-            cursor: not-allowed;
-            opacity: 0.72;
-            transform: none;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: #ffffff;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-dark);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: #ffffff;
-        }
-
-        .btn-success:hover {
-            background: var(--success-dark);
-        }
-
-        .btn-light {
-            background: #ffffff;
-            color: var(--primary-dark);
-            border: 1px solid rgba(229, 231, 235, 0.92);
-        }
-
-        .btn-outline {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
-            border: 1px solid #e5e7eb;
-        }
-
-        .btn-secondary:hover {
-            background: #e5e7eb;
-        }
-
-        .hero {
-            display: flex;
-            justify-content: space-between;
-            gap: 22px;
-            align-items: center;
-            margin-bottom: 22px;
-            padding: 28px;
-            border-radius: var(--radius-xl);
-            background:
-                linear-gradient(135deg, rgba(15, 76, 129, 0.97), rgba(10, 29, 53, 0.97)),
-                #0f4c81;
-            color: #ffffff;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .hero::before {
-            content: "";
-            position: absolute;
-            width: 230px;
-            height: 230px;
-            right: -96px;
-            top: -112px;
-            border-radius: 999px;
-            background: rgba(249, 115, 22, 0.28);
-            pointer-events: none;
-        }
-
-        .hero::after {
-            content: "";
-            position: absolute;
-            width: 180px;
-            height: 180px;
-            right: 112px;
-            bottom: -128px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
-            pointer-events: none;
-        }
-
-        .hero > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-content {
-            max-width: 780px;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 11px;
-            padding: 7px 11px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.12);
-            color: rgba(255, 255, 255, 0.90);
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .hero h1 {
-            margin: 0;
-            font-size: clamp(28px, 3vw, 40px);
-            letter-spacing: -0.045em;
-            line-height: 1.07;
-        }
-
-        .hero p {
-            margin: 11px 0 0;
-            max-width: 760px;
-            color: rgba(255, 255, 255, 0.84);
-            line-height: 1.65;
-        }
-
-        .hero-actions {
-            min-width: 280px;
-        }
-
-        .auth-strip {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            color: rgba(255, 255, 255, 0.88);
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .user-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 230px;
-            padding: 8px 10px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .action-group {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .messages {
-            display: grid;
-            gap: 8px;
-            margin-bottom: 18px;
-        }
-
-        .message {
-            padding: 13px 15px;
-            border-radius: 14px;
-            background: #e0f2fe;
-            color: #075985;
-            font-weight: 800;
-            box-shadow: var(--shadow-soft);
-        }
-
-        .message.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .message.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .message.warning {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .card,
-        .metric,
-        .filter-section {
-            background: var(--card);
-            border: 1px solid rgba(229, 231, 235, 0.80);
-            box-shadow: var(--shadow-soft);
-        }
-
-        .card {
-            padding: 21px;
-            margin-bottom: 20px;
-            border-radius: var(--radius-lg);
-        }
-
-        .card h2,
-        .section-heading h2 {
-            margin: 0;
-            font-size: 20px;
-            letter-spacing: -0.025em;
-        }
-
-        .section-subtitle,
-        .section-heading p {
-            display: block;
-            margin: 6px 0 0;
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .filter-section {
-            padding: 22px;
-            margin-bottom: 22px;
-            border-radius: var(--radius-lg);
-        }
-
-        .section-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-            margin-bottom: 18px;
-        }
-
-        .filter-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 7px 12px;
-            border-radius: 999px;
-            background: #fff7ed;
-            color: #c2410c;
-            border: 1px solid #fed7aa;
-            font-size: 12px;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .filter-form {
-            display: grid;
-            grid-template-columns: 1.35fr 1fr 1fr auto;
-            gap: 14px;
-            align-items: end;
-        }
-
-        .filter-group {
-            display: grid;
-            gap: 8px;
-        }
-
-        .filter-group label {
-            color: #374151;
-            font-size: 13px;
-            font-weight: 900;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
-            min-width: 0;
-            min-height: 44px;
-            padding: 10px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 13px;
-            outline: none;
-            background: #ffffff;
-            color: var(--text);
-            font-size: 14px;
-        }
-
-        .filter-group select:focus,
-        .filter-group input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .metric {
-            position: relative;
-            overflow: hidden;
-            padding: 20px;
-            border-radius: var(--radius-lg);
-        }
-
-        .metric::after {
-            content: "";
-            position: absolute;
-            width: 78px;
-            height: 78px;
-            right: -25px;
-            bottom: -32px;
-            border-radius: 999px;
-            background: rgba(15, 76, 129, 0.08);
-        }
-
-        .metric-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: flex-start;
-            position: relative;
-            z-index: 1;
-        }
-
-        .metric-icon {
-            width: 40px;
-            height: 40px;
-            display: grid;
-            place-items: center;
-            border-radius: 14px;
-            background: rgba(15, 76, 129, 0.10);
-            color: var(--primary);
-            font-size: 18px;
-        }
-
-        .metric h3 {
-            margin: 0;
-            color: var(--muted);
-            font-size: 14px;
-            font-weight: 900;
-        }
-
-        .metric p {
-            position: relative;
-            z-index: 1;
-            margin: 10px 0 0;
-            font-size: 29px;
-            font-weight: 950;
-            letter-spacing: -0.04em;
-        }
-
-        .metric .metric-date {
-            font-size: 16px;
-            letter-spacing: -0.02em;
-            line-height: 1.3;
-        }
-
-        .metric small {
-            position: relative;
-            z-index: 1;
-            display: block;
-            margin-top: 8px;
-            color: var(--muted);
-            line-height: 1.45;
-        }
-
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1.85fr) minmax(320px, 0.85fr);
-            gap: 20px;
-            align-items: start;
-            margin-bottom: 20px;
-        }
-
-        .chart-card {
-            margin-bottom: 0;
-        }
-
-        .chart-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 14px;
-            margin-bottom: 10px;
-        }
-
-        .chart-badges {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            width: fit-content;
-            padding: 7px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 950;
-            white-space: nowrap;
-        }
-
-        .badge-primary {
-            background: rgba(15, 76, 129, 0.12);
-            color: var(--primary);
-        }
-
-        .badge-success {
-            background: rgba(22, 163, 74, 0.12);
-            color: #166534;
-        }
-
-        .badge-accent {
-            background: rgba(249, 115, 22, 0.13);
-            color: #9a3412;
-        }
-
-        .chart-wrap {
-            position: relative;
-            height: 430px;
-            min-height: 380px;
-            margin-top: 14px;
-        }
-
-        .chart-wrap canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .chart-empty {
-            position: absolute;
-            inset: 0;
-            display: none;
-            place-items: center;
-            text-align: center;
-            padding: 24px;
-            border-radius: 18px;
-            background: #f9fafb;
-            border: 1px dashed #d1d5db;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        .chart-empty strong {
-            display: block;
-            margin-bottom: 6px;
-            color: var(--text);
-        }
-
-        .insight-stack {
-            display: grid;
-            gap: 20px;
-        }
-
-        .summary-box {
-            margin-top: 14px;
-            padding: 16px;
-            border-radius: 18px;
-            background: rgba(15, 76, 129, 0.07);
-            border: 1px solid rgba(15, 76, 129, 0.12);
-            color: var(--primary-dark);
-            line-height: 1.7;
-        }
-
-        .summary-box strong {
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .mini-list {
-            display: grid;
-            gap: 12px;
-            margin-top: 14px;
-        }
-
-        .mini-item {
-            display: grid;
-            grid-template-columns: 36px 1fr;
-            gap: 11px;
-            align-items: start;
-            padding: 13px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: #fbfdff;
-        }
-
-        .mini-icon {
-            width: 36px;
-            height: 36px;
-            display: grid;
-            place-items: center;
-            border-radius: 13px;
-            background: rgba(15, 76, 129, 0.10);
-            color: var(--primary);
-        }
-
-        .mini-item strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .mini-item span {
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.55;
-        }
-
-        .recommendation-list {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 16px;
-            margin-top: 16px;
-        }
-
-        .recommendation-item {
-            padding: 16px;
-            border-radius: 18px;
-            border: 1px solid var(--border);
-            background:
-                linear-gradient(180deg, #ffffff, #fbfdff);
-        }
-
-        .recommendation-item strong {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 18px;
-            letter-spacing: -0.02em;
-        }
-
-        .recommendation-item span {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .recommendation-item p {
-            margin: 8px 0 0;
-            font-size: 24px;
-            font-weight: 950;
-            letter-spacing: -0.04em;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 14px;
-            margin-top: 16px;
-        }
-
-        .feature-item {
-            padding: 16px;
-            border-radius: 18px;
-            border: 1px solid var(--border);
-            background: #fbfdff;
-        }
-
-        .feature-item strong {
-            display: block;
-            margin-bottom: 7px;
-        }
-
-        .feature-item span {
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.55;
-        }
-
-        .empty-text {
-            margin: 14px 0 0;
-            color: var(--muted);
-            line-height: 1.65;
-        }
-
-        .table-scroll {
-            width: 100%;
-            overflow-x: auto;
-            margin-top: 14px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-        }
-
-        table {
-            width: 100%;
-            min-width: 760px;
-            border-collapse: collapse;
-            background: #ffffff;
-        }
-
-        th,
-        td {
-            padding: 13px 14px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-            font-size: 14px;
-        }
-
-        th {
-            color: var(--muted);
-            background: #f9fafb;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        tr:last-child td {
-            border-bottom: 0;
-        }
-
-        .footer-note {
-            margin: 24px 0 4px;
-            color: var(--muted);
-            font-size: 13px;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-
-        .support-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .support-grid > .card:only-child {
-            grid-column: 1 / -1;
-        }
-
-        .card,
-        .metric,
-        .filter-section,
-        .hero,
-        .side-card,
-        .recommendation-item,
-        .feature-item,
-        .real-insight-item,
-        .mini-item,
-        .evaluation-item {
-            min-width: 0;
-        }
-
-        .card h2,
-        .hero h1,
-        .metric p,
-        .recommendation-item strong,
-        .real-insight-item b,
-        .mini-item strong,
-        .feature-item strong {
-            overflow-wrap: anywhere;
-        }
-
-        .table-scroll {
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .empty-text {
-            grid-column: 1 / -1;
-        }
-
-        .support-chart-wrap {
-            position: relative;
-            height: 320px;
-            margin-top: 16px;
-        }
-
-        .support-chart-wrap canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .real-insight-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 14px;
-            margin-top: 16px;
-        }
-
-        .real-insight-item {
-            padding: 16px;
-            border-radius: 18px;
-            border: 1px solid var(--border);
-            background: #fbfdff;
-        }
-
-        .real-insight-icon {
-            width: 38px;
-            height: 38px;
-            display: grid;
-            place-items: center;
-            margin-bottom: 12px;
-            border-radius: 14px;
-            background: rgba(15, 76, 129, 0.10);
-            color: var(--primary);
-            font-size: 18px;
-        }
-
-        .real-insight-item strong {
-            display: block;
-            margin-bottom: 6px;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .real-insight-item b {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text);
-            font-size: 20px;
-            letter-spacing: -0.03em;
-        }
-
-        .real-insight-item span {
-            display: block;
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .evaluation-list {
-            display: grid;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .evaluation-item {
-            display: grid;
-            grid-template-columns: 34px 1fr;
-            gap: 12px;
-            align-items: start;
-            padding: 14px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: #fbfdff;
-        }
-
-        .evaluation-item span:first-child {
-            width: 34px;
-            height: 34px;
-            display: grid;
-            place-items: center;
-            border-radius: 12px;
-            background: rgba(22, 163, 74, 0.10);
-        }
-
-        .evaluation-item strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .evaluation-item small {
-            color: var(--muted);
-            line-height: 1.55;
-        }
-
-        .forecast-modal-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 18px;
-            background: rgba(15, 23, 42, 0.62);
-            backdrop-filter: blur(5px);
-        }
-
-        .forecast-modal-overlay.show {
-            display: flex;
-        }
-
-        .forecast-modal {
-            width: min(520px, 100%);
-            padding: 24px;
-            border-radius: 24px;
-            background: #ffffff;
-            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.32);
-        }
-
-        .forecast-modal h2 {
-            margin: 0;
-            font-size: 23px;
-            letter-spacing: -0.03em;
-        }
-
-        .forecast-modal p {
-            margin: 9px 0 18px;
-            color: var(--muted);
-            line-height: 1.65;
-        }
-
-        .progress-shell {
-            width: 100%;
-            height: 14px;
-            overflow: hidden;
-            border-radius: 999px;
-            background: #e5e7eb;
-        }
-
-        .progress-fill {
-            width: 0%;
-            height: 100%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, var(--accent), var(--success));
-            transition: width 0.24s ease;
-        }
-
-        .progress-meta {
-            display: flex;
-            justify-content: space-between;
-            gap: 14px;
-            margin: 10px 0 18px;
-            font-size: 13px;
-            font-weight: 900;
-            color: #374151;
-        }
-
-        .process-steps {
-            display: grid;
-            gap: 9px;
-        }
-
-        .process-step {
-            padding: 11px 13px;
-            border-radius: 14px;
-            background: #f9fafb;
-            color: var(--muted);
-            font-size: 13px;
-            font-weight: 900;
-        }
-
-        .process-step.active {
-            color: #166534;
-            background: #dcfce7;
-        }
-
-        @media (max-width: 1180px) {
-            .metric-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .analytics-grid,
-            .support-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .real-insight-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .feature-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 1100px) {
-            .filter-form {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .filter-actions {
-                grid-column: 1 / -1;
-            }
-        }
-
-        @media (max-width: 980px) {
-            .mobile-topbar {
-                position: sticky;
-                top: 0;
-                z-index: 30;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 12px;
-                padding: 12px 16px;
-                color: #ffffff;
-                background:
-                    linear-gradient(135deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
-                    #0f172a;
-                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
-            }
-
-            .mobile-brand {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-weight: 950;
-            }
-
-            .mobile-brand span:last-child {
-                letter-spacing: -0.02em;
-            }
-
-            .mobile-toggle {
-                min-height: 38px;
-                padding: 9px 12px;
-                color: #ffffff;
-                background: rgba(255, 255, 255, 0.12);
-                border: 1px solid rgba(255, 255, 255, 0.14);
-            }
-
-            .sidebar {
-                width: min(320px, 88vw);
-                transform: translateX(-105%);
-                border-radius: 0 24px 24px 0;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .sidebar-overlay {
-                position: fixed;
-                inset: 0;
-                display: none;
-                background: rgba(15, 23, 42, 0.44);
-                z-index: 18;
-            }
-
-            .sidebar-overlay.active {
-                display: block;
-            }
-
-            .layout {
-                display: block;
-            }
-
-            .sidebar-close {
-                display: grid;
-                place-items: center;
-            }
-
-            .main {
-                width: 100%;
-                margin-left: 0;
-                padding: 18px;
-            }
-
-            .hero {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .hero-actions {
-                width: 100%;
-                min-width: 0;
-            }
-
-            .auth-strip,
-            .action-group {
-                justify-content: flex-start;
-            }
-
-            .recommendation-list {
-                grid-template-columns: 1fr;
-            }
-
-            .chart-head {
-                flex-direction: column;
-            }
-
-            .chart-badges {
-                justify-content: flex-start;
-            }
-        }
-
-        @media (max-width: 680px) {
-            .main {
-                padding: 14px;
-            }
-
-            .hero,
-            .card,
-            .filter-section,
-            .metric {
-                border-radius: 18px;
-                padding: 17px;
-            }
-
-            .hero h1 {
-                font-size: 26px;
-            }
-
-            .hero-actions,
-            .auth-strip,
-            .action-group {
-                display: grid;
-                width: 100%;
-                justify-content: stretch;
-            }
-
-            .action-group form {
-                width: 100%;
-            }
-
-            .btn,
-            button,
-            .filter-actions a {
-                width: 100%;
-            }
-
-            .section-heading {
-                flex-direction: column;
-            }
-
-            .filter-form,
-            .metric-grid,
-            .real-insight-grid,
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .filter-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .chart-wrap {
-                min-height: 320px;
-                height: 340px;
-            }
-
-            .user-pill {
-                max-width: none;
-                justify-content: center;
-            }
-
-            .mini-item,
-            .evaluation-item {
-                grid-template-columns: 34px 1fr;
-            }
-
-            .chart-badges,
-            .auth-strip {
-                display: grid;
-                grid-template-columns: 1fr;
-            }
-
-            .filter-badge,
-            .badge {
-                white-space: normal;
-            }
-
-            .support-chart-wrap {
-                height: 300px;
-            }
-
-            .forecast-modal {
-                padding: 18px;
-                border-radius: 20px;
-            }
-        }
-
-        @media (max-width: 440px) {
-            .mobile-topbar {
-                padding: 10px 12px;
-            }
-
-            .mobile-brand span:last-child {
-                max-width: 150px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            .main {
-                padding: 12px;
-            }
-
-            .hero,
-            .card,
-            .filter-section,
-            .metric {
-                padding: 15px;
-            }
-
-            .hero h1 {
-                font-size: 24px;
-            }
-
-            .hero p,
-            .section-subtitle,
-            .section-heading p,
-            .empty-text,
-            .summary-box {
-                font-size: 13px;
-            }
-
-            .metric p {
-                font-size: 25px;
-            }
-
-            .chart-wrap {
-                min-height: 300px;
-                height: 315px;
-            }
-
-            .support-chart-wrap {
-                height: 285px;
-            }
-
-            .process-step {
-                font-size: 12px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'assets/css/common.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/dashboard.css' %}">
 </head>
-
 <body>
     <div class="mobile-topbar">
-        <div class="mobile-brand">
-            <span class="mobile-logo">⚽</span>
+        <a href="{% url 'dashboard' %}" class="mobile-brand" aria-label="Wearemania Dashboard">
+            <span class="mobile-brand-icon">⚽</span>
             <span>Wearemania</span>
-        </div>
-        <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Buka menu">
-            ☰ Menu
-        </button>
+        </a>
+        <button class="mobile-menu-btn" type="button" aria-label="Buka menu" aria-expanded="false">☰ Menu</button>
     </div>
 
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar-overlay" aria-hidden="true"></div>
 
     <div class="layout">
-        <aside class="sidebar" id="sidebar">
-            <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Tutup menu">×</button>
+        <aside class="sidebar" aria-label="Navigasi utama">
+            <button class="sidebar-close" type="button" aria-label="Tutup menu">×</button>
 
-            <div class="brand">
-                <div class="brand-logo">⚽</div>
-                <div>
-                    <h2>Wearemania</h2>
-                    <p>Traffic Forecasting Dashboard</p>
-                </div>
-            </div>
+            <a href="{% url 'dashboard' %}" class="brand">
+                <span class="brand-logo">
+                    <img src="{% static 'assets/logo1.png' %}" alt="Logo Wearemania">
+                    <span class="brand-logo-emoji">⚽</span>
+                </span>
+                <span>
+                    <strong>Wearemania</strong>
+                    <small>Traffic Forecasting Dashboard</small>
+                </span>
+            </a>
 
             <div class="sidebar-label">Menu Utama</div>
-
             <nav class="menu">
-                <a href="{% url 'dashboard' %}" class="active">
-                    <span class="menu-icon">📊</span>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{% url 'upload_raw_data' %}">
-                    <span class="menu-icon">📁</span>
-                    <span>Upload & Cleaning</span>
-                </a>
-                <a href="/admin/">
-                    <span class="menu-icon">⚙️</span>
-                    <span>Admin Panel</span>
-                </a>
+                <a href="{% url 'dashboard' %}" class="active"><span class="menu-icon">📊</span><span>Dashboard</span></a>
+                <a href="{% url 'upload_raw_data' %}"><span class="menu-icon">⬆️</span><span>Upload & Cleaning</span></a>
+                <a href="/admin/"><span class="menu-icon">⚙️</span><span>Admin Panel</span></a>
             </nav>
 
-            <div class="account-card">
+            <div class="sidebar-card">
                 {% if user.is_authenticated %}
-                    <strong>Admin Aktif</strong>
-                    <span>Masuk sebagai <b>{{ user.username }}</b>. Gunakan logout kalau sesi admin sudah selesai.</span>
-
-                    <div class="sidebar-auth-actions">
-                        <form method="post" action="{% url 'admin:logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-outline">🚪 Logout</button>
-                        </form>
-                    </div>
+                    <span class="sidebar-chip success">Admin Aktif</span>
+                    <strong>{{ user.username }}</strong>
+                    <p>Kelola data, upload CSV, dan generate forecast dari satu dashboard.</p>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="sidebar-action">Logout</button>
+                    </form>
                 {% else %}
-                    <strong>Akses Admin</strong>
-                    <span>Login dulu untuk mengelola data, menjalankan forecast, dan masuk ke admin panel.</span>
-
-                    <div class="sidebar-auth-actions">
-                        <a href="{% url 'admin:login' %}?next={{ request.path|urlencode }}" class="btn btn-light">
-                            🔐 Login Admin
-                        </a>
-                    </div>
+                    <span class="sidebar-chip warning">Akses Admin</span>
+                    <strong>Belum login</strong>
+                    <p>Login dulu untuk mengelola data dan menjalankan forecast.</p>
+                    <a href="{% url 'login' %}" class="sidebar-action">Login Admin</a>
                 {% endif %}
             </div>
 
-            <div class="sidebar-card">
-                <strong>Mode Analitik</strong>
-                <span>Monitoring traffic aktual, forecast ARIMA, kategori berita, dan riwayat import dalam satu halaman.</span>
+            <div class="sidebar-card muted-card">
+                <span class="sidebar-chip">Mode Analitik</span>
+                <p>CSV Upload → Cleaning Data → ARIMA Forecast → Dashboard Insight.</p>
             </div>
-
-            
         </aside>
 
-        <main class="main">
-            <section class="hero">
-                <div class="hero-content">
-                    <div class="eyebrow">Live Analytics · ARIMA Forecast</div>
+        <main class="main-content">
+            <header class="page-hero">
+                <div>
+                    <span class="eyebrow">Live assets · ARIMA Forecast</span>
                     <h1>Traffic Forecasting Dashboard</h1>
-                    <p>
-                        Monitoring traffic aktual, prediksi ARIMA, performa kategori berita,
-                        dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.
-                    </p>
+                    <p>Monitoring traffic aktual, prediksi ARIMA, performa kategori berita, dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.</p>
                 </div>
 
                 <div class="hero-actions">
-                    <div class="auth-strip">
-                        {% if user.is_authenticated %}
-                            <span class="user-pill">👤 {{ user.username }}</span>
-                            <form method="post" action="{% url 'admin:logout' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn-outline">Logout</button>
-                            </form>
-                        {% else %}
-                            <a href="{% url 'admin:login' %}?next={{ request.path|urlencode }}" class="btn btn-outline">
-                                🔐 Login
-                            </a>
-                        {% endif %}
-                    </div>
-
-                    <div class="action-group">
-                        <a href="{% url 'upload_raw_data' %}" class="btn btn-primary">
-                            ⬆️ Upload Raw CSV
-                        </a>
-
-                        <form method="post" action="{% url 'generate_forecast' %}" id="generateForecastForm">
-                            {% csrf_token %}
-                            <input type="hidden" name="forecast_days" value="7">
-                            <button type="submit" class="btn-success">
-                                ⚡ Generate Forecast
-                            </button>
-                        </form>
-                    </div>
+                    {% if user.is_authenticated %}
+                        <span class="user-pill">👤 {{ user.username }}</span>
+                    {% else %}
+                        <a class="btn ghost" href="{% url 'login' %}">Login</a>
+                    {% endif %}
+                    <a class="btn secondary" href="{% url 'upload_raw_data' %}">⬆️ Upload Raw CSV</a>
+                    <form id="forecastForm" method="post" action="{% url 'generate_forecast' %}" class="forecast-form" aria-label="Form generate prediksi traffic">
+                        {% csrf_token %}
+                        <label class="forecast-days-field" for="forecastDaysInput">
+                            <span class="forecast-field-label">Periode prediksi</span>
+                            <span class="forecast-input-wrap">
+                                <input id="forecastDaysInput" type="number" name="forecast_days" value="{{ forecast_days|default:'7' }}" min="1" max="30" inputmode="numeric" aria-describedby="forecastDaysHint">
+                                <span class="forecast-unit">hari</span>
+                            </span>
+                        </label>
+                        <button type="submit" class="btn primary">⚡ Generate Forecast</button>
+                        <small id="forecastDaysHint" class="forecast-helper">Jumlah hari ke depan yang akan diprediksi ARIMA.</small>
+                    </form>
                 </div>
-            </section>
+            </header>
 
             {% if messages %}
-                <div class="messages">
+                <section class="message-stack" aria-label="Pesan sistem">
                     {% for message in messages %}
-                        <div class="message {{ message.tags }}">
-                            {{ message }}
-                        </div>
+                        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
                     {% endfor %}
-                </div>
+                </section>
             {% endif %}
 
-            <section class="filter-section">
-                <div class="section-heading">
+            <section class="panel filter-panel">
+                <div class="panel-head">
                     <div>
-                        <h2>Filter Data Dashboard</h2>
+                        <span class="section-kicker">Filter Data Dashboard</span>
+                        <h2>Pilih Data Analisis</h2>
                         <p>Pilih kategori dan rentang tanggal untuk melihat performa traffic lebih spesifik.</p>
                     </div>
-
-                    {% if is_filter_active %}
-                        <span class="filter-badge">● Filter Aktif</span>
-                    {% endif %}
+                    {% if is_filter_active %}<span class="status-badge active">● Filter Aktif</span>{% endif %}
                 </div>
 
-                <form method="get" action="{% url 'dashboard' %}" class="filter-form">
-                    <div class="filter-group">
-                        <label for="category">Kategori</label>
-                        <select name="category" id="category">
+                <form method="get" class="filter-form">
+                    <label>
+                        <span>Kategori</span>
+                        <select name="category">
                             <option value="">Semua Kategori</option>
-
                             {% for category in categories %}
-                                <option value="{{ category.id }}"
-                                    {% if selected_category == category.id|stringformat:"s" %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    {{ category.name }}
-                                </option>
+                                <option value="{{ category.id }}" {% if selected_category|stringformat:'s' == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>
                             {% endfor %}
                         </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="start_date">Tanggal Awal</label>
-                        <input
-                            type="date"
-                            id="start_date"
-                            name="start_date"
-                            value="{{ selected_start_date }}"
-                        >
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="end_date">Tanggal Akhir</label>
-                        <input
-                            type="date"
-                            id="end_date"
-                            name="end_date"
-                            value="{{ selected_end_date }}"
-                        >
-                    </div>
-
+                    </label>
+                    <label>
+                        <span>Tanggal Awal</span>
+                        <input type="date" name="start_date" value="{{ selected_start_date }}">
+                    </label>
+                    <label>
+                        <span>Tanggal Akhir</span>
+                        <input type="date" name="end_date" value="{{ selected_end_date }}">
+                    </label>
                     <div class="filter-actions">
-                        <button type="submit" class="btn-primary">
-                            Terapkan
-                        </button>
-
-                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
-                            Reset
-                        </a>
+                        <button class="btn primary" type="submit">Terapkan</button>
+                        <a class="btn ghost" href="{% url 'dashboard' %}">Reset</a>
                     </div>
                 </form>
             </section>
 
-            <section class="metric-grid">
-                <div class="metric">
-                    <div class="metric-top">
+            <section class="stats-grid" aria-label="Ringkasan dashboard">
+                <article class="stat-card">
+                    <span class="stat-icon">📈</span>
+                    <div>
                         <h3>Total Actual Views</h3>
-                        <div class="metric-icon">👁️</div>
+                        <strong>{{ total_actual_views|default:"0" }}</strong>
+                        <p>Akumulasi traffic aktual dari data historis.</p>
                     </div>
-                    <p>{{ total_actual_views|default:"0" }}</p>
-                    <small>Akumulasi traffic aktual dari data historis.</small>
-                </div>
-
-                <div class="metric">
-                    <div class="metric-top">
+                </article>
+                <article class="stat-card accent">
+                    <span class="stat-icon">🔮</span>
+                    <div>
                         <h3>Total Forecast Views</h3>
-                        <div class="metric-icon">📈</div>
+                        <strong>{{ total_forecast_views|default:"0" }}</strong>
+                        <p>Estimasi traffic dari hasil forecast ARIMA.</p>
                     </div>
-                    <p>{{ total_forecast_views|default:"0" }}</p>
-                    <small>Estimasi traffic dari hasil forecast ARIMA.</small>
-                </div>
-
-                <div class="metric">
-                    <div class="metric-top">
+                </article>
+                <article class="stat-card success">
+                    <span class="stat-icon">🗂️</span>
+                    <div>
                         <h3>Total Kategori</h3>
-                        <div class="metric-icon">🏷️</div>
+                        <strong>{{ total_categories|default:"0" }}</strong>
+                        <p>Kategori berita yang tersedia di database.</p>
                     </div>
-                    <p>{{ total_categories|default:"0" }}</p>
-                    <small>Kategori berita yang tersedia di database.</small>
-                </div>
-
-                <div class="metric">
-                    <div class="metric-top">
+                </article>
+                <article class="stat-card dark">
+                    <span class="stat-icon">⏱️</span>
+                    <div>
                         <h3>Prediksi Terakhir</h3>
-                        <div class="metric-icon">⏱️</div>
+                        {% if latest_forecast_run %}
+                            <strong>{{ latest_forecast_run.started_at|date:"d M Y H:i" }}</strong>
+                            <p>Status: {{ latest_forecast_run.status }} · {{ latest_forecast_run.total_predictions|default:"0" }} data prediksi.</p>
+                        {% elif last_prediction %}
+                            <strong>{{ last_prediction.generated_at|date:"d M Y H:i" }}</strong>
+                            <p>Kategori terakhir: {{ last_prediction.category.name }}</p>
+                        {% else %}
+                            <strong>Belum ada</strong>
+                            <p>Klik Generate Forecast untuk membuat prediksi pertama.</p>
+                        {% endif %}
                     </div>
-
-                    {% if latest_forecast_run %}
-                        <p class="metric-date">
-                            {{ latest_forecast_time }}
-                        </p>
-                        <small>
-                            Status: {{ latest_forecast_status }} ·
-                            {{ latest_forecast_total_predictions }} data prediksi.
-                        </small>
-                    {% else %}
-                        <p class="metric-date">Belum ada</p>
-                        <small>Klik Generate Forecast untuk membuat prediksi pertama.</small>
-                    {% endif %}
-                </div>
+                </article>
             </section>
 
-            <section class="analytics-grid">
-                <div class="card chart-card">
-                    <div class="chart-head">
+            <section class="content-grid">
+                <article class="panel chart-card">
+                    <div class="panel-head split">
                         <div>
-                            <h2>Actual Traffic vs Forecast Traffic</h2>
-                            <span class="section-subtitle">
-                                Grafik membandingkan traffic aktual dengan hasil prediksi, termasuk lower bound dan upper bound.
-                            </span>
+                            <span class="section-kicker">Actual Traffic vs Forecast Traffic</span>
+                            <h2>Grafik Traffic</h2>
+                            <p>Grafik membandingkan traffic aktual dengan hasil prediksi, termasuk lower bound dan upper bound.</p>
                         </div>
-
                         <div class="chart-badges">
-                            <span class="badge badge-primary">● Actual</span>
-                            <span class="badge badge-success">● Forecast</span>
-                            <span class="badge badge-accent">● Confidence Range</span>
+                            <span class="badge primary">● Actual</span>
+                            <span class="badge accent">● Forecast</span>
+                            <span class="badge muted">● Confidence Range</span>
                         </div>
                     </div>
 
                     <div class="chart-wrap">
-                        <canvas id="trafficChart"></canvas>
-
-                        <div class="chart-empty" id="chartEmpty">
-                            <div>
-                                <strong>Data grafik belum tersedia</strong>
-                                Upload CSV dan jalankan forecast terlebih dahulu agar grafik traffic bisa ditampilkan.
-                            </div>
+                        <canvas id="trafficChart" aria-label="Grafik actual traffic dan forecast traffic"></canvas>
+                        <div id="trafficChartEmpty" class="chart-empty">
+                            <strong>Data grafik belum tersedia</strong>
+                            Upload CSV dan jalankan forecast terlebih dahulu agar grafik traffic bisa ditampilkan.
                         </div>
                     </div>
-                </div>
+                </article>
 
-                <div class="insight-stack">
-                    <section class="card">
-                        <h2>Insight Data</h2>
-                        <span class="section-subtitle">
-                            Insight otomatis berdasarkan data aktual, forecast, kategori, dan rentang prediksi.
-                        </span>
+                <aside class="insight-stack">
+                    <article class="panel insight-panel">
+                        <span class="section-kicker">Insight Data</span>
+                        <h2>Ringkasan Otomatis</h2>
+                        <p id="autoInsight">Insight akan dihitung dari data actual dan forecast yang tersedia.</p>
+                    </article>
 
-                        <div class="summary-box">
-                            <strong>Ringkasan otomatis</strong>
-                            {{ insight_summary }}
-                        </div>
-                    </section>
-
-                    <section class="card">
-                        <h2>Status Analisis</h2>
-
+                    <article class="panel mini-panel">
+                        <span class="section-kicker">Status Analisis</span>
                         <div class="mini-list">
-                            <div class="mini-item">
-                                <div class="mini-icon">📈</div>
-                                <div>
-                                    <strong>Grafik Prediksi</strong>
-                                    <span>Menampilkan perbandingan data aktual dan hasil forecast ARIMA.</span>
-                                </div>
-                            </div>
-
-                            <div class="mini-item">
-                                <div class="mini-icon">🎯</div>
-                                <div>
-                                    <strong>Prioritas Redaksi</strong>
-                                    <span>Kategori dengan estimasi tinggi bisa menjadi acuan rencana konten.</span>
-                                </div>
-                            </div>
-
-                            <div class="mini-item">
-                                <div class="mini-icon">🧹</div>
-                                <div>
-                                    <strong>Data Cleaning</strong>
-                                    <span>CSV perlu sudah bersih agar grafik dan prediksi lebih stabil.</span>
-                                </div>
-                            </div>
+                            <div class="mini-item"><span>📊</span><div><strong>Grafik Prediksi</strong><small>Menampilkan perbandingan aktual dan forecast ARIMA.</small></div></div>
+                            <div class="mini-item"><span>🧭</span><div><strong>Prioritas Redaksi</strong><small>Kategori dengan estimasi tinggi bisa menjadi acuan rencana konten.</small></div></div>
+                            <div class="mini-item"><span>🧹</span><div><strong>Data Cleaning</strong><small>CSV perlu sudah bersih agar grafik dan prediksi stabil.</small></div></div>
                         </div>
-                    </section>
-                </div>
+                    </article>
+                </aside>
             </section>
 
-            <section class="card">
-                <h2>Real Insight Data</h2>
-                <span class="section-subtitle">
-                    Insight berikut dihitung langsung dari data yang sedang tampil di dashboard.
-                </span>
-
-                <div class="real-insight-grid">
-                    {% for insight in insight_cards %}
-                        <div class="real-insight-item">
-                            <div class="real-insight-icon">{{ insight.icon }}</div>
-                            <strong>{{ insight.title }}</strong>
-                            <b>{{ insight.value }}</b>
-                            <span>{{ insight.description }}</span>
+            <section class="dual-grid">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <span class="section-kicker">Top Kategori Berdasarkan Actual Views</span>
+                            <h2>Performa Historis</h2>
+                            <p>Kategori yang paling banyak menarik traffic pada data aktual.</p>
                         </div>
-                    {% empty %}
-                        <p class="empty-text">
-                            Belum ada insight. Upload CSV dan jalankan forecast terlebih dahulu.
-                        </p>
-                    {% endfor %}
-                </div>
-            </section>
-
-            <section class="support-grid">
-                <div class="card">
-                    <h2>Top Kategori Berdasarkan Actual Views</h2>
-                    <span class="section-subtitle">
-                        Grafik ini membantu melihat kategori yang benar-benar paling banyak menarik traffic historis.
-                    </span>
-
-                    <div class="support-chart-wrap">
-                        <canvas id="topActualChart"></canvas>
                     </div>
-                </div>
-
-                <div class="card">
-                    <h2>Distribusi Kontribusi Traffic</h2>
-                    <span class="section-subtitle">
-                        Menampilkan persentase kontribusi kategori terhadap total actual views.
-                    </span>
-
-                    <div class="support-chart-wrap">
-                        <canvas id="categoryShareChart"></canvas>
+                    <div class="ranking-list">
+                        {% for item in top_actual_categories %}
+                            <div class="ranking-item">
+                                <span class="rank-number">{{ forloop.counter }}</span>
+                                <div>
+                                    <strong>{{ item.category__name }}</strong>
+                                    <small>{{ item.total_views }} actual views</small>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="empty-text">Belum ada data aktual. Upload CSV dulu wak.</p>
+                        {% endfor %}
                     </div>
-                </div>
-            </section>
+                </article>
 
-            <section class="support-grid">
-                <div class="card">
-                    <h2>Ranking Forecast Kategori</h2>
-                    <span class="section-subtitle">
-                        Kategori dengan prediksi traffic tertinggi untuk periode forecast.
-                    </span>
-
-                    <div class="support-chart-wrap">
-                        <canvas id="topForecastChart"></canvas>
+                <article class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <span class="section-kicker">Ranking Forecast Kategori</span>
+                            <h2>Rekomendasi Kategori Potensial</h2>
+                            <p>Kategori dengan estimasi traffic tertinggi untuk periode prediksi.</p>
+                        </div>
                     </div>
-                </div>
-            </section>
-
-            <section class="card">
-                <h2>Rekomendasi Kategori Potensial</h2>
-                <span class="section-subtitle">
-                    Kategori dengan estimasi traffic tertinggi untuk periode prediksi.
-                </span>
-
-                {% if top_forecast_categories %}
                     <div class="recommendation-list">
                         {% for item in top_forecast_categories %}
                             <div class="recommendation-item">
-                                <strong>{{ item.category__name }}</strong>
-                                <span>Estimasi views periode prediksi:</span>
-                                <p>{{ item.total_predicted_views }}</p>
+                                <span class="rank-number accent">{{ forloop.counter }}</span>
+                                <div>
+                                    <strong>{{ item.category__name }}</strong>
+                                    <small>Estimasi views: {{ item.total_predicted_views }}</small>
+                                </div>
                             </div>
+                        {% empty %}
+                            <p class="empty-text">Belum ada hasil prediksi. Klik Generate Forecast terlebih dahulu.</p>
                         {% endfor %}
                     </div>
-                {% else %}
-                    <p class="empty-text">
-                        Belum ada hasil prediksi. Klik tombol <b>Generate Forecast</b> terlebih dahulu.
-                    </p>
-                {% endif %}
+                </article>
             </section>
 
-            <section class="card">
-                <h2>Fitur Pendukung Dashboard</h2>
-                <span class="section-subtitle">
-                    Modul utama yang membuat dashboard siap digunakan untuk kebutuhan development dan demo project.
-                </span>
-
+            <section class="panel feature-panel">
+                <div class="panel-head">
+                    <div>
+                        <span class="section-kicker">Fitur Pendukung Dashboard</span>
+                        <h2>Modul Development</h2>
+                        <p>Modul utama yang membuat dashboard siap digunakan untuk kebutuhan development dan demo project.</p>
+                    </div>
+                </div>
                 <div class="feature-grid">
-                    <div class="feature-item">
-                        <strong>Upload CSV Manual</strong>
-                        <span>Data traffic dapat dimasukkan dari file CSV hasil export analytics.</span>
-                    </div>
-
-                    <div class="feature-item">
-                        <strong>Filtering Data</strong>
-                        <span>Filter berdasarkan kategori dan tanggal untuk analisis lebih spesifik.</span>
-                    </div>
-
-                    <div class="feature-item">
-                        <strong>Forecast ARIMA</strong>
-                        <span>Prediksi traffic ke depan berdasarkan pola data historis.</span>
-                    </div>
-
-                    <div class="feature-item">
-                        <strong>Insight Redaksi</strong>
-                        <span>Rekomendasi kategori potensial untuk mendukung strategi konten.</span>
-                    </div>
+                    <div class="feature-item"><span>⬆️</span><strong>Upload CSV Manual</strong><p>Data traffic dapat dimasukkan dari file CSV hasil export assets.</p></div>
+                    <div class="feature-item"><span>🔎</span><strong>Filtering Data</strong><p>Filter berdasarkan kategori dan tanggal untuk analisis lebih spesifik.</p></div>
+                    <div class="feature-item"><span>⚡</span><strong>Forecast ARIMA</strong><p>Prediksi traffic ke depan berdasarkan pola data historis.</p></div>
+                    <div class="feature-item"><span>💡</span><strong>Insight Redaksi</strong><p>Rekomendasi kategori potensial untuk mendukung strategi konten.</p></div>
                 </div>
             </section>
 
             {% if predictions %}
-                <section class="card">
-                    <h2>Data Prediksi Terbaru</h2>
-                    <span class="section-subtitle">
-                        Ringkasan hasil forecast terbaru yang tersimpan di database.
-                    </span>
-
-                    <div class="table-scroll">
+                <section class="panel table-panel">
+                    <div class="panel-head">
+                        <div>
+                            <span class="section-kicker">Data Prediksi Terbaru</span>
+                            <h2>Tabel Forecast</h2>
+                            <p>Ringkasan hasil forecast terbaru yang tersimpan di database.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
                         <table>
                             <thead>
                                 <tr>
@@ -1832,457 +327,35 @@
                 </section>
             {% endif %}
 
-            <p class="footer-note">
-                Wearemania Traffic Forecasting Dashboard · Django · ARIMA · Chart.js
-            </p>
+            <footer class="page-footer">Wearemania Traffic Forecasting Dashboard · Django · ARIMA · Chart.js</footer>
         </main>
     </div>
 
-
-    <div class="forecast-modal-overlay" id="forecastModal">
-        <div class="forecast-modal">
+    <div id="forecastModal" class="process-modal" aria-hidden="true">
+        <div class="process-card" role="status" aria-live="polite">
+            <div class="loader-ring"></div>
             <h2>Generate Forecast Sedang Diproses</h2>
-            <p>
-                Sistem sedang membaca data historis, menyusun time series,
-                menjalankan model ARIMA, lalu menyimpan hasil prediksi ke database.
-            </p>
-
-            <div class="progress-shell">
-                <div class="progress-fill" id="forecastProgressFill"></div>
-            </div>
-
-            <div class="progress-meta">
-                <span id="forecastProgressText">Menyiapkan data...</span>
-                <span id="forecastPercent">0%</span>
-            </div>
-
-            <div class="process-steps">
-                <div class="process-step active" id="forecastStep1">1. Membaca data historis</div>
-                <div class="process-step" id="forecastStep2">2. Cleaning time series</div>
-                <div class="process-step" id="forecastStep3">3. Menjalankan ARIMA</div>
-                <div class="process-step" id="forecastStep4">4. Menyimpan prediksi</div>
-            </div>
+            <p>Sistem sedang membaca data historis, menyusun time series, menjalankan model ARIMA, lalu menyimpan hasil prediksi ke database.</p>
+            <div class="progress-track"><div id="forecastProgressBar" class="progress-bar"></div></div>
+            <span id="forecastProgressText" class="progress-text">Menyiapkan data... 0%</span>
+            <ol class="process-steps">
+                <li>Membaca data historis</li>
+                <li>Cleaning time series</li>
+                <li>Menjalankan ARIMA</li>
+                <li>Menyimpan prediksi</li>
+            </ol>
         </div>
     </div>
 
-    <script>
-        const sidebar = document.getElementById("sidebar");
-        const sidebarToggle = document.getElementById("sidebarToggle");
-        const sidebarClose = document.getElementById("sidebarClose");
-        const sidebarOverlay = document.getElementById("sidebarOverlay");
+    <script type="application/json" id="actual-labels">{{ actual_labels|default:"[]"|safe }}</script>
+    <script type="application/json" id="actual-views">{{ actual_views|default:"[]"|safe }}</script>
+    <script type="application/json" id="forecast-labels">{{ forecast_labels|default:"[]"|safe }}</script>
+    <script type="application/json" id="forecast-views">{{ forecast_views|default:"[]"|safe }}</script>
+    <script type="application/json" id="forecast-lower">{{ forecast_lower|default:"[]"|safe }}</script>
+    <script type="application/json" id="forecast-upper">{{ forecast_upper|default:"[]"|safe }}</script>
 
-        function openSidebar() {
-            sidebar.classList.add("open");
-            sidebarOverlay.classList.add("active");
-            document.body.classList.add("sidebar-open");
-        }
-
-        function closeSidebar() {
-            sidebar.classList.remove("open");
-            sidebarOverlay.classList.remove("active");
-            document.body.classList.remove("sidebar-open");
-        }
-
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener("click", () => {
-                if (sidebar.classList.contains("open")) {
-                    closeSidebar();
-                } else {
-                    openSidebar();
-                }
-            });
-        }
-
-        if (sidebarClose) {
-            sidebarClose.addEventListener("click", closeSidebar);
-        }
-
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener("click", closeSidebar);
-        }
-
-        document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                closeSidebar();
-            }
-        });
-
-        const generateForecastForm = document.getElementById("generateForecastForm");
-        const forecastModal = document.getElementById("forecastModal");
-        const forecastProgressFill = document.getElementById("forecastProgressFill");
-        const forecastProgressText = document.getElementById("forecastProgressText");
-        const forecastPercent = document.getElementById("forecastPercent");
-
-        const forecastStep2 = document.getElementById("forecastStep2");
-        const forecastStep3 = document.getElementById("forecastStep3");
-        const forecastStep4 = document.getElementById("forecastStep4");
-
-        if (generateForecastForm) {
-            generateForecastForm.addEventListener("submit", function(event) {
-                event.preventDefault();
-
-                if (forecastModal) {
-                    forecastModal.classList.add("show");
-                }
-
-                let progress = 0;
-
-                const interval = setInterval(function() {
-                    if (progress < 94) {
-                        progress += Math.floor(Math.random() * 7) + 4;
-                    }
-
-                    if (progress > 96) {
-                        progress = 96;
-                    }
-
-                    if (forecastProgressFill) {
-                        forecastProgressFill.style.width = progress + "%";
-                    }
-
-                    if (forecastPercent) {
-                        forecastPercent.textContent = progress + "%";
-                    }
-
-                    if (progress >= 20) {
-                        forecastProgressText.textContent = "Membersihkan dan menyusun time series...";
-                        forecastStep2.classList.add("active");
-                    }
-
-                    if (progress >= 46) {
-                        forecastProgressText.textContent = "Menjalankan model ARIMA...";
-                        forecastStep3.classList.add("active");
-                    }
-
-                    if (progress >= 74) {
-                        forecastProgressText.textContent = "Menyimpan hasil prediksi...";
-                        forecastStep4.classList.add("active");
-                    }
-
-                    if (progress >= 96) {
-                        forecastProgressText.textContent = "Menunggu respons server...";
-                        clearInterval(interval);
-                    }
-                }, 230);
-
-                setTimeout(function() {
-                    generateForecastForm.submit();
-                }, 850);
-            });
-        }
-
-        function parseJsonData(rawValue, fallback = []) {
-            try {
-                if (!rawValue || rawValue === "None") {
-                    return fallback;
-                }
-
-                return JSON.parse(rawValue);
-            } catch (error) {
-                return fallback;
-            }
-        }
-
-        function toNumberOrNull(value) {
-            if (value === null || value === undefined || value === "") {
-                return null;
-            }
-
-            const numberValue = Number(value);
-            return Number.isFinite(numberValue) ? numberValue : null;
-        }
-
-        const actualLabels = parseJsonData('{{ actual_labels|default:"[]"|escapejs }}');
-        const actualViews = parseJsonData('{{ actual_views|default:"[]"|escapejs }}');
-
-        const forecastLabels = parseJsonData('{{ forecast_labels|default:"[]"|escapejs }}');
-        const forecastViews = parseJsonData('{{ forecast_views|default:"[]"|escapejs }}');
-        const forecastLower = parseJsonData('{{ forecast_lower|default:"[]"|escapejs }}');
-        const forecastUpper = parseJsonData('{{ forecast_upper|default:"[]"|escapejs }}');
-
-        const topActualLabels = parseJsonData('{{ top_actual_labels|default:"[]"|escapejs }}');
-        const topActualValues = parseJsonData('{{ top_actual_values|default:"[]"|escapejs }}');
-
-        const topForecastLabels = parseJsonData('{{ top_forecast_labels|default:"[]"|escapejs }}');
-        const topForecastValues = parseJsonData('{{ top_forecast_values|default:"[]"|escapejs }}');
-
-        const categoryShareLabels = parseJsonData('{{ category_share_labels|default:"[]"|escapejs }}');
-        const categoryShareValues = parseJsonData('{{ category_share_values|default:"[]"|escapejs }}');
-
-        const combinedLabels = Array.from(new Set([...actualLabels, ...forecastLabels]));
-
-        const actualDataset = combinedLabels.map((label) => {
-            const index = actualLabels.indexOf(label);
-            return index !== -1 ? toNumberOrNull(actualViews[index]) : null;
-        });
-
-        const forecastDataset = combinedLabels.map((label) => {
-            const index = forecastLabels.indexOf(label);
-            return index !== -1 ? toNumberOrNull(forecastViews[index]) : null;
-        });
-
-        const lowerDataset = combinedLabels.map((label) => {
-            const index = forecastLabels.indexOf(label);
-            return index !== -1 ? toNumberOrNull(forecastLower[index]) : null;
-        });
-
-        const upperDataset = combinedLabels.map((label) => {
-            const index = forecastLabels.indexOf(label);
-            return index !== -1 ? toNumberOrNull(forecastUpper[index]) : null;
-        });
-
-        const ctx = document.getElementById("trafficChart");
-        const chartEmpty = document.getElementById("chartEmpty");
-
-        const hasChartData =
-            actualDataset.some((item) => item !== null) ||
-            forecastDataset.some((item) => item !== null);
-
-        if (!hasChartData && chartEmpty) {
-            chartEmpty.style.display = "grid";
-        }
-
-        if (ctx && hasChartData) {
-            new Chart(ctx, {
-                type: "line",
-                data: {
-                    labels: combinedLabels,
-                    datasets: [
-                        {
-                            label: "Actual Views",
-                            data: actualDataset,
-                            borderColor: "#0f4c81",
-                            backgroundColor: "rgba(15, 76, 129, 0.10)",
-                            borderWidth: 3,
-                            tension: 0.35,
-                            pointRadius: 2,
-                            pointHoverRadius: 5,
-                            spanGaps: false
-                        },
-                        {
-                            label: "Forecast Views",
-                            data: forecastDataset,
-                            borderColor: "#16a34a",
-                            backgroundColor: "rgba(22, 163, 74, 0.10)",
-                            borderWidth: 3,
-                            borderDash: [7, 6],
-                            tension: 0.35,
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            spanGaps: false
-                        },
-                        {
-                            label: "Lower Bound",
-                            data: lowerDataset,
-                            borderColor: "#f97316",
-                            backgroundColor: "rgba(249, 115, 22, 0.08)",
-                            borderWidth: 1.5,
-                            borderDash: [3, 4],
-                            tension: 0.35,
-                            pointRadius: 0,
-                            spanGaps: false
-                        },
-                        {
-                            label: "Upper Bound",
-                            data: upperDataset,
-                            borderColor: "#f97316",
-                            backgroundColor: "rgba(249, 115, 22, 0.08)",
-                            borderWidth: 1.5,
-                            borderDash: [3, 4],
-                            tension: 0.35,
-                            pointRadius: 0,
-                            spanGaps: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: "index",
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: {
-                                usePointStyle: true,
-                                boxWidth: 8,
-                                boxHeight: 8
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    if (context.raw === null || context.raw === undefined) {
-                                        return null;
-                                    }
-
-                                    return `${context.dataset.label}: ${Number(context.raw).toLocaleString("id-ID")}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                maxRotation: 0,
-                                autoSkip: true,
-                                maxTicksLimit: 8
-                            },
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return Number(value).toLocaleString("id-ID");
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function createBarChart(canvasId, labels, values, labelName) {
-            const canvas = document.getElementById(canvasId);
-
-            if (!canvas || !labels.length || !values.length) {
-                return;
-            }
-
-            new Chart(canvas, {
-                type: "bar",
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: labelName,
-                            data: values,
-                            backgroundColor: "rgba(15, 76, 129, 0.72)",
-                            borderColor: "#0f4c81",
-                            borderWidth: 1,
-                            borderRadius: 10
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: "y",
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${labelName}: ${Number(context.raw).toLocaleString("id-ID")}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return Number(value).toLocaleString("id-ID");
-                                }
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                autoSkip: false
-                            },
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function createDoughnutChart(canvasId, labels, values) {
-            const canvas = document.getElementById(canvasId);
-
-            if (!canvas || !labels.length || !values.length) {
-                return;
-            }
-
-            new Chart(canvas, {
-                type: "doughnut",
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            data: values,
-                            backgroundColor: [
-                                "#0f4c81",
-                                "#16a34a",
-                                "#f97316",
-                                "#f59e0b",
-                                "#7c3aed",
-                                "#64748b"
-                            ],
-                            borderColor: "#ffffff",
-                            borderWidth: 3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: "62%",
-                    plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: {
-                                usePointStyle: true,
-                                boxWidth: 8,
-                                boxHeight: 8
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const total = context.dataset.data.reduce((sum, item) => sum + Number(item), 0);
-                                    const value = Number(context.raw);
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-
-                                    return `${context.label}: ${value.toLocaleString("id-ID")} views (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        createBarChart(
-            "topActualChart",
-            topActualLabels,
-            topActualValues,
-            "Actual Views"
-        );
-
-        createBarChart(
-            "topForecastChart",
-            topForecastLabels,
-            topForecastValues,
-            "Forecast Views"
-        );
-
-        createDoughnutChart(
-            "categoryShareChart",
-            categoryShareLabels,
-            categoryShareValues
-        );
-
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'assets/js/common.js' %}" defer></script>
+    <script src="{% static 'assets/js/dashboard.js' %}" defer></script>
 </body>
 </html>
