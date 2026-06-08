@@ -7,6 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wearemania Traffic Forecasting Dashboard</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -48,7 +52,7 @@
                 radial-gradient(circle at top right, rgba(249, 115, 22, 0.10), transparent 30%),
                 var(--bg);
             color: var(--text);
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: "Inter", Arial, Helvetica, sans-serif;
         }
 
         body.sidebar-open {
@@ -77,6 +81,21 @@
 
         .sidebar-overlay {
             display: none;
+        }
+
+        .sidebar-close {
+            display: none;
+            width: 38px;
+            height: 38px;
+            min-height: 38px;
+            margin-left: auto;
+            margin-bottom: 12px;
+            padding: 0;
+            border-radius: 14px;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: none;
         }
 
         .sidebar {
@@ -176,8 +195,14 @@
         }
 
         .menu-icon {
-            width: 24px;
-            text-align: center;
+            width: 29px;
+            height: 29px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 29px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.12);
+            font-size: 14px;
         }
 
         .sidebar-card,
@@ -210,7 +235,8 @@
         }
 
         .main {
-            width: 100%;
+            width: calc(100% - 286px);
+            max-width: 100%;
             margin-left: 286px;
             padding: 28px;
         }
@@ -868,6 +894,41 @@
             margin-bottom: 20px;
         }
 
+        .support-grid > .card:only-child {
+            grid-column: 1 / -1;
+        }
+
+        .card,
+        .metric,
+        .filter-section,
+        .hero,
+        .side-card,
+        .recommendation-item,
+        .feature-item,
+        .real-insight-item,
+        .mini-item,
+        .evaluation-item {
+            min-width: 0;
+        }
+
+        .card h2,
+        .hero h1,
+        .metric p,
+        .recommendation-item strong,
+        .real-insight-item b,
+        .mini-item strong,
+        .feature-item strong {
+            overflow-wrap: anywhere;
+        }
+
+        .table-scroll {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .empty-text {
+            grid-column: 1 / -1;
+        }
+
         .support-chart-wrap {
             position: relative;
             height: 320px;
@@ -1135,7 +1196,13 @@
                 display: block;
             }
 
+            .sidebar-close {
+                display: grid;
+                place-items: center;
+            }
+
             .main {
+                width: 100%;
                 margin-left: 0;
                 padding: 18px;
             }
@@ -1229,8 +1296,82 @@
                 justify-content: center;
             }
 
-            .mini-item {
+            .mini-item,
+            .evaluation-item {
                 grid-template-columns: 34px 1fr;
+            }
+
+            .chart-badges,
+            .auth-strip {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .filter-badge,
+            .badge {
+                white-space: normal;
+            }
+
+            .support-chart-wrap {
+                height: 300px;
+            }
+
+            .forecast-modal {
+                padding: 18px;
+                border-radius: 20px;
+            }
+        }
+
+        @media (max-width: 440px) {
+            .mobile-topbar {
+                padding: 10px 12px;
+            }
+
+            .mobile-brand span:last-child {
+                max-width: 150px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .main {
+                padding: 12px;
+            }
+
+            .hero,
+            .card,
+            .filter-section,
+            .metric {
+                padding: 15px;
+            }
+
+            .hero h1 {
+                font-size: 24px;
+            }
+
+            .hero p,
+            .section-subtitle,
+            .section-heading p,
+            .empty-text,
+            .summary-box {
+                font-size: 13px;
+            }
+
+            .metric p {
+                font-size: 25px;
+            }
+
+            .chart-wrap {
+                min-height: 300px;
+                height: 315px;
+            }
+
+            .support-chart-wrap {
+                height: 285px;
+            }
+
+            .process-step {
+                font-size: 12px;
             }
         }
     </style>
@@ -1251,6 +1392,8 @@
 
     <div class="layout">
         <aside class="sidebar" id="sidebar">
+            <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Tutup menu">×</button>
+
             <div class="brand">
                 <div class="brand-logo">⚽</div>
                 <div>
@@ -1728,6 +1871,7 @@
     <script>
         const sidebar = document.getElementById("sidebar");
         const sidebarToggle = document.getElementById("sidebarToggle");
+        const sidebarClose = document.getElementById("sidebarClose");
         const sidebarOverlay = document.getElementById("sidebarOverlay");
 
         function openSidebar() {
@@ -1750,6 +1894,10 @@
                     openSidebar();
                 }
             });
+        }
+
+        if (sidebarClose) {
+            sidebarClose.addEventListener("click", closeSidebar);
         }
 
         if (sidebarOverlay) {
