@@ -19,6 +19,10 @@ def safe_positive_int(value):
     return max(0, value)
 
 
+def get_model_field_names(model_class):
+    return {field.name for field in model_class._meta.fields}
+
+
 def prepare_time_series(category):
     queryset = (
         TrafficData.objects
@@ -55,7 +59,6 @@ def run_moving_average_fallback(series, forecast_days=7):
         return []
 
     last_date = series.index.max().date()
-
     recent_series = series.tail(7)
 
     if recent_series.empty:
@@ -73,15 +76,13 @@ def run_moving_average_fallback(series, forecast_days=7):
         lower_bound = safe_positive_int(predicted_value * 0.8)
         upper_bound = safe_positive_int(predicted_value * 1.2)
 
-        results.append(
-            {
-                "prediction_date": prediction_date,
-                "predicted_views": predicted_value,
-                "lower_bound": lower_bound,
-                "upper_bound": upper_bound,
-                "model_name": "Moving Average Fallback",
-            }
-        )
+        results.append({
+            "prediction_date": prediction_date,
+            "predicted_views": predicted_value,
+            "lower_bound": lower_bound,
+            "upper_bound": upper_bound,
+            "model_name": "Moving Average Fallback",
+        })
 
     return results
 
@@ -107,7 +108,6 @@ def run_arima(series, forecast_days=7):
         fitted_model = model.fit()
 
         forecast_result = fitted_model.get_forecast(steps=forecast_days)
-
         predicted_mean = forecast_result.predicted_mean
         confidence_interval = forecast_result.conf_int()
 
@@ -117,20 +117,18 @@ def run_arima(series, forecast_days=7):
             lower_value = confidence_interval.loc[prediction_date].iloc[0]
             upper_value = confidence_interval.loc[prediction_date].iloc[1]
 
-            results.append(
-                {
-                    "prediction_date": prediction_date.date(),
-                    "predicted_views": safe_positive_int(predicted_value),
-                    "lower_bound": safe_positive_int(lower_value),
-                    "upper_bound": safe_positive_int(upper_value),
-                    "model_name": "ARIMA(1,1,1)",
-                }
-            )
+            results.append({
+                "prediction_date": prediction_date.date(),
+                "predicted_views": safe_positive_int(predicted_value),
+                "lower_bound": safe_positive_int(lower_value),
+                "upper_bound": safe_positive_int(upper_value),
+                "model_name": "ARIMA(1,1,1)",
+            })
 
         return results
 
     except Exception as error:
-        print(f"ARIMA error for series: {error}")
+        print(f"ARIMA error: {error}")
 
         return run_moving_average_fallback(
             series=series,
@@ -149,20 +147,24 @@ def generate_forecast_for_category(category, forecast_days=7, forecast_run=None)
     if not forecast_results:
         return 0
 
+    prediction_fields = get_model_field_names(Prediction)
+
     prediction_objects = []
 
     for item in forecast_results:
-        prediction_objects.append(
-            Prediction(
-                category=category,
-                forecast_run=forecast_run,
-                prediction_date=item["prediction_date"],
-                predicted_views=item["predicted_views"],
-                lower_bound=item["lower_bound"],
-                upper_bound=item["upper_bound"],
-                model_name=item["model_name"],
-            )
-        )
+        prediction_kwargs = {
+            "category": category,
+            "prediction_date": item["prediction_date"],
+            "predicted_views": item["predicted_views"],
+            "lower_bound": item["lower_bound"],
+            "upper_bound": item["upper_bound"],
+            "model_name": item["model_name"],
+        }
+
+        if forecast_run and "forecast_run" in prediction_fields:
+            prediction_kwargs["forecast_run"] = forecast_run
+
+        prediction_objects.append(Prediction(**prediction_kwargs))
 
     Prediction.objects.bulk_create(prediction_objects, batch_size=500)
 
@@ -187,10 +189,21 @@ def generate_all_forecasts(forecast_days=7, forecast_run=None):
 
 
 def create_forecast_run_and_generate(forecast_days=7):
-    forecast_run = ForecastRun.objects.create(
-        status=ForecastRun.STATUS_RUNNING,
-        forecast_days=forecast_days,
-    )
+    forecast_run_fields = get_model_field_names(ForecastRun)
+
+    running_status = getattr(ForecastRun, "STATUS_RUNNING", "running")
+    success_status = getattr(ForecastRun, "STATUS_SUCCESS", "success")
+    failed_status = getattr(ForecastRun, "STATUS_FAILED", "failed")
+
+    create_kwargs = {}
+
+    if "status" in forecast_run_fields:
+        create_kwargs["status"] = running_status
+
+    if "forecast_days" in forecast_run_fields:
+        create_kwargs["forecast_days"] = forecast_days
+
+    forecast_run = ForecastRun.objects.create(**create_kwargs)
 
     try:
         total_created = generate_all_forecasts(
@@ -198,10 +211,43 @@ def create_forecast_run_and_generate(forecast_days=7):
             forecast_run=forecast_run,
         )
 
-        forecast_run.mark_success(total_predictions=total_created)
+        if hasattr(forecast_run, "mark_success"):
+            forecast_run.mark_success(total_predictions=total_created)
+        else:
+            update_fields = []
+
+            if "status" in forecast_run_fields:
+                forecast_run.status = success_status
+                update_fields.append("status")
+
+            if "total_predictions" in forecast_run_fields:
+                forecast_run.total_predictions = total_created
+                update_fields.append("total_predictions")
+
+            if update_fields:
+                forecast_run.save(update_fields=update_fields)
+            else:
+                forecast_run.save()
 
     except Exception as error:
-        forecast_run.mark_failed(error)
+        if hasattr(forecast_run, "mark_failed"):
+            forecast_run.mark_failed(error)
+        else:
+            update_fields = []
+
+            if "status" in forecast_run_fields:
+                forecast_run.status = failed_status
+                update_fields.append("status")
+
+            if "error_message" in forecast_run_fields:
+                forecast_run.error_message = str(error)
+                update_fields.append("error_message")
+
+            if update_fields:
+                forecast_run.save(update_fields=update_fields)
+            else:
+                forecast_run.save()
+
         raise
 
     return forecast_run

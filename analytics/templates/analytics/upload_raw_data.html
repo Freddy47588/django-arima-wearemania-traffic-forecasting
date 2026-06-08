@@ -935,12 +935,419 @@
                 grid-template-columns: 1fr;
             }
         }
+
+
+        /* Responsive polish: mengikuti karakter dashboard tanpa mengubah warna utama */
+        .mobile-header,
+        .sidebar-overlay,
+        .sidebar-close {
+            display: none;
+        }
+
+        .panel,
+        .side-panel,
+        .upload-zone,
+        .file-preview,
+        .progress-panel {
+            min-width: 0;
+        }
+
+        .main {
+            min-width: 0;
+        }
+
+        .content-grid > * {
+            min-width: 0;
+        }
+
+        .page-title,
+        .hero-upload,
+        .panel-body,
+        form {
+            min-width: 0;
+        }
+
+        @media (max-width: 1280px) {
+            .main {
+                padding: 24px;
+            }
+
+            .content-grid {
+                grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+                gap: 18px;
+            }
+        }
+
+        @media (max-width: 1080px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .side-stack {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px;
+            }
+
+            .step-list {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 920px) {
+            body.sidebar-open {
+                overflow: hidden;
+            }
+
+            .mobile-header {
+                position: sticky;
+                top: 0;
+                z-index: 30;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 13px 16px;
+                background:
+                    linear-gradient(180deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
+                    #0f172a;
+                color: #ffffff;
+                box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+            }
+
+            .mobile-brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                min-width: 0;
+            }
+
+            .mobile-brand .brand-logo {
+                width: 38px;
+                height: 38px;
+                flex-basis: 38px;
+                border-radius: 14px;
+                font-size: 18px;
+                margin: 0;
+            }
+
+            .mobile-brand h2 {
+                font-size: 15px;
+                line-height: 1.15;
+                letter-spacing: -0.03em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .mobile-brand span {
+                display: block;
+                margin-top: 2px;
+                color: rgba(226, 232, 240, 0.78);
+                font-size: 11px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .mobile-menu-btn {
+                min-height: 40px;
+                padding: 10px 13px;
+                border-radius: 14px;
+                background: rgba(255, 255, 255, 0.12);
+                color: #ffffff;
+                box-shadow: none;
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                flex: 0 0 auto;
+            }
+
+            .mobile-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.18);
+                transform: translateY(-1px);
+            }
+
+            .layout {
+                display: block;
+                min-height: auto;
+            }
+
+            .sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                width: min(86vw, 320px);
+                transform: translateX(-104%);
+                transition: transform 0.26s ease;
+                border-radius: 0 28px 28px 0;
+                padding: 18px;
+                z-index: 50;
+            }
+
+            body.sidebar-open .sidebar {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+                inset: 0;
+                display: block;
+                opacity: 0;
+                visibility: hidden;
+                background: rgba(15, 23, 42, 0.48);
+                backdrop-filter: blur(4px);
+                transition: 0.22s ease;
+                z-index: 40;
+            }
+
+            body.sidebar-open .sidebar-overlay {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .sidebar-close {
+                position: absolute;
+                top: 18px;
+                right: 18px;
+                width: 38px;
+                height: 38px;
+                min-height: 38px;
+                padding: 0;
+                display: grid;
+                place-items: center;
+                border-radius: 14px;
+                background: rgba(255, 255, 255, 0.12);
+                color: #ffffff;
+                box-shadow: none;
+                font-size: 22px;
+                line-height: 1;
+            }
+
+            .sidebar .brand {
+                padding-right: 50px;
+            }
+
+            .main {
+                width: 100%;
+                margin-left: 0;
+                padding: 22px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+
+            .action-group {
+                justify-content: flex-start;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .main {
+                padding: 18px;
+            }
+
+            .page-title h1 {
+                font-size: 30px;
+            }
+
+            .hero-upload h2 {
+                font-size: 28px;
+            }
+
+            .panel-body,
+            .hero-upload,
+            .side-panel {
+                padding: 20px;
+            }
+
+            form {
+                padding: 18px;
+                border-radius: 20px;
+            }
+
+            .side-stack,
+            .step-list,
+            .metric-mini {
+                grid-template-columns: 1fr;
+            }
+
+            .info,
+            .info-box {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-zone {
+                min-height: 218px;
+                padding: 22px;
+            }
+
+            .file-preview-head,
+            .progress-head {
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .mobile-header {
+                padding: 11px 12px;
+            }
+
+            .mobile-brand span {
+                max-width: 170px;
+            }
+
+            .mobile-menu-btn {
+                width: auto;
+                min-height: 38px;
+                padding: 9px 11px;
+                font-size: 13px;
+            }
+
+            .main {
+                padding: 14px;
+            }
+
+            .page-title .eyebrow,
+            .hero-badge,
+            .file-status-pill {
+                max-width: 100%;
+                white-space: normal;
+            }
+
+            .page-title h1 {
+                font-size: 27px;
+            }
+
+            .page-title p,
+            .hero-upload p,
+            .side-panel p,
+            .small-note,
+            .progress-status {
+                font-size: 13px;
+            }
+
+            .hero-upload {
+                border-radius: 0;
+            }
+
+            .panel {
+                border-radius: 20px;
+            }
+
+            .panel-body,
+            .hero-upload,
+            .side-panel {
+                padding: 18px;
+            }
+
+            form {
+                padding: 14px;
+            }
+
+            .upload-zone {
+                min-height: 205px;
+                padding: 18px 14px;
+            }
+
+            .upload-icon {
+                width: 58px;
+                height: 58px;
+                border-radius: 20px;
+                font-size: 25px;
+            }
+
+            .upload-zone label {
+                font-size: 16px;
+            }
+
+            input[type="file"] {
+                max-width: 100%;
+                font-size: 13px;
+            }
+
+            input[type="file"]::file-selector-button {
+                display: block;
+                width: 100%;
+                margin: 0 0 10px 0;
+            }
+
+            .file-preview {
+                padding: 14px;
+            }
+
+            .file-preview-head {
+                gap: 10px;
+            }
+
+            .file-remove {
+                width: 36px;
+                flex: 0 0 36px;
+            }
+
+            .form-actions,
+            .action-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-actions .btn,
+            .form-actions button,
+            .action-group .btn,
+            .action-group button {
+                width: 100%;
+            }
+
+            .step {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .mobile-brand span {
+                display: none;
+            }
+
+            .main {
+                padding: 10px;
+            }
+
+            .panel-body,
+            .hero-upload,
+            .side-panel {
+                padding: 15px;
+            }
+
+            .btn,
+            button {
+                font-size: 13px;
+                padding: 11px 13px;
+            }
+        }
+
     </style>
 </head>
 
 <body>
+<header class="mobile-header">
+    <div class="mobile-brand">
+        <div class="brand-logo">📈</div>
+        <div>
+            <h2>Wearemania</h2>
+            <span>Traffic Forecasting Dashboard</span>
+        </div>
+    </div>
+    <button type="button" class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Buka menu navigasi" aria-expanded="false">☰ Menu</button>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
 <div class="layout">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebarNav">
+        <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Tutup menu navigasi">×</button>
         <div class="brand">
             <div class="brand-logo">📈</div>
             <div>
@@ -1188,6 +1595,10 @@
     const submitBtn = document.getElementById("submitBtn");
     const submitText = document.getElementById("submitText");
     const steps = document.querySelectorAll(".step");
+    const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+    const sidebarClose = document.getElementById("sidebarClose");
+    const sidebarNav = document.getElementById("sidebarNav");
 
     const serverLastImport = {
         fileName: "{{ last_import_result.file_name|default:''|escapejs }}",
@@ -1196,6 +1607,22 @@
         endDate: "{{ last_import_result.end_date|default:''|escapejs }}",
         totalCategories: "{{ last_import_result.total_categories|default:''|escapejs }}"
     };
+
+    function openSidebar() {
+        document.body.classList.add("sidebar-open");
+
+        if (mobileMenuToggle) {
+            mobileMenuToggle.setAttribute("aria-expanded", "true");
+        }
+    }
+
+    function closeSidebar() {
+        document.body.classList.remove("sidebar-open");
+
+        if (mobileMenuToggle) {
+            mobileMenuToggle.setAttribute("aria-expanded", "false");
+        }
+    }
 
     function formatFileSize(bytes) {
         if (!bytes && bytes !== 0) return "-";
@@ -1449,6 +1876,36 @@
             }
         }, 420);
     }
+
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener("click", () => {
+            if (document.body.classList.contains("sidebar-open")) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener("click", closeSidebar);
+    }
+
+    if (sidebarClose) {
+        sidebarClose.addEventListener("click", closeSidebar);
+    }
+
+    if (sidebarNav) {
+        sidebarNav.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", closeSidebar);
+        });
+    }
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closeSidebar();
+        }
+    });
 
     if (removeFileBtn) {
         removeFileBtn.addEventListener("click", unlockForNewUpload);

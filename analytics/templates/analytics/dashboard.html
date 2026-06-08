@@ -860,13 +860,202 @@
             line-height: 1.6;
         }
 
+
+        .support-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .support-chart-wrap {
+            position: relative;
+            height: 320px;
+            margin-top: 16px;
+        }
+
+        .support-chart-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .real-insight-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .real-insight-item {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: #fbfdff;
+        }
+
+        .real-insight-icon {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 12px;
+            border-radius: 14px;
+            background: rgba(15, 76, 129, 0.10);
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .real-insight-item strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .real-insight-item b {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 20px;
+            letter-spacing: -0.03em;
+        }
+
+        .real-insight-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .evaluation-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .evaluation-item {
+            display: grid;
+            grid-template-columns: 34px 1fr;
+            gap: 12px;
+            align-items: start;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #fbfdff;
+        }
+
+        .evaluation-item span:first-child {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: rgba(22, 163, 74, 0.10);
+        }
+
+        .evaluation-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .evaluation-item small {
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .forecast-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(15, 23, 42, 0.62);
+            backdrop-filter: blur(5px);
+        }
+
+        .forecast-modal-overlay.show {
+            display: flex;
+        }
+
+        .forecast-modal {
+            width: min(520px, 100%);
+            padding: 24px;
+            border-radius: 24px;
+            background: #ffffff;
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.32);
+        }
+
+        .forecast-modal h2 {
+            margin: 0;
+            font-size: 23px;
+            letter-spacing: -0.03em;
+        }
+
+        .forecast-modal p {
+            margin: 9px 0 18px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .progress-shell {
+            width: 100%;
+            height: 14px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e5e7eb;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            transition: width 0.24s ease;
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            margin: 10px 0 18px;
+            font-size: 13px;
+            font-weight: 900;
+            color: #374151;
+        }
+
+        .process-steps {
+            display: grid;
+            gap: 9px;
+        }
+
+        .process-step {
+            padding: 11px 13px;
+            border-radius: 14px;
+            background: #f9fafb;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .process-step.active {
+            color: #166534;
+            background: #dcfce7;
+        }
+
         @media (max-width: 1180px) {
             .metric-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
-            .analytics-grid {
+            .analytics-grid,
+            .support-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .real-insight-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             .feature-grid {
@@ -1020,6 +1209,7 @@
 
             .filter-form,
             .metric-grid,
+            .real-insight-grid,
             .feature-grid {
                 grid-template-columns: 1fr;
             }
@@ -1151,8 +1341,9 @@
                             ⬆️ Upload Raw CSV
                         </a>
 
-                        <form method="post" action="{% url 'generate_forecast' %}">
+                        <form method="post" action="{% url 'generate_forecast' %}" id="generateForecastForm">
                             {% csrf_token %}
+                            <input type="hidden" name="forecast_days" value="7">
                             <button type="submit" class="btn-success">
                                 ⚡ Generate Forecast
                             </button>
@@ -1269,13 +1460,16 @@
 
                     {% if latest_forecast_run %}
                         <p class="metric-date">
-                            {{ latest_forecast_run.created_at|date:"d M Y H:i" }}
+                            {{ latest_forecast_time }}
                         </p>
+                        <small>
+                            Status: {{ latest_forecast_status }} ·
+                            {{ latest_forecast_total_predictions }} data prediksi.
+                        </small>
                     {% else %}
                         <p class="metric-date">Belum ada</p>
+                        <small>Klik Generate Forecast untuk membuat prediksi pertama.</small>
                     {% endif %}
-
-                    <small>Status waktu terakhir proses forecasting.</small>
                 </div>
             </section>
 
@@ -1310,21 +1504,14 @@
 
                 <div class="insight-stack">
                     <section class="card">
-                        <h2>Kesimpulan Dashboard</h2>
+                        <h2>Insight Data</h2>
                         <span class="section-subtitle">
-                            Ringkasan fungsi utama dashboard berdasarkan data yang sedang tampil.
+                            Insight otomatis berdasarkan data aktual, forecast, kategori, dan rentang prediksi.
                         </span>
 
                         <div class="summary-box">
-                            <strong>Kesimpulan sementara</strong>
-                            Dashboard ini membantu membaca pola traffic historis, membandingkan arah prediksi,
-                            dan menentukan kategori konten yang perlu diprioritaskan oleh redaksi.
-
-                            {% if selected_category %}
-                                Filter kategori sedang aktif, sehingga insight difokuskan pada kategori yang dipilih.
-                            {% else %}
-                                Saat ini data ditampilkan untuk seluruh kategori.
-                            {% endif %}
+                            <strong>Ringkasan otomatis</strong>
+                            {{ insight_summary }}
                         </div>
                     </section>
 
@@ -1357,6 +1544,65 @@
                             </div>
                         </div>
                     </section>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>Real Insight Data</h2>
+                <span class="section-subtitle">
+                    Insight berikut dihitung langsung dari data yang sedang tampil di dashboard.
+                </span>
+
+                <div class="real-insight-grid">
+                    {% for insight in insight_cards %}
+                        <div class="real-insight-item">
+                            <div class="real-insight-icon">{{ insight.icon }}</div>
+                            <strong>{{ insight.title }}</strong>
+                            <b>{{ insight.value }}</b>
+                            <span>{{ insight.description }}</span>
+                        </div>
+                    {% empty %}
+                        <p class="empty-text">
+                            Belum ada insight. Upload CSV dan jalankan forecast terlebih dahulu.
+                        </p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="support-grid">
+                <div class="card">
+                    <h2>Top Kategori Berdasarkan Actual Views</h2>
+                    <span class="section-subtitle">
+                        Grafik ini membantu melihat kategori yang benar-benar paling banyak menarik traffic historis.
+                    </span>
+
+                    <div class="support-chart-wrap">
+                        <canvas id="topActualChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Distribusi Kontribusi Traffic</h2>
+                    <span class="section-subtitle">
+                        Menampilkan persentase kontribusi kategori terhadap total actual views.
+                    </span>
+
+                    <div class="support-chart-wrap">
+                        <canvas id="categoryShareChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section class="support-grid">
+                <div class="card">
+                    <h2>Ranking Forecast Kategori</h2>
+                    <span class="section-subtitle">
+                        Kategori dengan prediksi traffic tertinggi untuk periode forecast.
+                    </span>
+
+                    <div class="support-chart-wrap">
+                        <canvas id="topForecastChart"></canvas>
+                    </div>
                 </div>
             </section>
 
@@ -1452,6 +1698,33 @@
         </main>
     </div>
 
+
+    <div class="forecast-modal-overlay" id="forecastModal">
+        <div class="forecast-modal">
+            <h2>Generate Forecast Sedang Diproses</h2>
+            <p>
+                Sistem sedang membaca data historis, menyusun time series,
+                menjalankan model ARIMA, lalu menyimpan hasil prediksi ke database.
+            </p>
+
+            <div class="progress-shell">
+                <div class="progress-fill" id="forecastProgressFill"></div>
+            </div>
+
+            <div class="progress-meta">
+                <span id="forecastProgressText">Menyiapkan data...</span>
+                <span id="forecastPercent">0%</span>
+            </div>
+
+            <div class="process-steps">
+                <div class="process-step active" id="forecastStep1">1. Membaca data historis</div>
+                <div class="process-step" id="forecastStep2">2. Cleaning time series</div>
+                <div class="process-step" id="forecastStep3">3. Menjalankan ARIMA</div>
+                <div class="process-step" id="forecastStep4">4. Menyimpan prediksi</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const sidebar = document.getElementById("sidebar");
         const sidebarToggle = document.getElementById("sidebarToggle");
@@ -1489,6 +1762,70 @@
             }
         });
 
+        const generateForecastForm = document.getElementById("generateForecastForm");
+        const forecastModal = document.getElementById("forecastModal");
+        const forecastProgressFill = document.getElementById("forecastProgressFill");
+        const forecastProgressText = document.getElementById("forecastProgressText");
+        const forecastPercent = document.getElementById("forecastPercent");
+
+        const forecastStep2 = document.getElementById("forecastStep2");
+        const forecastStep3 = document.getElementById("forecastStep3");
+        const forecastStep4 = document.getElementById("forecastStep4");
+
+        if (generateForecastForm) {
+            generateForecastForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                if (forecastModal) {
+                    forecastModal.classList.add("show");
+                }
+
+                let progress = 0;
+
+                const interval = setInterval(function() {
+                    if (progress < 94) {
+                        progress += Math.floor(Math.random() * 7) + 4;
+                    }
+
+                    if (progress > 96) {
+                        progress = 96;
+                    }
+
+                    if (forecastProgressFill) {
+                        forecastProgressFill.style.width = progress + "%";
+                    }
+
+                    if (forecastPercent) {
+                        forecastPercent.textContent = progress + "%";
+                    }
+
+                    if (progress >= 20) {
+                        forecastProgressText.textContent = "Membersihkan dan menyusun time series...";
+                        forecastStep2.classList.add("active");
+                    }
+
+                    if (progress >= 46) {
+                        forecastProgressText.textContent = "Menjalankan model ARIMA...";
+                        forecastStep3.classList.add("active");
+                    }
+
+                    if (progress >= 74) {
+                        forecastProgressText.textContent = "Menyimpan hasil prediksi...";
+                        forecastStep4.classList.add("active");
+                    }
+
+                    if (progress >= 96) {
+                        forecastProgressText.textContent = "Menunggu respons server...";
+                        clearInterval(interval);
+                    }
+                }, 230);
+
+                setTimeout(function() {
+                    generateForecastForm.submit();
+                }, 850);
+            });
+        }
+
         function parseJsonData(rawValue, fallback = []) {
             try {
                 if (!rawValue || rawValue === "None") {
@@ -1517,6 +1854,15 @@
         const forecastViews = parseJsonData('{{ forecast_views|default:"[]"|escapejs }}');
         const forecastLower = parseJsonData('{{ forecast_lower|default:"[]"|escapejs }}');
         const forecastUpper = parseJsonData('{{ forecast_upper|default:"[]"|escapejs }}');
+
+        const topActualLabels = parseJsonData('{{ top_actual_labels|default:"[]"|escapejs }}');
+        const topActualValues = parseJsonData('{{ top_actual_values|default:"[]"|escapejs }}');
+
+        const topForecastLabels = parseJsonData('{{ top_forecast_labels|default:"[]"|escapejs }}');
+        const topForecastValues = parseJsonData('{{ top_forecast_values|default:"[]"|escapejs }}');
+
+        const categoryShareLabels = parseJsonData('{{ category_share_labels|default:"[]"|escapejs }}');
+        const categoryShareValues = parseJsonData('{{ category_share_values|default:"[]"|escapejs }}');
 
         const combinedLabels = Array.from(new Set([...actualLabels, ...forecastLabels]));
 
@@ -1655,6 +2001,143 @@
                 }
             });
         }
+
+        function createBarChart(canvasId, labels, values, labelName) {
+            const canvas = document.getElementById(canvasId);
+
+            if (!canvas || !labels.length || !values.length) {
+                return;
+            }
+
+            new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: labelName,
+                            data: values,
+                            backgroundColor: "rgba(15, 76, 129, 0.72)",
+                            borderColor: "#0f4c81",
+                            borderWidth: 1,
+                            borderRadius: 10
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: "y",
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${labelName}: ${Number(context.raw).toLocaleString("id-ID")}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return Number(value).toLocaleString("id-ID");
+                                }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                autoSkip: false
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDoughnutChart(canvasId, labels, values) {
+            const canvas = document.getElementById(canvasId);
+
+            if (!canvas || !labels.length || !values.length) {
+                return;
+            }
+
+            new Chart(canvas, {
+                type: "doughnut",
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            data: values,
+                            backgroundColor: [
+                                "#0f4c81",
+                                "#16a34a",
+                                "#f97316",
+                                "#f59e0b",
+                                "#7c3aed",
+                                "#64748b"
+                            ],
+                            borderColor: "#ffffff",
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: "62%",
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                boxHeight: 8
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((sum, item) => sum + Number(item), 0);
+                                    const value = Number(context.raw);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+
+                                    return `${context.label}: ${value.toLocaleString("id-ID")} views (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        createBarChart(
+            "topActualChart",
+            topActualLabels,
+            topActualValues,
+            "Actual Views"
+        );
+
+        createBarChart(
+            "topForecastChart",
+            topForecastLabels,
+            topForecastValues,
+            "Forecast Views"
+        );
+
+        createDoughnutChart(
+            "categoryShareChart",
+            categoryShareLabels,
+            categoryShareValues
+        );
+
     </script>
 </body>
 </html>
