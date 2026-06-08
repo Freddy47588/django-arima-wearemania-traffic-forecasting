@@ -1,32 +1,45 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Wearemania Traffic Forecasting Dashboard</title>
+    <title>Login | Wearemania Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --bg: #f5f7fb;
             --surface: #ffffff;
             --surface-soft: #f8fafc;
-            --text: #111827;
-            --muted: #6b7280;
+            --text: #0f172a;
+            --muted: #64748b;
+            --muted-soft: #94a3b8;
+            --line: #e2e8f0;
             --primary: #0f4c81;
-            --primary-dark: #0a1d35;
+            --primary-dark: #0b355f;
+            --primary-soft: #e0f2fe;
             --accent: #f97316;
-            --success: #16a34a;
-            --border: #e5e7eb;
-            --danger-bg: #fee2e2;
-            --danger-text: #991b1b;
-            --shadow: 0 24px 80px rgba(15, 23, 42, 0.22);
-            --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.10);
+            --green: #16a34a;
+            --green-soft: #dcfce7;
+            --red: #dc2626;
+            --red-soft: #fee2e2;
+            --yellow-soft: #fef3c7;
+            --orange-soft: #fff7ed;
+            --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+            --shadow-soft: 0 8px 28px rgba(15, 23, 42, 0.06);
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
         }
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         html {
@@ -35,589 +48,880 @@
 
         body {
             min-height: 100vh;
-            margin: 0;
             background:
-                radial-gradient(circle at top left, rgba(15, 76, 129, 0.20), transparent 32%),
-                radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.13), transparent 30%),
-                linear-gradient(135deg, #06111f 0%, #0a1d35 45%, #111827 100%);
+                radial-gradient(circle at top left, rgba(15, 76, 129, 0.14), transparent 32%),
+                radial-gradient(circle at top right, rgba(249, 115, 22, 0.12), transparent 34%),
+                var(--bg);
             color: var(--text);
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: "Inter", Arial, Helvetica, sans-serif;
         }
 
         a {
             color: inherit;
-            text-decoration: none;
         }
 
-        .page-shell {
+        .auth-page {
             min-height: 100vh;
             display: grid;
             place-items: center;
-            padding: 32px;
+            padding: 28px;
         }
 
-        .login-wrapper {
-            width: min(100%, 1060px);
-            min-height: 620px;
+        .auth-shell {
+            width: min(1180px, 100%);
             display: grid;
-            grid-template-columns: 0.98fr 1.02fr;
+            grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
+            gap: 22px;
+            align-items: stretch;
+        }
+
+        .brand-panel,
+        .login-panel {
+            border-radius: var(--radius-xl);
             overflow: hidden;
-            border-radius: 30px;
-            background: var(--surface);
-            border: 1px solid rgba(255, 255, 255, 0.22);
             box-shadow: var(--shadow);
         }
 
-        .login-hero {
+        .brand-panel {
             position: relative;
-            overflow: hidden;
-            padding: 44px;
-            color: #ffffff;
+            min-height: 680px;
+            padding: 28px;
             background:
-                linear-gradient(145deg, rgba(15, 76, 129, 0.98), rgba(10, 29, 53, 0.98)),
-                #0f4c81;
+                linear-gradient(160deg, rgba(15, 76, 129, 0.98), rgba(15, 23, 42, 0.98)),
+                #0f172a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            isolation: isolate;
         }
 
-        .login-hero::before,
-        .login-hero::after {
+        .brand-panel::before,
+        .brand-panel::after {
             content: "";
             position: absolute;
             border-radius: 999px;
             pointer-events: none;
+            z-index: -1;
         }
 
-        .login-hero::before {
-            width: 230px;
-            height: 230px;
-            right: -86px;
-            top: -90px;
+        .brand-panel::before {
+            width: 280px;
+            height: 280px;
+            top: -105px;
+            right: -92px;
             background: rgba(249, 115, 22, 0.34);
         }
 
-        .login-hero::after {
-            width: 260px;
-            height: 260px;
-            left: -120px;
-            bottom: -130px;
-            background: rgba(255, 255, 255, 0.10);
-        }
-
-        .hero-watermark {
-            position: absolute;
-            right: -36px;
+        .brand-panel::after {
+            width: 250px;
+            height: 250px;
+            left: -110px;
             bottom: 58px;
-            width: 260px;
-            height: 260px;
-            opacity: 0.08;
-            background: url("{% static 'assets/logo1.png' %}") center / contain no-repeat;
-            pointer-events: none;
-        }
-
-        .hero-inner {
-            position: relative;
-            z-index: 1;
-            min-height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 44px;
+            background: rgba(56, 189, 248, 0.16);
         }
 
         .brand {
-            display: inline-flex;
-            align-items: center;
+            display: flex;
             gap: 14px;
+            align-items: center;
             width: fit-content;
-            max-width: 100%;
-            padding: 13px 15px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 22px;
-            background: rgba(255, 255, 255, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(10px);
         }
 
         .brand-logo {
-            width: 48px;
-            height: 48px;
+            width: 46px;
+            height: 46px;
             display: grid;
             place-items: center;
-            flex: 0 0 48px;
-            overflow: hidden;
+            flex: 0 0 46px;
             border-radius: 16px;
             background: linear-gradient(135deg, #f97316, #facc15);
-            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.30);
-        }
-
-        .brand-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .brand-text h1 {
-            margin: 0;
-            color: #ffffff;
+            color: #111827;
             font-size: 22px;
+            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.32);
+        }
+
+        .brand h2 {
+            font-size: 19px;
             line-height: 1.1;
             letter-spacing: -0.03em;
         }
 
-        .brand-text p {
-            margin: 5px 0 0;
+        .brand p {
             color: rgba(226, 232, 240, 0.86);
             font-size: 12px;
             line-height: 1.45;
+            margin-top: 5px;
         }
 
-        .hero-content {
-            max-width: 470px;
+        .hero-copy {
+            margin: 56px 0 36px;
         }
 
         .hero-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            width: fit-content;
-            margin-bottom: 16px;
             padding: 8px 12px;
             border-radius: 999px;
             background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: rgba(255, 255, 255, 0.88);
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-
-        .hero-content h2 {
-            margin: 0;
+            border: 1px solid rgba(255, 255, 255, 0.18);
             color: #ffffff;
-            font-size: clamp(32px, 4vw, 46px);
-            line-height: 1.06;
-            letter-spacing: -0.05em;
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 16px;
         }
 
-        .hero-content p {
-            margin: 16px 0 0;
-            color: rgba(226, 232, 240, 0.86);
+        .hero-copy h1 {
+            max-width: 560px;
+            font-size: clamp(32px, 4vw, 54px);
+            line-height: 1.03;
+            letter-spacing: -0.055em;
+            margin-bottom: 16px;
+        }
+
+        .hero-copy p {
+            max-width: 560px;
+            color: #dbeafe;
             font-size: 15px;
             line-height: 1.75;
         }
 
-        .hero-stats {
+        .feature-list {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
+            margin-top: 26px;
         }
 
-        .hero-stat {
-            min-height: 88px;
+        .feature-item {
+            display: grid;
+            grid-template-columns: 38px 1fr;
+            gap: 12px;
+            align-items: start;
             padding: 14px;
             border-radius: 18px;
             background: rgba(255, 255, 255, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.13);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .hero-stat strong {
+        .feature-icon {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.13);
+            font-size: 16px;
+        }
+
+        .feature-item strong {
             display: block;
-            margin-bottom: 6px;
-            color: #ffffff;
-            font-size: 18px;
+            font-size: 14px;
+            margin-bottom: 4px;
         }
 
-        .hero-stat span {
+        .feature-item span {
             display: block;
             color: rgba(226, 232, 240, 0.78);
             font-size: 12px;
-            line-height: 1.45;
+            line-height: 1.55;
         }
 
-        .login-form-side {
+        .brand-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: center;
+            color: rgba(226, 232, 240, 0.78);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 8px 11px;
+            border-radius: 999px;
+            background: rgba(22, 163, 74, 0.18);
+            border: 1px solid rgba(187, 247, 208, 0.24);
+            color: #dcfce7;
+            font-size: 12px;
+            font-weight: 850;
+            white-space: nowrap;
+        }
+
+        .login-panel {
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            display: grid;
+        }
+
+        .login-inner {
+            width: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 52px 58px;
-            background:
-                radial-gradient(circle at top right, rgba(15, 76, 129, 0.08), transparent 28%),
-                #ffffff;
+            padding: clamp(24px, 4vw, 44px);
         }
 
-        .back-link {
+        .top-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .btn,
+        button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            width: fit-content;
-            margin-bottom: 24px;
-            padding: 10px 14px;
-            border-radius: 999px;
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            color: #475569;
-            font-size: 13px;
+            gap: 9px;
+            min-height: 46px;
+            padding: 12px 17px;
+            border-radius: 15px;
+            border: 0;
+            outline: 0;
+            text-decoration: none;
+            font-size: 14px;
             font-weight: 800;
-            transition: 0.2s ease;
+            cursor: pointer;
+            transition: 0.22s ease;
+            white-space: nowrap;
+            font-family: inherit;
         }
 
-        .back-link:hover {
+        .btn-primary,
+        button[type="submit"] {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 12px 22px rgba(15, 76, 129, 0.18);
+        }
+
+        .btn-primary:hover,
+        button[type="submit"]:hover {
+            background: var(--primary-dark);
             transform: translateY(-1px);
-            background: #ffffff;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
         }
 
-        .form-header {
-            margin-bottom: 28px;
-        }
-
-        .form-header h2 {
-            margin: 0 0 10px;
+        .btn-light {
+            background: white;
             color: var(--text);
-            font-size: clamp(30px, 3.2vw, 40px);
-            line-height: 1.05;
-            letter-spacing: -0.05em;
+            border: 1px solid var(--line);
         }
 
-        .form-header p {
-            max-width: 450px;
-            margin: 0;
+        .btn-light:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        .login-header {
+            margin-bottom: 24px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .login-header h2 {
+            color: var(--text);
+            font-size: clamp(28px, 3vw, 40px);
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            max-width: 620px;
             color: var(--muted);
             font-size: 14px;
             line-height: 1.7;
         }
 
-        .error-box {
+        .messages,
+        .error-list {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .message,
+        .form-error-box {
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-weight: 750;
+            border: 1px solid transparent;
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
+        .success {
+            background: var(--green-soft);
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .error,
+        .form-error-box {
+            background: var(--red-soft);
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .warning {
+            background: var(--yellow-soft);
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .info {
             display: grid;
             grid-template-columns: auto 1fr;
-            gap: 10px;
-            align-items: start;
-            margin-bottom: 18px;
-            padding: 13px 14px;
-            border-radius: 16px;
-            background: var(--danger-bg);
-            border: 1px solid #fecaca;
-            color: var(--danger-text);
-            font-size: 13px;
-            font-weight: 700;
-            line-height: 1.55;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #334155;
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .input-control {
-            position: relative;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            min-height: 52px;
-            padding: 14px 15px;
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            background: var(--surface-soft);
-            color: var(--text);
-            font-size: 15px;
-            outline: none;
-            transition: 0.2s ease;
-        }
-
-        input[type="text"]:focus,
-        input[type="password"]:focus {
-            border-color: var(--primary);
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.10);
-        }
-
-        .password-input {
-            padding-right: 82px !important;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            min-height: 38px;
-            padding: 0 13px;
-            border: 0;
-            border-radius: 12px;
-            background: #e0f2fe;
-            color: var(--primary-dark);
-            font-size: 13px;
-            font-weight: 900;
-            cursor: pointer;
-            transform: translateY(-50%);
-            transition: 0.2s ease;
-        }
-
-        .toggle-password:hover {
-            filter: brightness(0.98);
-        }
-
-        .login-btn {
-            width: 100%;
-            min-height: 54px;
-            margin-top: 8px;
-            border: none;
-            border-radius: 16px;
-            background: #2563eb;
-            color: #ffffff;
-            font-size: 15px;
-            font-weight: 900;
-            cursor: pointer;
-            transition: 0.2s ease;
-            box-shadow: 0 16px 30px rgba(37, 99, 235, 0.22);
-        }
-
-        .login-btn:hover {
-            transform: translateY(-1px);
-            filter: brightness(0.96);
-        }
-
-        .access-divider {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
             gap: 12px;
-            margin: 26px 0 18px;
-            color: #94a3b8;
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-        }
-
-        .access-divider::before,
-        .access-divider::after {
-            content: "";
-            height: 1px;
-            background: var(--border);
-        }
-
-        .access-note {
+            align-items: start;
+            margin-bottom: 20px;
             padding: 16px;
             border-radius: 18px;
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.7;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
         }
 
-        .access-note strong {
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+        }
+
+        .info strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .info p {
+            line-height: 1.65;
+            font-size: 13px;
+        }
+
+        .login-form {
+            padding: 22px;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .field-group {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .field-group label {
             color: var(--text);
+            font-size: 13px;
+            font-weight: 850;
         }
 
-        .footer-note {
-            margin-top: 22px;
+        .help-text {
+            color: var(--muted-soft);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .input-shell {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .login-form input[type="text"],
+        .login-form input[type="password"],
+        .login-form input[type="email"] {
+            width: 100%;
+            min-height: 52px;
+            padding: 13px 46px 13px 56px;
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            color: #334155;
+            outline: 0;
+            font-size: 14px;
+            font-weight: 650;
+            font-family: inherit;
+            transition: 0.22s ease;
+        }
+
+        .login-form input:focus {
+            border-color: #bfdbfe;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+        }
+
+        .login-form input::placeholder {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 9px;
+            width: 38px;
+            height: 38px;
+            min-height: 38px;
+            padding: 0;
+            border-radius: 13px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            box-shadow: none;
+            font-size: 15px;
+        }
+
+        .password-toggle:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        .field-error {
+            color: #991b1b;
+            font-size: 12px;
+            font-weight: 750;
+            line-height: 1.45;
+        }
+
+        .login-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .remember-note {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             color: var(--muted);
             font-size: 13px;
-            line-height: 1.6;
-            text-align: center;
+            line-height: 1.5;
         }
 
-        @media (max-width: 980px) {
-            .page-shell {
+        .remember-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: var(--green);
+            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
+        }
+
+        .login-actions {
+            display: grid;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .login-actions button {
+            width: 100%;
+        }
+
+        .small-note {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.65;
+        }
+
+        .mini-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .mini-card {
+            padding: 14px;
+            border-radius: 17px;
+            background: white;
+            border: 1px solid var(--line);
+        }
+
+        .mini-card strong {
+            display: block;
+            font-size: 18px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .mini-card span {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .mobile-brand {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+            padding: 14px;
+            border-radius: 22px;
+            background: rgba(15, 76, 129, 0.98);
+            color: white;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .mobile-brand .brand {
+            padding: 0;
+            border: 0;
+            background: transparent;
+            backdrop-filter: none;
+        }
+
+        .mobile-brand .status-pill {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        @media (max-width: 1040px) {
+            .auth-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-panel {
+                min-height: auto;
+            }
+
+            .hero-copy {
+                margin: 40px 0 24px;
+            }
+
+            .feature-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 760px) {
+            .auth-page {
+                display: block;
+                padding: 18px;
+            }
+
+            .auth-shell {
+                gap: 18px;
+            }
+
+            .brand-panel {
+                display: none;
+            }
+
+            .mobile-brand {
+                display: flex;
+            }
+
+            .login-inner {
                 padding: 22px;
             }
 
-            .login-wrapper {
+            .top-actions {
+                justify-content: flex-start;
+                margin-bottom: 22px;
+            }
+
+            .mini-stats {
                 grid-template-columns: 1fr;
-                min-height: unset;
-            }
-
-            .login-hero {
-                padding: 34px;
-            }
-
-            .hero-inner {
-                gap: 34px;
-            }
-
-            .hero-content {
-                max-width: 100%;
-            }
-
-            .hero-stats {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-
-            .login-form-side {
-                padding: 38px;
             }
         }
 
-        @media (max-width: 620px) {
-            .page-shell {
-                align-items: start;
+        @media (max-width: 560px) {
+            .auth-page {
                 padding: 14px;
             }
 
-            .login-wrapper {
-                border-radius: 22px;
+            .mobile-brand {
+                align-items: flex-start;
+                flex-direction: column;
             }
 
-            .login-hero,
-            .login-form-side {
-                padding: 24px;
+            .login-inner,
+            .login-form {
+                padding: 18px;
             }
 
-            .brand {
+            .top-actions,
+            .login-options {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn,
+            button {
                 width: 100%;
             }
 
-            .brand-text h1 {
-                font-size: 19px;
-            }
-
-            .hero-content h2 {
-                font-size: 30px;
-            }
-
-            .hero-stats {
+            .info {
                 grid-template-columns: 1fr;
             }
 
-            .form-header h2 {
-                font-size: 30px;
-            }
-
-            .back-link,
-            .login-btn {
-                width: 100%;
+            .feature-list {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
-
 <body>
-    <main class="page-shell">
-        <section class="login-wrapper">
-            <aside class="login-hero" aria-label="Informasi dashboard">
-                <div class="hero-watermark"></div>
-
-                <div class="hero-inner">
+    <main class="auth-page">
+        <div class="auth-shell">
+            <section class="brand-panel" aria-label="Informasi dashboard">
+                <div>
                     <div class="brand">
-                        <div class="brand-logo">
-                            <img src="{% static 'assets/logo1.png' %}" alt="Wearemania Logo">
-                        </div>
-                        <div class="brand-text">
-                            <h1>Wearemania</h1>
+                        <div class="brand-logo">📈</div>
+                        <div>
+                            <h2>Wearemania</h2>
                             <p>Traffic Forecasting Dashboard</p>
                         </div>
                     </div>
 
-                    <div class="hero-content">
-                        <span class="hero-badge">📊 Internal Analytics System</span>
-                        <h2>Monitor traffic, forecast views, dan evaluasi konten.</h2>
+                    <div class="hero-copy">
+                        <div class="hero-badge">🔐 Secure Access</div>
+                        <h1>Masuk ke dashboard analitik internal.</h1>
                         <p>
-                            Dashboard internal untuk membaca data aktual, hasil prediksi ARIMA,
-                            performa kategori berita, dan insight redaksi berbasis data.
+                            Login digunakan untuk membatasi akses dashboard, upload data mentah,
+                            cleaning data, dan proses forecasting traffic Wearemania.
                         </p>
                     </div>
 
-                    <div class="hero-stats">
-                        <div class="hero-stat">
-                            <strong>01</strong>
-                            <span>Actual traffic monitoring</span>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">📊</div>
+                            <div>
+                                <strong>Traffic aktual</strong>
+                                <span>Monitoring performa harian dari data CSV/GA4 yang sudah dibersihkan.</span>
+                            </div>
                         </div>
-                        <div class="hero-stat">
-                            <strong>02</strong>
-                            <span>ARIMA forecasting result</span>
+
+                        <div class="feature-item">
+                            <div class="feature-icon">⬆️</div>
+                            <div>
+                                <strong>Upload & cleaning</strong>
+                                <span>Validasi kolom, mapping kategori, dan import data ke database Django.</span>
+                            </div>
                         </div>
-                        <div class="hero-stat">
-                            <strong>03</strong>
-                            <span>Category performance insight</span>
+
+                        <div class="feature-item">
+                            <div class="feature-icon">🤖</div>
+                            <div>
+                                <strong>Forecast ARIMA</strong>
+                                <span>Prediksi traffic kategori untuk membantu keputusan konten redaksi.</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </aside>
 
-            <section class="login-form-side" aria-label="Form login">
-                <a href="{% url 'dashboard' %}" class="back-link">← Kembali ke Dashboard</a>
-
-                <div class="form-header">
-                    <h2>Masuk Dashboard</h2>
-                    <p>
-                        Gunakan akun yang sudah terdaftar untuk mengakses sistem internal
-                        Wearemania Traffic Forecasting Dashboard.
-                    </p>
-                </div>
-
-                {% if form.errors %}
-                    <div class="error-box">
-                        <span>⚠️</span>
-                        <span>Username atau password belum sesuai. Coba cek lagi, wak.</span>
-                    </div>
-                {% endif %}
-
-                {% if next %}
-                    {% if user.is_authenticated %}
-                        <div class="error-box">
-                            <span>⚠️</span>
-                            <span>Akun kamu tidak punya akses ke halaman ini.</span>
-                        </div>
-                    {% endif %}
-                {% endif %}
-
-                <form method="post" action="{% url 'login' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ next }}">
-
-                    <div class="form-group">
-                        <label for="id_username">Username</label>
-                        <div class="input-control">
-                            {{ form.username }}
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="id_password">Password</label>
-                        <div class="input-control">
-                            {{ form.password }}
-                            <button type="button" class="toggle-password" id="togglePassword">Lihat</button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="login-btn">Masuk Sekarang</button>
-                </form>
-
-                <div class="access-divider">Account Access</div>
-
-                <div class="access-note">
-                    <strong>Note:</strong> Akses hanya diberikan kepada tim internal Wearemania.
-                    Jika kamu butuh akses atau mengalami masalah login, silakan hubungi admin.
-
-                <div class="footer-note">
-                    Wearemania Traffic Forecasting Dashboard · Django · ARIMA
+                <div class="brand-footer">
+                    <span>Internal dashboard · Digtive Global Media</span>
+                    <span class="status-pill">● System ready</span>
                 </div>
             </section>
-        </section>
+
+            <section class="login-panel" aria-label="Form login">
+                <div class="login-inner">
+                    <div class="mobile-brand">
+                        <div class="brand">
+                            <div class="brand-logo">📈</div>
+                            <div>
+                                <h2>Wearemania</h2>
+                                <p>Traffic Forecasting Dashboard</p>
+                            </div>
+                        </div>
+                        <span class="status-pill">● Secure Login</span>
+                    </div>
+
+                    <div class="top-actions">
+                        <a href="/admin/" class="btn btn-primary">Admin Panel</a>
+                    </div>
+
+                    <header class="login-header">
+                        <div class="eyebrow">👋 Welcome Back</div>
+                        <h2>Login Dashboard</h2>
+                        <p>
+                            Masukkan username dan password akun Django untuk mengakses halaman dashboard,
+                            upload raw data, dan panel administrasi.
+                        </p>
+                    </header>
+
+                    {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                                <div class="message {{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if form.non_field_errors %}
+                        <div class="error-list">
+                            {% for error in form.non_field_errors %}
+                                <div class="form-error-box">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="info">
+                        <div class="info-icon">ℹ️</div>
+                        <div>
+                            <strong>Akses khusus pengelola</strong>
+                            <p>
+                                Gunakan akun yang sudah dibuat lewat Django Admin atau superuser.
+                                Setelah login berhasil, kamu akan diarahkan ke halaman yang diminta sebelumnya.
+                            </p>
+                        </div>
+                    </div>
+
+                    <form method="post" class="login-form" novalidate>
+                        {% csrf_token %}
+
+                        {% if next %}
+                            <input type="hidden" name="next" value="{{ next }}">
+                        {% endif %}
+
+                        <div class="form-grid">
+                            <div class="field-group">
+                                <div class="field-head">
+                                    <label for="{{ form.username.id_for_label }}">Username</label>
+                                    <span class="help-text">Akun Django</span>
+                                </div>
+                                <div class="input-shell">
+                                    <span class="input-icon">👤</span>
+                                    {{ form.username }}
+                                </div>
+                                {% for error in form.username.errors %}
+                                    <div class="field-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="field-group">
+                                <div class="field-head">
+                                    <label for="{{ form.password.id_for_label }}">Password</label>
+                                    <span class="help-text">Rahasia akun</span>
+                                </div>
+                                <div class="input-shell">
+                                    <span class="input-icon">🔒</span>
+                                    {{ form.password }}
+                                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Tampilkan atau sembunyikan password">👁️</button>
+                                </div>
+                                {% for error in form.password.errors %}
+                                    <div class="field-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="login-options">
+                                <div class="remember-note">
+                                    <span class="remember-dot"></span>
+                                    <span>Pastikan login dari perangkat yang aman.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="login-actions">
+                            <button type="submit">Masuk Dashboard</button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-light">Lihat Dashboard</a>
+                        </div>
+
+                        <p class="small-note">
+                            Catatan: kalau belum punya akun, buat superuser lewat terminal dengan
+                            <strong>python manage.py createsuperuser</strong>, lalu login memakai akun tersebut.
+                        </p>
+
+                        <div class="mini-stats">
+                            <div class="mini-card">
+                                <strong>CSV</strong>
+                                <span>Upload data manual</span>
+                            </div>
+                            <div class="mini-card">
+                                <strong>ARIMA</strong>
+                                <span>Forecast traffic</span>
+                            </div>
+                            <div class="mini-card">
+                                <strong>Admin</strong>
+                                <span>Kelola database</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
     </main>
 
     <script>
-        const passwordInput = document.getElementById("id_password");
+        const usernameInput = document.querySelector('input[name="username"]');
+        const passwordInput = document.querySelector('input[name="password"]');
         const togglePassword = document.getElementById("togglePassword");
 
-        if (passwordInput) {
-            passwordInput.classList.add("password-input");
+        if (usernameInput) {
+            usernameInput.setAttribute("placeholder", "Masukkan username");
+            usernameInput.setAttribute("autocomplete", "username");
         }
 
-        if (passwordInput && togglePassword) {
+        if (passwordInput) {
+            passwordInput.setAttribute("placeholder", "Masukkan password");
+            passwordInput.setAttribute("autocomplete", "current-password");
+        }
+
+        if (togglePassword && passwordInput) {
             togglePassword.addEventListener("click", () => {
-                const isPassword = passwordInput.type === "password";
-                passwordInput.type = isPassword ? "text" : "password";
-                togglePassword.textContent = isPassword ? "Tutup" : "Lihat";
+                const isPassword = passwordInput.getAttribute("type") === "password";
+                passwordInput.setAttribute("type", isPassword ? "text" : "password");
+                togglePassword.textContent = isPassword ? "🙈" : "👁️";
             });
         }
     </script>
