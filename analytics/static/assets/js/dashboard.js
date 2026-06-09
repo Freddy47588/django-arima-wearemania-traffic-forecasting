@@ -30,6 +30,34 @@
         });
     }
 
+    let trafficChartInstance = null;
+
+    function isoDateToTime(label) {
+        const date = new Date(`${label}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+    }
+
+    function filterTrafficLabels(labels, actualLabels, forecastLabels, range) {
+        if (range === 'all') return labels;
+
+        if (range === 'bridge') {
+            const actualSlice = (actualLabels || []).slice(-7);
+            const forecastSlice = (forecastLabels || []).slice(0, 7);
+            return buildUnifiedLabels(actualSlice, forecastSlice);
+        }
+
+        const latestTime = labels.reduce(function (latest, label) {
+            return Math.max(latest, isoDateToTime(label));
+        }, 0);
+
+        if (!latestTime) return labels;
+
+        const windowMs = 29 * 24 * 60 * 60 * 1000;
+        return labels.filter(function (label) {
+            return isoDateToTime(label) >= latestTime - windowMs;
+        });
+    }
+
     function hasPositiveValues(values) {
         return (values || []).some(function (value) {
             return Number(value || 0) > 0;
@@ -202,7 +230,7 @@
             emptyId: 'topActualChartEmpty',
             labelsId: 'top-actual-labels',
             valuesId: 'top-actual-values',
-            label: 'Actual Views',
+            label: 'Traffic Aktual',
             color: 'rgba(15, 76, 129, 0.84)'
         });
 
@@ -211,47 +239,38 @@
             emptyId: 'topForecastChartEmpty',
             labelsId: 'top-forecast-labels',
             valuesId: 'top-forecast-values',
-            label: 'Forecast Views',
+            label: 'Prediksi Traffic',
             color: 'rgba(249, 115, 22, 0.86)'
         });
 
         renderCategoryShareChart();
     }
 
-    function generateInsight(actualViews, forecastViews) {
+    function generateInsight() {
         const target = document.getElementById('autoInsight');
         if (!target) return;
 
-        const actualTotal = actualViews.reduce((total, value) => total + Number(value || 0), 0);
-        const forecastTotal = forecastViews.reduce((total, value) => total + Number(value || 0), 0);
+        const insight = readJson('balanced-insight', {});
 
-        if (!actualTotal && !forecastTotal) {
+        if (insight && insight.summary) {
+            target.textContent = insight.summary;
+            return;
+        }
+
+        if (!insight || (!insight.recentActualViews && !insight.forecastViews)) {
             target.textContent = 'Belum ada data yang cukup untuk membuat insight. Upload CSV lalu jalankan forecast terlebih dahulu.';
             return;
         }
 
-        if (!forecastTotal) {
-            target.textContent = `Data aktual sudah tersedia dengan total ${numberFormat(actualTotal)} views. Jalankan Buat Prediksi agar dashboard bisa membandingkan arah traffic ke depan.`;
+        if (!insight.forecastViews) {
+            target.textContent = 'Data aktual sudah tersedia. Jalankan Buat Prediksi agar dashboard bisa membandingkan arah traffic ke depan.';
             return;
         }
 
-        const delta = forecastTotal - actualTotal;
-        const percent = actualTotal ? Math.round((delta / actualTotal) * 100) : 0;
-
-        if (delta > 0) {
-            target.textContent = `Forecast menunjukkan potensi kenaikan sekitar ${numberFormat(delta)} views (${percent}%) dibanding total aktual pada data yang sedang difilter. Prioritaskan kategori dengan estimasi tertinggi.`;
-            return;
-        }
-
-        if (delta < 0) {
-            target.textContent = `Forecast menunjukkan potensi penurunan sekitar ${numberFormat(Math.abs(delta))} views (${Math.abs(percent)}%). Redaksi bisa menyiapkan konten booster untuk menjaga traffic.`;
-            return;
-        }
-
-        target.textContent = `Traffic aktual dan forecast terlihat relatif seimbang di angka ${numberFormat(actualTotal)} views. Pantau kategori teratas untuk menjaga konsistensi performa.`;
+        target.textContent = `Prediksi ${insight.comparisonDays || 7} hari ke depan menunjukkan estimasi traffic sekitar ${numberFormat(insight.forecastViews)} views. Dibandingkan periode aktual terbaru yang seimbang, traffic diperkirakan ${String(insight.trendLabel || 'stabil').toLowerCase()}.`;
     }
 
-    function renderTrafficChart() {
+    function renderTrafficChart(range) {
         const canvas = document.getElementById('trafficChart');
         const emptyState = document.getElementById('trafficChartEmpty');
         if (!canvas) return;
@@ -263,7 +282,7 @@
         const forecastLower = readJson('forecast-lower', []);
         const forecastUpper = readJson('forecast-upper', []);
 
-        generateInsight(actualViews, forecastViews);
+        generateInsight();
 
         const hasData = actualLabels.length > 0 || forecastLabels.length > 0;
         if (!hasData || typeof Chart === 'undefined') {
@@ -273,13 +292,18 @@
 
         if (emptyState) emptyState.classList.remove('active');
 
-        const labels = buildUnifiedLabels(actualLabels, forecastLabels);
+        const unifiedLabels = buildUnifiedLabels(actualLabels, forecastLabels);
+        const labels = filterTrafficLabels(unifiedLabels, actualLabels, forecastLabels, range || '30');
         const actualData = alignSeries(labels, actualLabels, actualViews);
         const forecastData = alignSeries(labels, forecastLabels, forecastViews);
         const lowerData = alignSeries(labels, forecastLabels, forecastLower);
         const upperData = alignSeries(labels, forecastLabels, forecastUpper);
 
-        new Chart(canvas, {
+        if (trafficChartInstance) {
+            trafficChartInstance.destroy();
+        }
+
+        trafficChartInstance = new Chart(canvas, {
             type: 'line',
             data: {
                 labels,
@@ -302,7 +326,7 @@
                         spanGaps: true
                     },
                     {
-                        label: 'Lower Bound',
+                        label: 'Batas Bawah',
                         data: lowerData,
                         borderWidth: 1,
                         pointRadius: 0,
@@ -311,7 +335,7 @@
                         spanGaps: true
                     },
                     {
-                        label: 'Upper Bound',
+                        label: 'Batas Atas',
                         data: upperData,
                         borderWidth: 1,
                         pointRadius: 0,
@@ -372,6 +396,42 @@
         });
     }
 
+    function setupChartRangeToggle() {
+        const toggle = document.querySelector('.chart-range-toggle');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', function (event) {
+            const button = event.target.closest('button[data-range]');
+            if (!button) return;
+
+            toggle.querySelectorAll('button[data-range]').forEach(function (item) {
+                item.classList.toggle('active', item === button);
+            });
+
+            renderTrafficChart(button.dataset.range || '30');
+        });
+    }
+
+    function setupPredictionTableToggle() {
+        const button = document.getElementById('predictionTableToggle');
+        if (!button) return;
+
+        const panel = button.closest('.table-panel');
+        if (!panel) return;
+
+        const extraRows = panel.querySelectorAll('.extra-prediction-row');
+        if (!extraRows.length) {
+            button.style.display = 'none';
+            return;
+        }
+
+        button.addEventListener('click', function () {
+            const showAll = !panel.classList.contains('show-all');
+            panel.classList.toggle('show-all', showAll);
+            button.textContent = showAll ? 'Tampilkan 10 Data' : 'Lihat Semua';
+        });
+    }
+
     function setupForecastProgress() {
         const form = document.getElementById('forecastForm');
         const modal = document.getElementById('forecastModal');
@@ -380,6 +440,14 @@
         if (!form || !modal || !text) return;
 
         form.addEventListener('submit', function () {
+            const submitButton = form.querySelector('button[type="submit"]');
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.classList.add('loading');
+                submitButton.textContent = 'Membuat prediksi...';
+            }
+
             modal.classList.add('active');
             modal.setAttribute('aria-hidden', 'false');
 
@@ -431,8 +499,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        renderTrafficChart();
+        renderTrafficChart('30');
+        setupChartRangeToggle();
         renderSuggestedCharts();
+        setupPredictionTableToggle();
         setupForecastDaysLabel();
         setupForecastProgress();
     });

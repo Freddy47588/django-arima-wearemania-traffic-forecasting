@@ -74,7 +74,7 @@
                 <div>
                     <span class="eyebrow">Data traffic · Prediksi ARIMA</span>
                     <h1>Traffic Forecasting Dashboard</h1>
-                    <p>Monitoring traffic aktual, prediksi ARIMA, performa kategori berita, dan insight redaksi untuk membantu keputusan konten Wearemania lebih data-driven.</p>
+                    <p>Monitoring Traffic Aktual, Prediksi Traffic, kualitas model, insight kategori, dan rekomendasi redaksi untuk membantu keputusan konten Wearemania berbasis data.</p>
                 </div>
 
                 <div class="hero-actions">
@@ -112,7 +112,7 @@
                     <div>
                         <span class="section-kicker">Filter Data Dashboard</span>
                         <h2>Pilih Data Analisis</h2>
-                        <p>Pilih kategori dan rentang tanggal untuk melihat performa traffic lebih spesifik.</p>
+                        <p>Gunakan filter untuk melihat performa kategori atau periode tertentu. Grafik, ringkasan, dan tabel akan mengikuti filter ini.</p>
                     </div>
                     {% if is_filter_active %}<span class="status-badge active">● Filter Aktif</span>{% endif %}
                 </div>
@@ -146,7 +146,7 @@
                 <article class="stat-card">
                     <span class="stat-icon">📈</span>
                     <div>
-                        <h3>Total Actual Views</h3>
+                        <h3>Total Traffic Aktual</h3>
                         <strong>{{ total_actual_views|default:"0" }}</strong>
                         <p>Akumulasi traffic aktual dari data historis.</p>
                     </div>
@@ -154,9 +154,9 @@
                 <article class="stat-card accent">
                     <span class="stat-icon">🔮</span>
                     <div>
-                        <h3>Total Forecast Views</h3>
+                        <h3>Estimasi Traffic</h3>
                         <strong>{{ total_forecast_views|default:"0" }}</strong>
-                        <p>Estimasi traffic dari hasil forecast ARIMA.</p>
+                        <p>Total Prediksi Traffic dari run terbaru.</p>
                     </div>
                 </article>
                 <article class="stat-card success">
@@ -191,12 +191,22 @@
                         <div>
                             <span class="section-kicker">Traffic Aktual vs Prediksi Traffic</span>
                             <h2>Grafik Traffic</h2>
-                            <p>Grafik membandingkan traffic aktual dengan hasil prediksi, termasuk lower bound dan upper bound.</p>
+                            <p>Gunakan pilihan tampilan agar garis prediksi tetap mudah dibaca tanpa menghapus konteks historis.</p>
                         </div>
-                        <div class="chart-badges">
+                        <div class="chart-tools">
+                            <div class="chart-range-toggle" role="group" aria-label="Pilihan tampilan grafik">
+                                <button type="button" data-range="all">Semua Data</button>
+                                <button type="button" data-range="30" class="active">30 Hari Terakhir</button>
+                                <button type="button" data-range="bridge">7 Hari + 7 Prediksi</button>
+                            </div>
+                            <div class="chart-badges">
+                                <span class="badge primary preferred-badge">Traffic Aktual</span>
+                                <span class="badge accent preferred-badge">Prediksi Traffic</span>
+                                <span class="badge muted preferred-badge">Batas Bawah/Atas</span>
                             <span class="badge primary">● Aktual</span>
                             <span class="badge accent">● Prediksi</span>
                             <span class="badge muted">● Rentang keyakinan</span>
+                            </div>
                         </div>
                     </div>
 
@@ -213,13 +223,13 @@
                     <article class="panel insight-panel">
                         <span class="section-kicker">Insight Data</span>
                         <h2>Ringkasan Otomatis</h2>
-                        <p id="autoInsight">Insight akan dihitung dari data actual dan forecast yang tersedia.</p>
+                        <p id="autoInsight">{{ insight_summary }}</p>
                     </article>
 
                     <article class="panel mini-panel">
                         <span class="section-kicker">Status Analisis</span>
                         <div class="mini-list">
-                            <div class="mini-item"><span>📊</span><div><strong>Grafik Prediksi</strong><small>Menampilkan perbandingan aktual dan forecast ARIMA.</small></div></div>
+                            <div class="mini-item"><span>📊</span><div><strong>Grafik Prediksi</strong><small>Menampilkan perbandingan Traffic Aktual dan Prediksi Traffic.</small></div></div>
                             <div class="mini-item"><span>🧭</span><div><strong>Prioritas Redaksi</strong><small>Kategori dengan estimasi tinggi bisa menjadi acuan rencana konten.</small></div></div>
                             <div class="mini-item"><span>🧹</span><div><strong>Data Cleaning</strong><small>CSV perlu sudah bersih agar grafik dan prediksi stabil.</small></div></div>
                         </div>
@@ -233,33 +243,45 @@
                         <div>
                             <span class="section-kicker">Kualitas Prediksi</span>
                             <h2>Kualitas Prediksi</h2>
-                            <p>Ringkasan apakah hasil forecast cukup stabil untuk dipakai sebagai acuan redaksi.</p>
+                            <p>Ringkasan model dalam bahasa operasional agar redaksi/admin mudah membaca kelayakan prediksi.</p>
                         </div>
                     </div>
                     <div class="quality-list">
                         {% for item in forecast_quality_items %}
-                            <div class="quality-item">
+                            <div class="quality-item" {% if item.tooltip %}title="{{ item.tooltip }}"{% endif %}>
                                 <span>{{ item.label }}</span>
                                 <strong>{{ item.value }}</strong>
                                 <small>{{ item.detail }}</small>
                             </div>
                         {% endfor %}
                     </div>
+                    <details class="technical-details">
+                        <summary>Detail Teknis Model</summary>
+                        <div class="quality-list">
+                            {% for item in forecast_technical_items %}
+                                <div class="quality-item compact" {% if item.tooltip %}title="{{ item.tooltip }}"{% endif %}>
+                                    <span>{{ item.label }}</span>
+                                    <strong>{{ item.value }}</strong>
+                                    <small>{{ item.detail }}</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </details>
                 </article>
 
                 <article class="panel data-quality-panel">
                     <div class="panel-head">
                         <div>
-                            <span class="section-kicker">Data Quality</span>
+                            <span class="section-kicker">Kualitas Data</span>
                             <h2>{{ data_quality_status }}</h2>
                             <p>{{ data_quality_note }}</p>
                         </div>
                     </div>
                     <div class="data-quality-grid">
                         <div><span>Rentang data</span><strong>{{ data_days_covered }}</strong><small>hari</small></div>
-                        <div><span>Baris data</span><strong>{{ data_total_rows }}</strong><small>traffic rows</small></div>
+                        <div><span>Baris data</span><strong>{{ data_total_rows }}</strong><small>baris traffic</small></div>
                         <div><span>Kategori aktif</span><strong>{{ data_categories_with_data }}</strong><small>kategori</small></div>
-                        <div><span>Zero views</span><strong>{{ data_zero_view_rows }}</strong><small>baris</small></div>
+                        <div><span>Views nol</span><strong>{{ data_zero_view_rows }}</strong><small>baris</small></div>
                     </div>
                     {% if data_first_date and data_last_date %}
                         <p class="quality-footnote">Periode data: {{ data_first_date }} sampai {{ data_last_date }}.</p>
@@ -273,7 +295,7 @@
                         <div>
                             <span class="section-kicker">Alert Kategori Naik/Turun</span>
                             <h2>Arah Kategori</h2>
-                            <p>Perbandingan rata-rata forecast per hari dengan rata-rata aktual 7 data terakhir per kategori.</p>
+                            <p>Perbandingan rata-rata Prediksi Traffic per hari dengan rata-rata Traffic Aktual 7 data terakhir per kategori.</p>
                         </div>
                     </div>
                     <div class="alert-list">
@@ -281,7 +303,7 @@
                             <div class="category-alert {{ item.tone }}">
                                 <div>
                                     <strong>{{ item.category_name }}</strong>
-                                    <small>Rata-rata prediksi {{ item.forecast_average|floatformat:0 }} vs rata-rata aktual {{ item.recent_average|floatformat:0 }}</small>
+                                    <small>Aktual terbaru: {{ item.recent_average|floatformat:0 }} views/hari &middot; Prediksi: {{ item.forecast_average|floatformat:0 }} views/hari</small>
                                 </div>
                                 <span>
                                     {{ item.label }}
@@ -318,7 +340,7 @@
                     <div>
                         <span class="section-kicker">Saran Grafik Dashboard</span>
                         <h2>Grafik Pendukung Analisis</h2>
-                        <p>Tambahan visual untuk membaca kategori yang kuat secara historis, kategori potensial dari forecast, dan komposisi kontribusi traffic.</p>
+                        <p>Tambahan visual untuk membaca kategori yang kuat secara historis, kategori potensial dari Prediksi Traffic, dan komposisi kontribusi traffic.</p>
                     </div>
                 </div>
 
@@ -328,7 +350,7 @@
                             <span class="suggested-chart-icon">01</span>
                             <div>
                                 <h3>Traffic Aktual Teratas</h3>
-                                <p>Bar chart kategori dengan performa historis tertinggi.</p>
+                                <p>Bar chart kategori dengan Traffic Aktual tertinggi.</p>
                             </div>
                         </div>
                         <div class="suggested-chart-wrap">
@@ -345,7 +367,7 @@
                             <span class="suggested-chart-icon accent">02</span>
                             <div>
                                 <h3>Prediksi Traffic Teratas</h3>
-                                <p>Bar chart kategori yang diprediksi paling potensial.</p>
+                                <p>Bar chart kategori dengan Estimasi Traffic tertinggi.</p>
                             </div>
                         </div>
                         <div class="suggested-chart-wrap">
@@ -362,7 +384,7 @@
                             <span class="suggested-chart-icon success">03</span>
                             <div>
                                 <h3>Share Traffic Kategori</h3>
-                                <p>Doughnut chart kontribusi kategori terhadap total actual views.</p>
+                                <p>Doughnut chart kontribusi kategori terhadap Total Traffic Aktual.</p>
                             </div>
                         </div>
                         <div class="suggested-chart-wrap">
@@ -391,7 +413,7 @@
                                 <span class="rank-number">{{ forloop.counter }}</span>
                                 <div>
                                     <strong>{{ item.category__name }}</strong>
-                                    <small>{{ item.total_views }} actual views</small>
+                                    <small>{{ item.total_views }} Traffic Aktual</small>
                                 </div>
                             </div>
                         {% empty %}
@@ -405,7 +427,7 @@
                         <div>
                             <span class="section-kicker">Ranking Prediksi Kategori</span>
                             <h2>Rekomendasi Kategori Potensial</h2>
-                            <p>Kategori dengan estimasi traffic tertinggi untuk periode prediksi.</p>
+                            <p>Kategori dengan Estimasi Traffic tertinggi untuk periode prediksi.</p>
                         </div>
                     </div>
                     <div class="recommendation-list">
@@ -414,7 +436,7 @@
                                 <span class="rank-number accent">{{ forloop.counter }}</span>
                                 <div>
                                     <strong>{{ item.category__name }}</strong>
-                                    <small>Estimasi views: {{ item.total_predicted_views }}</small>
+                                    <small>Estimasi Traffic: {{ item.total_predicted_views }}</small>
                                 </div>
                             </div>
                         {% empty %}
@@ -440,14 +462,15 @@
                 </div>
             </section>
 
-            {% if predictions %}
+            {% if prediction_rows %}
                 <section class="panel table-panel">
                     <div class="panel-head">
                         <div>
                             <span class="section-kicker">Data Prediksi Terbaru</span>
                             <h2>Tabel Prediksi</h2>
-                            <p>Ringkasan hasil forecast terbaru yang tersimpan di database.</p>
+                            <p>Menampilkan 10 data pertama dari hasil Prediksi Traffic terbaru. Gunakan filter kategori/periode di atas untuk mempersempit isi tabel.</p>
                         </div>
+                        <button type="button" class="btn ghost table-toggle" id="predictionTableToggle">Lihat Semua</button>
                     </div>
                     <div class="table-responsive">
                         <table>
@@ -455,19 +478,21 @@
                                 <tr>
                                     <th>Tanggal Prediksi</th>
                                     <th>Kategori</th>
-                                    <th>Predicted Views</th>
-                                    <th>Lower Bound</th>
-                                    <th>Upper Bound</th>
+                                    <th>Prediksi Traffic</th>
+                                    <th>Batas Bawah</th>
+                                    <th>Batas Atas</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for prediction in predictions %}
-                                    <tr>
-                                        <td>{{ prediction.prediction_date }}</td>
-                                        <td>{{ prediction.category.name }}</td>
-                                        <td>{{ prediction.predicted_views|floatformat:0 }}</td>
-                                        <td>{{ prediction.lower_bound|default:"-" }}</td>
-                                        <td>{{ prediction.upper_bound|default:"-" }}</td>
+                                {% for row in prediction_rows %}
+                                    <tr {% if forloop.counter > 10 %}class="extra-prediction-row"{% endif %}>
+                                        <td>{{ row.prediction.prediction_date }}</td>
+                                        <td>{{ row.prediction.category.name }}</td>
+                                        <td>{{ row.prediction.predicted_views|floatformat:0 }}</td>
+                                        <td>{{ row.prediction.lower_bound|default:"-" }}</td>
+                                        <td>{{ row.prediction.upper_bound|default:"-" }}</td>
+                                        <td><span class="trend-badge {{ row.status_tone }}">{{ row.status_label }} {{ row.change_display }}</span></td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -548,6 +573,7 @@
     <script type="application/json" id="top-forecast-values">{{ top_forecast_values|default:"[]"|safe }}</script>
     <script type="application/json" id="category-share-labels">{{ category_share_labels|default:"[]"|safe }}</script>
     <script type="application/json" id="category-share-values">{{ category_share_values|default:"[]"|safe }}</script>
+    <script type="application/json" id="balanced-insight">{{ balanced_insight|default:"{}"|safe }}</script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'assets/js/common.js' %}" defer></script>

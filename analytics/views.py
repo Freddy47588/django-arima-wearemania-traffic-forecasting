@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Max, Min, Sum
+from django.db.models import Avg, Count, Max, Min, Sum
 from django.shortcuts import redirect, render
 from django.utils.text import slugify
 
@@ -330,6 +330,50 @@ def format_number(value):
         return "0"
 
 
+def format_metric(value, digits=1, suffix=""):
+    if value in [None, ""]:
+        return "Belum ada"
+
+    try:
+        return f"{float(value):.{digits}f}{suffix}"
+    except (TypeError, ValueError):
+        return "Belum ada"
+
+
+def normalize_percent_metric(value):
+    if value in [None, ""]:
+        return None
+
+    try:
+        metric = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    if 0 <= metric <= 1:
+        return metric * 100
+
+    return metric
+
+
+def format_percent_metric(value, digits=2):
+    metric = normalize_percent_metric(value)
+
+    if metric is None:
+        return "Belum ada"
+
+    return f"{metric:.{digits}f}%"
+
+
+def format_percent_value(value, digits=2):
+    if value in [None, ""]:
+        return "Belum ada"
+
+    try:
+        return f"{float(value):.{digits}f}%"
+    except (TypeError, ValueError):
+        return "Belum ada"
+
+
 def percentage_change(current_value, previous_value):
     if previous_value in [0, None]:
         return None
@@ -374,6 +418,101 @@ def get_alert_label(change_percentage):
         return "Turun"
 
     return "Stabil"
+
+
+def get_prediction_status(wmape_value, needs_more_data=False):
+    if wmape_value in [None, ""]:
+        return (
+            "Data rendah",
+            "Traffic aktual pembanding masih terlalu rendah untuk menghitung WMAPE."
+        )
+
+    if needs_more_data:
+        return (
+            "Perlu data tambahan",
+            "Tambahkan histori traffic agar prediksi lebih stabil untuk dibaca redaksi."
+        )
+
+    try:
+        wmape_value = float(wmape_value)
+    except (TypeError, ValueError):
+        return (
+            "Perlu data tambahan",
+            "Data evaluasi belum cukup untuk membaca kualitas prediksi."
+        )
+
+    if wmape_value < 10:
+        return (
+            "Prediksi cukup akurat",
+            "Prediksi cukup akurat untuk acuan awal redaksi."
+        )
+
+    if wmape_value <= 20:
+        return (
+            "Prediksi cukup layak",
+            "Prediksi cukup layak, tetap pantau kategori dengan perubahan besar."
+        )
+
+    if wmape_value <= 35:
+        return (
+            "Perlu dipantau",
+            "Prediksi perlu dipantau karena error masih cukup tinggi."
+        )
+
+    return (
+        "Perlu evaluasi",
+        "Prediksi perlu evaluasi sebelum dijadikan acuan utama."
+    )
+
+
+def get_mape_status(mape_value):
+    mape_value = normalize_percent_metric(mape_value)
+
+    if mape_value is None:
+        return "Belum cukup data evaluasi"
+
+    if mape_value < 10:
+        return "Prediksi cukup akurat"
+
+    if mape_value <= 20:
+        return "Prediksi cukup layak"
+
+    return "Prediksi perlu dievaluasi"
+
+
+def clean_order_label(value):
+    if not value:
+        return ""
+
+    return str(value).replace(" ", "")
+
+
+def is_empty_seasonal_order(value):
+    return clean_order_label(value) in ["", "(0,0,0,0)", "(0,0,0,7)"]
+
+
+def format_active_model(model_name, arima_order=None, seasonal_order=None):
+    model_name = (model_name or "").strip()
+    arima_order = clean_order_label(arima_order)
+    seasonal_order = clean_order_label(seasonal_order)
+    normalized_name = model_name.lower()
+
+    if "moving" in normalized_name or "fallback" in normalized_name:
+        return "Moving Average"
+
+    if "(" in model_name and (
+        normalized_name.startswith("arima") or
+        normalized_name.startswith("sarima")
+    ):
+        return model_name.replace(" ", "")
+
+    if seasonal_order and not is_empty_seasonal_order(seasonal_order):
+        return f"SARIMA{arima_order or ''}{seasonal_order}"
+
+    if arima_order:
+        return f"ARIMA{arima_order}"
+
+    return model_name or "ARIMA"
 
 
 def get_model_field_names(model_class):
@@ -618,6 +757,31 @@ def dashboard(request):
         if forecast_views else 0
     )
 
+    comparison_days = min(len(forecast_views) or 7, len(actual_views) or 7)
+    recent_actual_comparison_views = (
+        sum(actual_views[-comparison_days:])
+        if actual_views and comparison_days else 0
+    )
+    forecast_comparison_views = (
+        sum(forecast_views[:comparison_days])
+        if forecast_views and comparison_days else 0
+    )
+    recent_actual_comparison_average = (
+        round(recent_actual_comparison_views / comparison_days, 1)
+        if comparison_days and recent_actual_comparison_views else 0
+    )
+    forecast_comparison_average = (
+        round(forecast_comparison_views / comparison_days, 1)
+        if comparison_days and forecast_comparison_views else 0
+    )
+    forecast_comparison_percentage = percentage_change(
+        forecast_comparison_views,
+        recent_actual_comparison_views,
+    )
+    forecast_comparison_trend_label = get_trend_label(
+        forecast_comparison_percentage
+    )
+
     forecast_vs_recent_percentage = percentage_change(
         forecast_average,
         recent_actual_average,
@@ -697,10 +861,11 @@ def dashboard(request):
         {
             "icon": "📈",
             "title": "Arah Forecast",
-            "value": forecast_trend_label,
+            "value": forecast_comparison_trend_label,
             "description": (
-                f"Rata-rata forecast adalah {format_number(forecast_average)} views/hari. "
-                f"Rata-rata aktual terbaru adalah {format_number(recent_actual_average)} views/hari."
+                f"Rata-rata prediksi adalah {format_number(forecast_comparison_average)} views/hari. "
+                f"Rata-rata aktual {comparison_days} hari terakhir adalah "
+                f"{format_number(recent_actual_comparison_average)} views/hari."
             ),
         },
         {
@@ -708,7 +873,7 @@ def dashboard(request):
             "title": "Kategori Aktual Terkuat",
             "value": top_actual_category["category__name"] if top_actual_category else "Belum ada",
             "description": (
-                f"Kategori ini menyumbang sekitar {top_actual_share}% dari total actual views."
+                f"Kategori ini menyumbang sekitar {top_actual_share}% dari total Traffic Aktual."
                 if top_actual_category else
                 "Belum ada kategori aktual yang bisa dianalisis."
             ),
@@ -718,9 +883,9 @@ def dashboard(request):
             "title": "Kategori Forecast Potensial",
             "value": top_forecast_category["category__name"] if top_forecast_category else "Belum ada",
             "description": (
-                f"Kategori ini diprediksi menyumbang sekitar {top_forecast_share}% dari total forecast views."
+                f"Kategori ini diprediksi menyumbang sekitar {top_forecast_share}% dari total Prediksi Traffic."
                 if top_forecast_category else
-                "Belum ada kategori forecast. Jalankan Generate Forecast terlebih dahulu."
+                "Belum ada kategori prediksi. Jalankan Buat Prediksi terlebih dahulu."
             ),
         },
         {
@@ -738,7 +903,7 @@ def dashboard(request):
             "title": "Kejelasan Prediksi",
             "value": confidence_status,
             "description": (
-                f"Rata-rata rentang confidence forecast sekitar {confidence_width_average}%."
+                f"Rata-rata lebar rentang prediksi sekitar {confidence_width_average}%."
                 if confidence_width_average > 0 else
                 "Belum ada lower bound dan upper bound yang bisa dievaluasi."
             ),
@@ -753,14 +918,22 @@ def dashboard(request):
     elif total_forecast_views <= 0:
         insight_summary = (
             f"Data aktual sudah tersedia dengan total {format_number(total_actual_views)} views. "
-            "Forecast belum tersedia, jadi klik Generate Forecast untuk melihat arah prediksi."
+            "Prediksi belum tersedia, jadi klik Buat Prediksi untuk melihat arah traffic ke depan."
         )
     else:
+        change_text = "belum bisa dibandingkan"
+        if forecast_comparison_percentage is not None:
+            change_text = (
+                f"{forecast_comparison_trend_label.lower()} sekitar "
+                f"{abs(forecast_comparison_percentage)}%"
+            )
+
         insight_summary = (
-            f"Traffic aktual berjumlah {format_number(total_actual_views)} views, "
-            f"sedangkan hasil forecast memperkirakan {format_number(total_forecast_views)} views. "
-            f"Tren aktual saat ini: {actual_trend_label}. "
-            f"Kategori forecast paling potensial: "
+            f"Prediksi {comparison_days} hari ke depan menunjukkan estimasi traffic sekitar "
+            f"{format_number(forecast_comparison_views)} views. Dibandingkan "
+            f"{comparison_days} hari terakhir ({format_number(recent_actual_comparison_views)} views), "
+            f"traffic diperkirakan {change_text}. Redaksi dapat memantau kategori utama "
+            "dan menyiapkan konten pendukung. Kategori prediksi paling potensial: "
             f"{top_forecast_category['category__name'] if top_forecast_category else 'belum tersedia'}."
         )
 
@@ -830,42 +1003,6 @@ def dashboard(request):
                 "Histori masih pendek. Tambahkan data harian agar prediksi tidak terlalu rapuh."
             )
 
-    forecast_category_count = (
-        prediction_queryset
-        .values("category_id")
-        .distinct()
-        .count()
-    )
-
-    forecast_model_names = list(
-        prediction_queryset
-        .values_list("model_name", flat=True)
-        .distinct()
-        .order_by("model_name")
-    )
-
-    forecast_quality_items = [
-        {
-            "label": "Status forecast",
-            "value": confidence_status,
-            "detail": (
-                f"Rata-rata rentang confidence {confidence_width_average}%."
-                if confidence_width_average else
-                "Belum ada confidence range yang bisa dihitung."
-            ),
-        },
-        {
-            "label": "Cakupan kategori",
-            "value": f"{forecast_category_count}/{data_categories_with_data}",
-            "detail": "Kategori dengan data aktual yang ikut memiliki prediksi.",
-        },
-        {
-            "label": "Model aktif",
-            "value": ", ".join(forecast_model_names) if forecast_model_names else "Belum ada",
-            "detail": "ARIMA dipakai saat data cukup, fallback dipakai saat histori tipis atau datar.",
-        },
-    ]
-
     actual_by_category_date = {}
 
     for item in traffic_queryset.values("category__name", "date", "views").order_by("date"):
@@ -884,8 +1021,6 @@ def dashboard(request):
         for category_name, date_map in actual_by_category_date.items()
     }
 
-    forecast_alerts = []
-
     forecast_category_rows = (
         prediction_queryset
         .values("category__name")
@@ -895,6 +1030,8 @@ def dashboard(request):
         )
         .order_by("-total_predicted_views")
     )
+
+    forecast_category_metrics = []
 
     for item in forecast_category_rows:
         category_name = item["category__name"]
@@ -907,6 +1044,243 @@ def dashboard(request):
             sum(recent_values) / len(recent_values)
             if recent_values else 0
         )
+
+        forecast_category_metrics.append({
+            "category_name": category_name,
+            "forecast_average_per_day": forecast_average_per_day,
+            "recent_average": recent_average,
+            "total_predicted_views": item["total_predicted_views"] or 0,
+        })
+
+    forecast_category_count = (
+        prediction_queryset
+        .values("category_id")
+        .distinct()
+        .count()
+    )
+
+    forecast_model_names = list(
+        prediction_queryset
+        .values_list("model_name", flat=True)
+        .distinct()
+        .order_by("model_name")
+    )
+
+    forecast_metrics = prediction_queryset.aggregate(
+        avg_mae=Avg("mae"),
+        avg_rmse=Avg("rmse"),
+        avg_mape=Avg("mape"),
+        avg_aic=Avg("aic"),
+        avg_bic=Avg("bic"),
+    )
+
+    best_model_metric = (
+        prediction_queryset
+        .exclude(mape__isnull=True)
+        .values("model_name", "arima_order", "seasonal_order", "mape", "mae", "rmse", "aic", "bic")
+        .order_by("mape", "aic", "bic")
+        .first()
+    )
+
+    best_model_display = "Belum ada"
+    fallback_note = ""
+
+    if best_model_metric:
+        best_model_display = format_active_model(
+            best_model_metric.get("model_name"),
+            best_model_metric.get("arima_order"),
+            best_model_metric.get("seasonal_order"),
+        )
+
+    if any(
+        "moving" in (model_name or "").lower() or "fallback" in (model_name or "").lower()
+        for model_name in forecast_model_names
+    ):
+        fallback_note = (
+            "Fallback: Moving Average digunakan untuk kategori dengan data kurang stabil."
+        )
+
+    dominant_model_row = (
+        prediction_queryset
+        .values("model_name", "arima_order", "seasonal_order")
+        .annotate(total=Count("id"))
+        .order_by("-total", "model_name")
+        .first()
+    )
+    dominant_model_display = "Belum ada"
+
+    if dominant_model_row:
+        dominant_model_display = format_active_model(
+            dominant_model_row.get("model_name"),
+            dominant_model_row.get("arima_order"),
+            dominant_model_row.get("seasonal_order"),
+        )
+
+    wmape_denominator = sum(
+        item["recent_average"]
+        for item in forecast_category_metrics
+        if item["recent_average"] > 0
+    )
+    wmape_numerator = sum(
+        abs(item["recent_average"] - item["forecast_average_per_day"])
+        for item in forecast_category_metrics
+        if item["recent_average"] > 0
+    )
+    wmape_value = (
+        round((wmape_numerator / wmape_denominator) * 100, 2)
+        if wmape_denominator > 0 else None
+    )
+
+    smape_terms = []
+
+    for item in forecast_category_metrics:
+        denominator = (
+            abs(item["recent_average"]) +
+            abs(item["forecast_average_per_day"])
+        ) / 2
+
+        if denominator > 0:
+            smape_terms.append(
+                abs(item["recent_average"] - item["forecast_average_per_day"]) /
+                denominator
+            )
+
+    smape_value = (
+        round((sum(smape_terms) / len(smape_terms)) * 100, 2)
+        if smape_terms else None
+    )
+
+    fallback_category_ids = set()
+
+    for item in prediction_queryset.values("category_id", "model_name"):
+        model_name = (item["model_name"] or "").lower()
+
+        if "moving" in model_name or "fallback" in model_name:
+            fallback_category_ids.add(item["category_id"])
+
+    fallback_category_count = len(fallback_category_ids)
+    fallback_dominant = (
+        forecast_category_count > 0 and
+        fallback_category_count / forecast_category_count >= 0.5
+    )
+    needs_more_prediction_data = (
+        data_days_covered < 10 or
+        (fallback_dominant and data_days_covered < 60)
+    )
+
+    prediction_status, prediction_status_detail = get_prediction_status(
+        wmape_value,
+        needs_more_data=needs_more_prediction_data,
+    )
+
+    if fallback_dominant and data_days_covered < 60:
+        prediction_status_detail = (
+            "Perlu data tambahan karena cukup banyak kategori memakai Moving Average."
+        )
+    elif fallback_dominant:
+        prediction_status_detail = (
+            f"{prediction_status_detail} ARIMA tetap digunakan untuk kategori yang stabil; "
+            "Moving Average hanya dipakai sebagai fallback pada kategori berpola rendah atau tidak stabil."
+        )
+
+    mape_status = get_mape_status(forecast_metrics["avg_mape"])
+
+    forecast_quality_items = [
+        {
+            "label": "Status Prediksi",
+            "value": prediction_status,
+            "detail": prediction_status_detail,
+            "tooltip": "Status utama dihitung dari WMAPE dan kondisi kecukupan data.",
+        },
+        {
+            "label": "WMAPE",
+            "value": format_percent_value(wmape_value),
+            "detail": "Error berbobot traffic. Kategori besar ikut memberi bobot lebih besar.",
+            "tooltip": "WMAPE = total selisih absolut dibagi total Traffic Aktual terbaru.",
+        },
+        {
+            "label": "Rata-rata lebar rentang prediksi",
+            "value": (
+                f"{confidence_width_average}%"
+                if confidence_width_average else
+                "Belum ada"
+            ),
+            "detail": (
+                "Semakin kecil nilainya, semakin rapat rentang prediksi dan semakin stabil hasil forecast."
+            ),
+            "tooltip": "Dihitung dari jarak Batas Bawah dan Batas Atas terhadap nilai prediksi.",
+        },
+        {
+            "label": "Cakupan kategori",
+            "value": f"{forecast_category_count}/{data_categories_with_data}",
+            "detail": "Kategori dengan data aktual yang ikut memiliki prediksi.",
+            "tooltip": "Jumlah kategori yang punya hasil prediksi dibanding kategori aktif di data aktual.",
+        },
+        {
+            "label": "Model dominan",
+            "value": dominant_model_display,
+            "detail": (
+                "Model yang paling banyak dipakai pada run prediksi terbaru."
+            ),
+            "tooltip": "ARIMA tetap menjadi model utama saat data kategori layak.",
+        },
+    ]
+
+    forecast_technical_items = [
+        {
+            "label": "MAPE",
+            "value": format_percent_metric(forecast_metrics["avg_mape"]),
+            "detail": (
+                f"{mape_status}. Error persentase rata-rata. "
+                "Sensitif pada kategori dengan views kecil."
+            ),
+            "tooltip": "MAPE tetap ditampilkan sebagai detail teknis, bukan penentu status utama.",
+        },
+        {
+            "label": "SMAPE",
+            "value": format_percent_value(smape_value),
+            "detail": "Error persentase simetris yang lebih stabil untuk data kecil.",
+            "tooltip": "SMAPE membandingkan selisih dengan rata-rata nilai aktual dan prediksi.",
+        },
+        {
+            "label": "MAE",
+            "value": format_metric(forecast_metrics["avg_mae"]),
+            "detail": "Rata-rata selisih absolut antara prediksi dan data uji.",
+            "tooltip": "MAE menunjukkan besar error rata-rata dalam satuan views.",
+        },
+        {
+            "label": "RMSE",
+            "value": format_metric(forecast_metrics["avg_rmse"]),
+            "detail": "Akar rata-rata error kuadrat pada data uji.",
+            "tooltip": "RMSE memberi penalti lebih besar pada error yang besar.",
+        },
+        {
+            "label": "AIC / BIC",
+            "value": (
+                f"{format_metric(forecast_metrics['avg_aic'])} / "
+                f"{format_metric(forecast_metrics['avg_bic'])}"
+            ),
+            "detail": "Kriteria pemilihan model saat MAPE kandidat relatif mirip.",
+            "tooltip": "AIC dan BIC membantu membandingkan model statistik. Nilai lebih kecil biasanya lebih baik.",
+        },
+        {
+            "label": "Model aktif",
+            "value": best_model_display,
+            "detail": (
+                "Beberapa kategori memakai Moving Average karena pola data belum cukup stabil untuk ARIMA."
+                if fallback_note else
+                "Model terbaik dipilih dari evaluasi train/test."
+            ),
+            "tooltip": "Format ARIMA(p,d,q) atau SARIMA(p,d,q)(P,D,Q,7).",
+        },
+    ]
+
+    forecast_alerts = []
+
+    for item in forecast_category_metrics:
+        category_name = item["category_name"]
+        forecast_average_per_day = item["forecast_average_per_day"]
+        recent_average = item["recent_average"]
         change_percentage = percentage_change(
             forecast_average_per_day,
             recent_average,
@@ -924,7 +1298,7 @@ def dashboard(request):
             ),
             "forecast_average": round(forecast_average_per_day, 1),
             "recent_average": round(recent_average, 1),
-            "total_predicted_views": item["total_predicted_views"] or 0,
+            "total_predicted_views": item["total_predicted_views"],
         })
 
     category_alerts = forecast_alerts[:8]
@@ -945,7 +1319,7 @@ def dashboard(request):
         editorial_recommendations.append({
             "title": f"Dorong liputan {item['category_name']}",
             "description": (
-                f"Forecast naik {item['change_percentage']}% dari rata-rata aktual terbaru. "
+                f"Prediksi naik {item['change_percentage']}% dari rata-rata aktual terbaru. "
                 "Siapkan angle lanjutan, update cepat, dan distribusi sosial lebih awal."
             ),
         })
@@ -954,7 +1328,7 @@ def dashboard(request):
         editorial_recommendations.append({
             "title": f"Siapkan booster untuk {item['category_name']}",
             "description": (
-                f"Forecast turun {abs(item['change_percentage'])}% dari rata-rata aktual terbaru. "
+                f"Prediksi turun {abs(item['change_percentage'])}% dari rata-rata aktual terbaru. "
                 "Pertimbangkan artikel evergreen, rangkuman, atau konteks tambahan."
             ),
         })
@@ -963,7 +1337,7 @@ def dashboard(request):
         editorial_recommendations.append({
             "title": f"Prioritaskan {top_forecast_category['category__name']}",
             "description": (
-                "Kategori ini punya estimasi forecast tertinggi. Jadikan sebagai slot utama "
+                "Kategori ini punya Estimasi Traffic tertinggi. Jadikan sebagai slot utama "
                 "untuk agenda editorial periode prediksi."
             ),
         })
@@ -978,11 +1352,36 @@ def dashboard(request):
 
     forecast_history = ForecastRun.objects.all().order_by("-started_at")[:5]
 
-    predictions = (
+    predictions_queryset = (
         prediction_queryset
         .select_related("category")
-        .order_by("prediction_date", "category__name")[:20]
+        .order_by("prediction_date", "category__name")
     )
+
+    prediction_rows = []
+
+    for prediction in predictions_queryset[:50]:
+        category_name = prediction.category.name
+        recent_values = actual_by_category.get(category_name, [])[-7:]
+        recent_average = (
+            sum(recent_values) / len(recent_values)
+            if recent_values else 0
+        )
+        change_percentage = percentage_change(
+            prediction.predicted_views,
+            recent_average,
+        )
+
+        prediction_rows.append({
+            "prediction": prediction,
+            "status_label": get_alert_label(change_percentage),
+            "status_tone": get_alert_tone(change_percentage),
+            "change_display": (
+                f"{change_percentage}%"
+                if change_percentage is not None else
+                "-"
+            ),
+        })
 
     is_filter_active = bool(selected_category or start_date or end_date)
 
@@ -1014,12 +1413,13 @@ def dashboard(request):
         "latest_forecast_status": get_forecast_run_status(latest_forecast_run),
         "latest_forecast_total_predictions": get_forecast_run_total_predictions(latest_forecast_run),
         "last_prediction": last_prediction,
-        "predictions": predictions,
+        "prediction_rows": prediction_rows,
         "forecast_history": forecast_history,
 
         "insight_cards": insight_cards,
         "insight_summary": insight_summary,
         "forecast_quality_items": forecast_quality_items,
+        "forecast_technical_items": forecast_technical_items,
         "category_alerts": category_alerts,
         "editorial_recommendations": editorial_recommendations,
         "data_quality_status": data_quality_status,
@@ -1037,6 +1437,18 @@ def dashboard(request):
         "top_forecast_values": json.dumps(top_forecast_values),
         "category_share_labels": json.dumps(category_share_labels),
         "category_share_values": json.dumps(category_share_values),
+        "balanced_insight": json.dumps({
+            "comparisonDays": comparison_days,
+            "recentActualViews": recent_actual_comparison_views,
+            "forecastViews": forecast_comparison_views,
+            "changePercentage": forecast_comparison_percentage,
+            "trendLabel": forecast_comparison_trend_label,
+            "topForecastCategory": (
+                top_forecast_category["category__name"]
+                if top_forecast_category else ""
+            ),
+            "summary": insight_summary,
+        }),
     }
 
     return render(request, "analytics/dashboard.html", context)

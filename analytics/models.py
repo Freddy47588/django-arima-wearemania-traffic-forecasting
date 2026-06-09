@@ -122,6 +122,13 @@ class Prediction(models.Model):
     upper_bound = models.PositiveIntegerField(default=0)
 
     model_name = models.CharField(max_length=100, default="ARIMA")
+    arima_order = models.CharField(max_length=30, blank=True, null=True)
+    seasonal_order = models.CharField(max_length=40, blank=True, null=True)
+    mae = models.FloatField(blank=True, null=True)
+    rmse = models.FloatField(blank=True, null=True)
+    mape = models.FloatField(blank=True, null=True)
+    aic = models.FloatField(blank=True, null=True)
+    bic = models.FloatField(blank=True, null=True)
     generated_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
