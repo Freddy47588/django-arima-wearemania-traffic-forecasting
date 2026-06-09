@@ -34,9 +34,9 @@
             </div>
 
             <div class="login-feature-list">
-                <div><span>📈</span><strong>Traffic aktual</strong><small>Monitoring performa harian dari data CSV/GA4 yang sudah dibersihkan.</small></div>
-                <div><span>⬆️</span><strong>Upload & cleaning</strong><small>Validasi kolom, mapping kategori, dan import data ke database Django.</small></div>
-                <div><span>⚡</span><strong>Forecast ARIMA</strong><small>Prediksi traffic kategori untuk membantu keputusan konten redaksi.</small></div>
+                <div><span data-icon="TR"></span><strong>Traffic aktual</strong><small>Monitoring performa harian dari data CSV/GA4 yang sudah dibersihkan.</small></div>
+                <div><span data-icon="UP"></span><strong>Upload & cleaning</strong><small>Validasi kolom, mapping kategori, dan import data ke database Django.</small></div>
+                <div><span data-icon="AI"></span><strong>Forecast ARIMA</strong><small>Prediksi traffic kategori untuk membantu keputusan konten redaksi.</small></div>
             </div>
 
             <div class="login-footnote">Dashboard internal · Digtive Global Media <span>● Sistem siap</span></div>
@@ -45,7 +45,7 @@
         <section class="login-panel" aria-label="Form login">
             <div class="login-panel-head">
                 <div>
-                    <span class="panel-logo">⚽</span>
+                    <span class="panel-logo"><img src="{% static 'assets/logo1.png' %}" alt=""></span>
                     <span class="login-status">● Login aman</span>
                 </div>
                 <a href="/admin/" class="admin-link">Panel Admin</a>
@@ -72,7 +72,7 @@
             {% endif %}
 
             <div class="login-note">
-                <span>ℹ️</span>
+                <span>i</span>
                 <p><strong>Akses khusus pengelola.</strong> Gunakan akun yang sudah dibuat lewat Admin. Setelah login berhasil, kamu akan diarahkan ke dashboard</p>
             </div>
 
@@ -90,7 +90,7 @@
                     <span>Password <small>Rahasia akun</small></span>
                     <div class="password-wrap">
                         {{ form.password }}
-                        <button id="togglePassword" type="button" aria-label="Tampilkan password">👁️</button>
+                        <button id="togglePassword" type="button" aria-label="Tampilkan password">Lihat</button>
                     </div>
                     {% for error in form.password.errors %}<em>{{ error }}</em>{% endfor %}
                 </label>

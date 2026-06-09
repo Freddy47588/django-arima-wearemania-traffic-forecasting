@@ -16,10 +16,12 @@
 <body>
     <div class="mobile-topbar">
         <a href="{% url 'dashboard' %}" class="mobile-brand" aria-label="Wearemania Dashboard">
-            <span class="mobile-brand-icon">⚽</span>
+            <span class="mobile-brand-icon"><img src="{% static 'assets/logo1.png' %}" alt=""></span>
             <span>Wearemania</span>
         </a>
-        <button class="mobile-menu-btn" type="button" aria-label="Buka menu" aria-expanded="false">☰ Menu</button>
+        <button class="mobile-menu-btn" type="button" aria-label="Buka menu" aria-expanded="false">
+            <span class="mobile-menu-text">Menu</span>
+        </button>
     </div>
 
     <div class="sidebar-overlay" aria-hidden="true"></div>
@@ -89,12 +91,12 @@
                         <label class="forecast-days-field" for="forecastDaysInput">
                             <span class="forecast-field-label">Jumlah hari prediksi</span>
                             <span class="forecast-input-wrap">
-                                <input id="forecastDaysInput" type="number" name="forecast_days" value="{{ forecast_days|default:'7' }}" min="1" max="30" inputmode="numeric" aria-describedby="forecastDaysHint">
+                                <input id="forecastDaysInput" type="number" name="forecast_days" value="{{ forecast_days|default:'7' }}" min="1" max="14" inputmode="numeric" aria-describedby="forecastDaysHint">
                                 <span class="forecast-unit">hari</span>
                             </span>
                         </label>
                         <button type="submit" class="btn primary">⚡ Buat Prediksi {{ forecast_days|default:'7' }} Hari</button>
-                        <small id="forecastDaysHint" class="forecast-helper">Masukkan berapa hari ke depan yang ingin diprediksi. Batas aman: 1 sampai 30 hari.</small>
+                        <small id="forecastDaysHint" class="forecast-helper">Rekomendasi prediksi: 7-14 hari. Batas maksimal dashboard ini 14 hari.</small>
                     </form>
                 </div>
             </header>
@@ -144,7 +146,7 @@
 
             <section class="stats-grid" aria-label="Ringkasan dashboard">
                 <article class="stat-card">
-                    <span class="stat-icon">📈</span>
+                    <span class="stat-icon" data-icon="AK"></span>
                     <div>
                         <h3>Total Traffic Aktual</h3>
                         <strong>{{ total_actual_views|default:"0" }}</strong>
@@ -152,7 +154,7 @@
                     </div>
                 </article>
                 <article class="stat-card accent">
-                    <span class="stat-icon">🔮</span>
+                    <span class="stat-icon" data-icon="PR"></span>
                     <div>
                         <h3>Estimasi Traffic</h3>
                         <strong>{{ total_forecast_views|default:"0" }}</strong>
@@ -160,7 +162,7 @@
                     </div>
                 </article>
                 <article class="stat-card success">
-                    <span class="stat-icon">🗂️</span>
+                    <span class="stat-icon" data-icon="KT"></span>
                     <div>
                         <h3>Total Kategori</h3>
                         <strong>{{ total_categories|default:"0" }}</strong>
@@ -168,7 +170,7 @@
                     </div>
                 </article>
                 <article class="stat-card dark">
-                    <span class="stat-icon">⏱️</span>
+                    <span class="stat-icon" data-icon="RUN"></span>
                     <div>
                         <h3>Prediksi Terakhir</h3>
                         {% if latest_forecast_run %}
@@ -197,7 +199,7 @@
                             <div class="chart-range-toggle" role="group" aria-label="Pilihan tampilan grafik">
                                 <button type="button" data-range="all">Semua Data</button>
                                 <button type="button" data-range="30" class="active">30 Hari Terakhir</button>
-                                <button type="button" data-range="bridge">7 Hari + 7 Prediksi</button>
+                                <button type="button" data-range="bridge">7 Aktual + 7 Prediksi</button>
                             </div>
                             <div class="chart-badges">
                                 <span class="badge primary preferred-badge">Traffic Aktual</span>
