@@ -11,17 +11,31 @@ ENV/
 # Database Lokal Django (Penting agar data tes tidak tertimpa saat kolaborasi)
 db.sqlite3
 db.sqlite3-journal
+*.sqlite3
+*.sqlite3-journal
 
 # File Kredensial & Rahasia (SANGAT PENTING)
 .env
+.env.*
+!.env.example
 *credentials*.json
 *ga4*.json
 *service_account*.json
 secret_key.txt
+*.pem
+*.key
 
 # File Sistem Operasi
 .DS_Store
 Thumbs.db
+
+# File runtime / upload lokal
+media/
+*.log
+cleaned_daily_category.csv
+
+# Output collectstatic lokal
+staticfiles/
 
 # File Output Model Statistika (Buka komentar di bawah jika file .pkl terlalu besar untuk GitHub)
 # *.pkl
