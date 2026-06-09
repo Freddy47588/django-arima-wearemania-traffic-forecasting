@@ -70,6 +70,9 @@ wearemania_dashboard/
 |   |-- asgi.py
 |   `-- wsgi.py
 |-- staticfiles/
+|-- DEPLOY_NORTHFLANK.md
+|-- Procfile
+|-- build.sh
 |-- manage.py
 |-- requirements.txt
 `-- README.md
@@ -285,11 +288,20 @@ Environment variable yang digunakan:
 
 | Variable | Default | Keterangan |
 |---|---|---|
-| `SECRET_KEY` | local development key | Secret key Django. |
-| `DEBUG` | `True` | Mode debug. |
+| `SECRET_KEY` | - | Secret key Django dari environment variable. |
+| `DEBUG` | `False` | Mode debug. |
 | `ALLOWED_HOSTS` | `127.0.0.1,localhost` | Daftar host yang diizinkan. |
-| `DB_ENGINE` | `django.db.backends.sqlite3` | Engine database Django. |
+| `CSRF_TRUSTED_ORIGINS` | - | Origin tepercaya untuk request HTTPS production. |
+| `DB_ENGINE` | SQLite fallback jika kosong | Engine database Django. Untuk production gunakan `django.db.backends.mysql`. |
 | `DB_NAME` | `BASE_DIR / db.sqlite3` | Nama/path database. |
+| `DB_USER` | - | Username database production. |
+| `DB_PASSWORD` | - | Password database production. |
+| `DB_HOST` | - | Host database production. |
+| `DB_PORT` | `3306` | Port database MySQL. |
+| `DB_SSL_CA` | - | Path CA certificate Aiven jika diperlukan. |
+| `FORECAST_HISTORY_LIMIT` | `10` | Jumlah `ForecastRun` terbaru yang disimpan. |
+| `FORECAST_DAYS` | `7` | Default jumlah hari forecast. |
+| `FORECAST_MAX_DAYS` | `14` | Batas maksimal hari forecast. |
 
 Catatan keamanan:
 
@@ -312,21 +324,25 @@ Output static akan masuk ke folder `staticfiles/`.
 
 ## Deployment
 
-Project ini dapat dideploy ke Koyeb Free atau Render dengan Aiven MySQL melalui environment variables.
-
-Panduan Koyeb tersedia di:
+Deployment utama project ini menggunakan Northflank dengan Aiven MySQL melalui environment variables.
 
 ```txt
-DEPLOY_KOYEB.md
+DEPLOY_NORTHFLANK.md
 ```
 
-Untuk Koyeb, gunakan run command:
+Ringkasan konfigurasi Northflank:
 
 ```bash
-gunicorn core.wsgi:application --workers 1 --timeout 120 --bind 0.0.0.0:$PORT
+Build Command: ./build.sh
+Port: 8000
+Procfile: web: sh -c 'gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --timeout 120'
 ```
 
-Konfigurasi Render lama tetap tersedia di `DEPLOY_RENDER.md`. Perbedaan penting untuk Koyeb adalah Gunicorn harus bind ke host dan port platform: `--bind 0.0.0.0:$PORT`.
+Build dan startup tidak menjalankan forecast otomatis. Forecast tetap hanya berjalan dari tombol Generate Forecast di dashboard atau management command `python manage.py generate_forecast`.
+
+### Legacy deployment notes
+
+Dokumentasi Render dan Koyeb lama sudah dihapus agar konfigurasi deployment tidak membingungkan. Jika ingin memakai platform lain, gunakan pola generic yang sama: environment variables untuk Django/Aiven MySQL, WhiteNoise untuk static files, dan Gunicorn untuk WSGI.
 
 ## Testing dan Cek Project
 
@@ -388,7 +404,7 @@ python manage.py runserver 8080
 - Export hasil forecast.
 - Evaluasi akurasi forecast.
 - Tuning parameter ARIMA per kategori.
-- Deployment production dengan database MySQL atau PostgreSQL.
+- Dokumentasi operasional deployment Northflank.
 - Dokumentasi user manual untuk pengguna dashboard.
 
 ## Lisensi

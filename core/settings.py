@@ -39,10 +39,6 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
-RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
@@ -161,11 +157,11 @@ def build_database_config():
 
     if db_engine == "django.db.backends.mysql":
         mysql_config = {
-            "NAME": get_env_value("DB_NAME", "MYSQL_DATABASE"),
-            "USER": get_env_value("DB_USER", "MYSQL_USER"),
-            "PASSWORD": get_env_value("DB_PASSWORD", "MYSQL_PASSWORD"),
-            "HOST": get_env_value("DB_HOST", "MYSQL_HOST"),
-            "PORT": get_env_value("DB_PORT", "MYSQL_PORT", default="3306"),
+            "NAME": get_env_value("DB_NAME"),
+            "USER": get_env_value("DB_USER"),
+            "PASSWORD": get_env_value("DB_PASSWORD"),
+            "HOST": get_env_value("DB_HOST"),
+            "PORT": get_env_value("DB_PORT", default="3306"),
         }
         missing_mysql_config = [
             name for name, value in mysql_config.items()
@@ -182,7 +178,7 @@ def build_database_config():
             "charset": "utf8mb4",
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         }
-        db_ssl_ca = get_env_value("DB_SSL_CA", "MYSQL_SSL_CA")
+        db_ssl_ca = get_env_value("DB_SSL_CA")
 
         if db_ssl_ca:
             options["ssl"] = {"ca": db_ssl_ca}
