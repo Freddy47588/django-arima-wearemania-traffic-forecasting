@@ -157,11 +157,11 @@ def build_database_config():
 
     if db_engine == "django.db.backends.mysql":
         mysql_config = {
-            "NAME": get_env_value("DB_NAME"),
-            "USER": get_env_value("DB_USER"),
-            "PASSWORD": get_env_value("DB_PASSWORD"),
-            "HOST": get_env_value("DB_HOST"),
-            "PORT": get_env_value("DB_PORT", default="3306"),
+            "NAME": get_env_value("MYSQL_DATABASE"),
+            "USER": get_env_value("MYSQL_USER"),
+            "PASSWORD": get_env_value("MYSQL_PASSWORD"),
+            "HOST": get_env_value("MYSQL_HOST"),
+            "PORT": get_env_value("MYSQL_PORT", default="3306"),
         }
         missing_mysql_config = [
             name for name, value in mysql_config.items()
@@ -169,6 +169,9 @@ def build_database_config():
         ]
 
         if missing_mysql_config:
+            if IS_RUNSERVER:
+                return build_sqlite_database_config()
+
             missing_names = ", ".join(f"DB_{name}" for name in missing_mysql_config)
             raise ImproperlyConfigured(
                 f"Missing required MySQL environment variable(s): {missing_names}"
@@ -193,7 +196,7 @@ def build_database_config():
 
     return {
         "ENGINE": db_engine,
-        "NAME": get_env_value("DB_NAME", default=BASE_DIR / "db.sqlite3"),
+        "NAME": get_env_value("MYSQL_DATABASE", default=BASE_DIR / "db.sqlite3"),
     }
 
 
