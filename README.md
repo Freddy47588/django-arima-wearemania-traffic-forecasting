@@ -310,6 +310,24 @@ python manage.py collectstatic
 
 Output static akan masuk ke folder `staticfiles/`.
 
+## Deployment
+
+Project ini dapat dideploy ke Koyeb Free atau Render dengan Aiven MySQL melalui environment variables.
+
+Panduan Koyeb tersedia di:
+
+```txt
+DEPLOY_KOYEB.md
+```
+
+Untuk Koyeb, gunakan run command:
+
+```bash
+gunicorn core.wsgi:application --workers 1 --timeout 120 --bind 0.0.0.0:$PORT
+```
+
+Konfigurasi Render lama tetap tersedia di `DEPLOY_RENDER.md`. Perbedaan penting untuk Koyeb adalah Gunicorn harus bind ke host dan port platform: `--bind 0.0.0.0:$PORT`.
+
 ## Testing dan Cek Project
 
 Jalankan test Django:

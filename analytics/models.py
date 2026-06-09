@@ -83,6 +83,9 @@ class ForecastRun(models.Model):
 
     class Meta:
         ordering = ["-started_at"]
+        indexes = [
+            models.Index(fields=["started_at"], name="analytics_f_started_7b5f21_idx"),
+        ]
         verbose_name = "Forecast Run"
         verbose_name_plural = "Forecast Runs"
 

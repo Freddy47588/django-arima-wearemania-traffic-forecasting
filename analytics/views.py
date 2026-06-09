@@ -6,12 +6,14 @@ from urllib.parse import urlparse
 import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.db.models import Avg, Count, Max, Min, Sum
 from django.shortcuts import redirect, render
 from django.utils.text import slugify
 
 from analytics.forms import CSVUploadForm
 from analytics.models import Category, ForecastRun, Prediction, TrafficData
+from analytics.services.csv_importer import import_raw_traffic_csv
 from analytics.services.forecasting import (
     create_forecast_run_and_generate,
     normalize_forecast_days,
@@ -611,6 +613,66 @@ def get_or_create_category(category_name):
     )
 
     return category
+
+
+def build_category_cache(category_names):
+    """
+    Ambil/buat kategori sekali per upload, bukan query get_or_create per row CSV.
+    """
+    normalized_names = sorted({
+        str(category_name).strip()
+        for category_name in category_names
+        if str(category_name).strip()
+    })
+
+    if not normalized_names:
+        return {}
+
+    existing_categories = {
+        category.name: category
+        for category in Category.objects.filter(name__in=normalized_names)
+    }
+
+    missing_names = [
+        category_name
+        for category_name in normalized_names
+        if category_name not in existing_categories
+    ]
+
+    if missing_names:
+        category_fields = get_model_field_names(Category)
+        existing_slugs = set(
+            Category.objects
+            .exclude(slug="")
+            .values_list("slug", flat=True)
+        )
+        categories_to_create = []
+
+        for category_name in missing_names:
+            category_kwargs = {"name": category_name}
+
+            if "slug" in category_fields:
+                base_slug = (slugify(category_name) or "kategori")[:110]
+                slug = base_slug
+                counter = 2
+
+                while slug in existing_slugs:
+                    slug = f"{base_slug[:104]}-{counter}"
+                    counter += 1
+
+                existing_slugs.add(slug)
+                category_kwargs["slug"] = slug
+
+            categories_to_create.append(Category(**category_kwargs))
+
+        Category.objects.bulk_create(categories_to_create, batch_size=500)
+
+        existing_categories = {
+            category.name: category
+            for category in Category.objects.filter(name__in=normalized_names)
+        }
+
+    return existing_categories
 
 
 @login_required
@@ -1465,218 +1527,65 @@ def upload_raw_data(request):
             csv_file = form.cleaned_data["csv_file"]
 
             try:
-                df = pd.read_csv(csv_file)
+                result = import_raw_traffic_csv(csv_file)
 
-                if df.empty:
+                if result.processed_rows == 0:
                     messages.error(
                         request,
                         "File CSV kosong. Tidak ada data yang bisa diimport."
                     )
                     return redirect("upload_raw_data")
 
-                date_column = find_column(
-                    df.columns,
-                    [
-                        "date",
-                        "tanggal",
-                        "day",
-                        "Date",
-                        "Tanggal",
-                    ],
-                )
-
-                path_column = find_column(
-                    df.columns,
-                    [
-                        "page_path",
-                        "path",
-                        "url",
-                        "url_path",
-                        "page",
-                        "pagePath",
-                        "Page path",
-                        "Page Path",
-                        "Landing page",
-                        "landing_page",
-                    ],
-                )
-
-                views_column = find_column(
-                    df.columns,
-                    [
-                        "views",
-                        "screen_page_views",
-                        "page_views",
-                        "pageviews",
-                        "total_views",
-                        "Views",
-                        "Page views",
-                        "Screen page views",
-                    ],
-                )
-
-                missing_columns = []
-
-                if not date_column:
-                    missing_columns.append("date")
-
-                if not path_column:
-                    missing_columns.append("page_path")
-
-                if not views_column:
-                    missing_columns.append("views")
-
-                if missing_columns:
-                    messages.error(
-                        request,
-                        (
-                            "Kolom CSV tidak lengkap. "
-                            "Kolom wajib: date, page_path, views. "
-                            f"Kolom yang belum ditemukan: {', '.join(missing_columns)}."
-                        ),
-                    )
-                    return redirect("upload_raw_data")
-
-                skipped_count = 0
-                valid_row_count = 0
-                traffic_map = {}
-
-                for _, row in df.iterrows():
-                    traffic_date = parse_date_value(row.get(date_column))
-                    page_path = clean_page_path(row.get(path_column))
-                    views = parse_views_value(row.get(views_column, 0))
-
-                    if not traffic_date or views is None:
-                        skipped_count += 1
-                        continue
-
-                    category_name = detect_category_from_path(page_path)
-
-                    if category_name in EXCLUDED_FORECAST_CATEGORIES:
-                        skipped_count += 1
-                        continue
-
-                    category = get_or_create_category(category_name)
-
-                    key = (
-                        category.id,
-                        traffic_date,
-                        page_path,
-                    )
-
-                    if key not in traffic_map:
-                        traffic_map[key] = {
-                            "category": category,
-                            "date": traffic_date,
-                            "page_path": page_path,
-                            "views": 0,
-                        }
-
-                    traffic_map[key]["views"] += views
-                    valid_row_count += 1
-
-                if not traffic_map:
+                if result.valid_rows == 0:
                     messages.error(
                         request,
                         "Tidak ada data valid yang berhasil diproses dari CSV."
                     )
                     return redirect("upload_raw_data")
 
-                category_ids = list({
-                    item["category"].id
-                    for item in traffic_map.values()
-                })
-
-                dates = list({
-                    item["date"]
-                    for item in traffic_map.values()
-                })
-
-                page_paths = list({
-                    item["page_path"]
-                    for item in traffic_map.values()
-                })
-
-                existing_keys = set(
-                    TrafficData.objects
-                    .filter(
-                        category_id__in=category_ids,
-                        date__in=dates,
-                        page_path__in=page_paths,
-                    )
-                    .values_list("category_id", "date", "page_path")
-                )
-
-                traffic_objects = []
-
-                for key, item in traffic_map.items():
-                    if key in existing_keys:
-                        continue
-
-                    traffic_objects.append(
-                        TrafficData(
-                            category=item["category"],
-                            date=item["date"],
-                            page_path=item["page_path"],
-                            views=item["views"],
-                        )
-                    )
-
-                duplicate_in_file_count = valid_row_count - len(traffic_map)
-                duplicate_in_database_count = len(traffic_map) - len(traffic_objects)
-
-                if not traffic_objects:
+                if result.created_count == 0:
                     messages.warning(
                         request,
                         (
                             "Tidak ada data baru yang disimpan. "
-                            f"{duplicate_in_database_count} data terdeteksi sudah ada di database."
+                            f"{result.duplicate_in_database_count} data terdeteksi sudah ada di database."
                         ),
                     )
                     return redirect("upload_raw_data")
 
-                TrafficData.objects.bulk_create(
-                    traffic_objects,
-                    batch_size=1000,
-                )
-
-                created_count = len(traffic_objects)
-                first_date = min(item.date for item in traffic_objects)
-                last_date = max(item.date for item in traffic_objects)
-                total_categories = Category.objects.count()
-
                 messages.success(
                     request,
                     (
-                        f"Import berhasil. {created_count} data baru disimpan. "
-                        f"Periode {first_date} sampai {last_date}. "
-                        f"Total kategori: {total_categories}."
+                        f"Import berhasil. {result.created_count} data baru disimpan. "
+                        f"{result.processed_rows} row diproses. "
+                        f"Periode {result.first_date} sampai {result.last_date}. "
+                        f"Total kategori: {result.total_categories}."
                     ),
                 )
 
-                if duplicate_in_database_count > 0:
+                if result.duplicate_in_database_count > 0:
                     messages.warning(
                         request,
                         (
-                            f"{duplicate_in_database_count} data duplikat dilewati "
+                            f"{result.duplicate_in_database_count} data duplikat dilewati "
                             "karena sudah ada di database."
                         ),
                     )
 
-                if duplicate_in_file_count > 0:
+                if result.duplicate_in_file_count > 0:
                     messages.info(
                         request,
                         (
-                            f"{duplicate_in_file_count} baris duplikat di file CSV "
+                            f"{result.duplicate_in_file_count} baris duplikat di file CSV "
                             "digabung berdasarkan tanggal, kategori, dan page path."
                         ),
                     )
 
-                if skipped_count > 0:
+                if result.skipped_count > 0:
                     messages.warning(
                         request,
                         (
-                            f"{skipped_count} baris dilewati karena tanggal/views tidak valid, "
+                            f"{result.skipped_count} baris dilewati karena tanggal/views tidak valid, "
                             "homepage, halaman arsip, halaman informasi, atau noise teknis."
                         ),
                     )

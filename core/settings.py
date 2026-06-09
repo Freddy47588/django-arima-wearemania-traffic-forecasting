@@ -173,13 +173,10 @@ def build_database_config():
         ]
 
         if missing_mysql_config:
-            if os.getenv("RENDER") or RENDER_EXTERNAL_HOSTNAME:
-                missing_names = ", ".join(f"DB_{name}" for name in missing_mysql_config)
-                raise ImproperlyConfigured(
-                    f"Missing required MySQL environment variable(s): {missing_names}"
-                )
-
-            return build_sqlite_database_config()
+            missing_names = ", ".join(f"DB_{name}" for name in missing_mysql_config)
+            raise ImproperlyConfigured(
+                f"Missing required MySQL environment variable(s): {missing_names}"
+            )
 
         options = {
             "charset": "utf8mb4",
