@@ -148,7 +148,14 @@
     height: 48px;
     border-radius: 18px;
     background: rgba(15, 76, 129, 0.10);
-    font-size: 22px;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: 0;
+}
+
+.stat-icon::before {
+    content: attr(data-icon);
 }
 
 .stat-card h3 {
@@ -178,10 +185,17 @@
 
 .stat-card.accent .stat-icon {
     background: rgba(249, 115, 22, 0.13);
+    color: #9a3412;
 }
 
 .stat-card.success .stat-icon {
     background: rgba(22, 163, 74, 0.12);
+    color: #166534;
+}
+
+.stat-card.dark .stat-icon {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--white);
 }
 
 .stat-card.dark {
