@@ -259,7 +259,7 @@ Tentukan jumlah hari forecast:
 python manage.py generate_forecast --days 14
 ```
 
-Jumlah hari forecast dibatasi 1 sampai 30 hari.
+Jumlah hari forecast dibatasi 1 sampai 14 hari agar prediksi tetap berada pada rentang yang lebih akurat untuk data traffic harian.
 
 ## Import CSV Harian Kategori dari Terminal
 

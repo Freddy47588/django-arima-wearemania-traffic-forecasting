@@ -1,5 +1,6 @@
 # Python pycache
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 
@@ -16,6 +17,9 @@ db.sqlite3-journal
 
 # File Kredensial & Rahasia (SANGAT PENTING)
 .env
+.env.*
+!.env.example
+*.env
 .env.*
 !.env.example
 *credentials*.json

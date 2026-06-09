@@ -112,12 +112,71 @@ TEMPLATES = [
 # DATABASE
 # =========================
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.getenv("DB_NAME", BASE_DIR / "db.sqlite3"),
+def get_env_value(*names, default=None):
+    for name in names:
+        value = os.getenv(name)
+
+        if value not in [None, ""]:
+            return value
+
+    return default
+
+
+def get_int_env(name, default):
+    try:
+        return int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def build_database_config():
+    mysql_env_present = bool(
+        get_env_value("DB_HOST", "MYSQL_HOST") or
+        get_env_value("DB_NAME", "MYSQL_DATABASE")
+    )
+    db_engine = get_env_value(
+        "DB_ENGINE",
+        default=(
+            "django.db.backends.mysql"
+            if mysql_env_present else
+            "django.db.backends.sqlite3"
+        ),
+    )
+
+    if db_engine == "django.db.backends.mysql":
+        options = {
+            "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
+        db_ssl_ca = get_env_value("DB_SSL_CA", "MYSQL_SSL_CA")
+
+        if db_ssl_ca:
+            options["ssl"] = {"ca": db_ssl_ca}
+
+        return {
+            "ENGINE": db_engine,
+            "NAME": get_env_value("DB_NAME", "MYSQL_DATABASE"),
+            "USER": get_env_value("DB_USER", "MYSQL_USER"),
+            "PASSWORD": get_env_value("DB_PASSWORD", "MYSQL_PASSWORD"),
+            "HOST": get_env_value("DB_HOST", "MYSQL_HOST"),
+            "PORT": get_env_value("DB_PORT", "MYSQL_PORT", default="3306"),
+            "CONN_MAX_AGE": 60,
+            "CONN_HEALTH_CHECKS": True,
+            "OPTIONS": options,
+        }
+
+    return {
+        "ENGINE": db_engine,
+        "NAME": get_env_value("DB_NAME", default=BASE_DIR / "db.sqlite3"),
     }
+
+
+DATABASES = {
+    "default": build_database_config(),
 }
+
+FORECAST_HISTORY_LIMIT = get_int_env("FORECAST_HISTORY_LIMIT", 10)
+FORECAST_DAYS = get_int_env("FORECAST_DAYS", 7)
 
 
 # =========================
@@ -166,6 +225,10 @@ STATICFILES_DIRS = [
 ] if (BASE_DIR / "static").exists() else []
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_USE_FINDERS = os.getenv(
+    "WHITENOISE_USE_FINDERS",
+    "True",
+).lower() in ["true", "1", "yes"]
 
 
 # =========================
