@@ -8,6 +8,10 @@
         body.classList.add('sidebar-open');
         if (menuButton) {
             menuButton.setAttribute('aria-expanded', 'true');
+            const menuText = menuButton.querySelector('.mobile-menu-text');
+            if (menuText) {
+                menuText.textContent = 'Tutup';
+            }
         }
     }
 
@@ -15,11 +19,24 @@
         body.classList.remove('sidebar-open');
         if (menuButton) {
             menuButton.setAttribute('aria-expanded', 'false');
+            const menuText = menuButton.querySelector('.mobile-menu-text');
+            if (menuText) {
+                menuText.textContent = 'Menu';
+            }
         }
     }
 
+    function toggleSidebar() {
+        if (body.classList.contains('sidebar-open')) {
+            closeSidebar();
+            return;
+        }
+
+        openSidebar();
+    }
+
     if (menuButton) {
-        menuButton.addEventListener('click', openSidebar);
+        menuButton.addEventListener('click', toggleSidebar);
     }
 
     if (closeButton) {
@@ -29,6 +46,12 @@
     if (overlay) {
         overlay.addEventListener('click', closeSidebar);
     }
+
+    document.querySelectorAll('.sidebar a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            closeSidebar();
+        });
+    });
 
     window.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {

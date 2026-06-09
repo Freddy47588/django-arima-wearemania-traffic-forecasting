@@ -490,7 +490,7 @@
         if (!input || !button) return;
 
         function updateButtonLabel() {
-            const value = Math.min(Math.max(Number(input.value || 7), 1), 30);
+            const value = Math.min(Math.max(Number(input.value || 7), 1), 14);
             button.textContent = `⚡ Buat Prediksi ${value} Hari`;
         }
 

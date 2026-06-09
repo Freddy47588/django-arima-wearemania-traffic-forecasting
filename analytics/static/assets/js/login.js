@@ -9,7 +9,7 @@
         button.addEventListener('click', function () {
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
-            button.textContent = isPassword ? '🙈' : '👁️';
+            button.textContent = isPassword ? 'Tutup' : 'Lihat';
             button.setAttribute('aria-label', isPassword ? 'Sembunyikan password' : 'Tampilkan password');
         });
     }
