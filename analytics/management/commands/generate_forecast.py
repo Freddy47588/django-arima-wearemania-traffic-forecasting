@@ -23,7 +23,7 @@ class Command(BaseCommand):
             "--days",
             type=int,
             default=7,
-            help="Jumlah hari prediksi ke depan. Default: 7.",
+            help="Jumlah hari prediksi ke depan. Default: 7, maksimal: 14.",
         )
 
     def handle(self, *args, **options):

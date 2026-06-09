@@ -5,6 +5,8 @@ from datetime import timedelta
 
 import numpy as np
 import pandas as pd
+from django.conf import settings
+from django.db import transaction
 from django.db.models import Max
 from statsmodels.tsa.arima.model import ARIMA
 
@@ -81,7 +83,16 @@ def safe_float(value):
     return round(value, 4)
 
 
-def normalize_forecast_days(value, default=7, minimum=1, maximum=30):
+def normalize_forecast_days(value, default=7, minimum=1, maximum=14):
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        value = default
+
+    return max(minimum, min(value, maximum))
+
+
+def normalize_history_limit(value, default=10, minimum=1, maximum=100):
     try:
         value = int(value)
     except (TypeError, ValueError):
@@ -736,7 +747,7 @@ def build_prediction_kwargs(category, item, forecast_run=None):
     return prediction_kwargs
 
 
-def generate_forecast_for_category(category, forecast_days=7, forecast_run=None):
+def build_prediction_objects_for_category(category, forecast_days=7, forecast_run=None):
     series = prepare_time_series(
         category=category,
         end_date=get_latest_traffic_date(),
@@ -748,39 +759,73 @@ def generate_forecast_for_category(category, forecast_days=7, forecast_run=None)
     )
 
     if not forecast_results:
-        return 0
+        return []
 
-    prediction_objects = [
+    return [
         Prediction(**build_prediction_kwargs(category, item, forecast_run))
         for item in forecast_results
     ]
 
-    Prediction.objects.bulk_create(prediction_objects, batch_size=500)
+
+def generate_forecast_for_category(category, forecast_days=7, forecast_run=None):
+    prediction_objects = build_prediction_objects_for_category(
+        category=category,
+        forecast_days=forecast_days,
+        forecast_run=forecast_run,
+    )
+
+    with transaction.atomic():
+        Prediction.objects.filter(category=category).delete()
+
+        if prediction_objects:
+            Prediction.objects.bulk_create(prediction_objects, batch_size=500)
 
     return len(prediction_objects)
 
 
+def cleanup_old_forecast_runs(keep_last=10):
+    keep_last = normalize_history_limit(keep_last)
+    kept_ids = list(
+        ForecastRun.objects
+        .order_by("-started_at", "-id")
+        .values_list("id", flat=True)[:keep_last]
+    )
+
+    if not kept_ids:
+        return 0
+
+    deleted_count, _ = ForecastRun.objects.exclude(id__in=kept_ids).delete()
+
+    return deleted_count
+
+
 def generate_all_forecasts(forecast_days=7, forecast_run=None):
     forecast_days = normalize_forecast_days(forecast_days)
-    total_created = 0
+    prediction_objects = []
     failed_categories = []
 
-    categories = Category.objects.all().order_by("name")
+    categories = list(Category.objects.all().order_by("name"))
 
     for category in categories:
         try:
-            created_count = generate_forecast_for_category(
+            category_predictions = build_prediction_objects_for_category(
                 category=category,
                 forecast_days=forecast_days,
                 forecast_run=forecast_run,
             )
-            total_created += created_count
+            prediction_objects.extend(category_predictions)
         except Exception as error:
             failed_categories.append(f"{category.name}: {error}")
 
+    with transaction.atomic():
+        Prediction.objects.all().delete()
+
+        if prediction_objects:
+            Prediction.objects.bulk_create(prediction_objects, batch_size=500)
+
     return {
-        "total_categories": categories.count(),
-        "total_predictions": total_created,
+        "total_categories": len(categories),
+        "total_predictions": len(prediction_objects),
         "failed_categories": failed_categories,
     }
 
@@ -842,6 +887,10 @@ def create_forecast_run_and_generate(forecast_days=7):
             else:
                 forecast_run.save()
 
+        cleanup_old_forecast_runs(
+            keep_last=getattr(settings, "FORECAST_HISTORY_LIMIT", 10)
+        )
+
     except Exception as error:
         if hasattr(forecast_run, "mark_failed"):
             forecast_run.mark_failed(error)
@@ -860,6 +909,10 @@ def create_forecast_run_and_generate(forecast_days=7):
                 forecast_run.save(update_fields=update_fields)
             else:
                 forecast_run.save()
+
+        cleanup_old_forecast_runs(
+            keep_last=getattr(settings, "FORECAST_HISTORY_LIMIT", 10)
+        )
 
         raise
 
