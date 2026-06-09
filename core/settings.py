@@ -4,8 +4,10 @@ Wearemania Traffic Forecasting Dashboard.
 """
 
 import os
+import sys
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 
@@ -22,18 +24,40 @@ load_dotenv(BASE_DIR / ".env")
 # SECURITY
 # =========================
 
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "django-insecure-wearemania-local-development-key"
-)
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = os.getenv("DEBUG", "True").lower() in ["true", "1", "yes"]
+def get_bool_env(name, default=False):
+    return os.getenv(name, str(default)).lower() in ["true", "1", "yes"]
+
+
+DEBUG = get_bool_env("DEBUG", False)
+IS_RUNSERVER = "runserver" in sys.argv
 
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
     if host.strip()
 ]
+
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = False if IS_RUNSERVER else get_bool_env("SECURE_SSL_REDIRECT", False)
+SESSION_COOKIE_SECURE = False if IS_RUNSERVER else get_bool_env("SESSION_COOKIE_SECURE", False)
+CSRF_COOKIE_SECURE = False if IS_RUNSERVER else get_bool_env("CSRF_COOKIE_SECURE", False)
+SECURE_HSTS_SECONDS = 0 if IS_RUNSERVER else int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+    False if IS_RUNSERVER else get_bool_env("SECURE_HSTS_INCLUDE_SUBDOMAINS", False)
+)
+SECURE_HSTS_PRELOAD = False if IS_RUNSERVER else get_bool_env("SECURE_HSTS_PRELOAD", False)
 
 
 # =========================
@@ -130,20 +154,33 @@ def get_int_env(name, default):
 
 
 def build_database_config():
-    mysql_env_present = bool(
-        get_env_value("DB_HOST", "MYSQL_HOST") or
-        get_env_value("DB_NAME", "MYSQL_DATABASE")
-    )
-    db_engine = get_env_value(
-        "DB_ENGINE",
-        default=(
-            "django.db.backends.mysql"
-            if mysql_env_present else
-            "django.db.backends.sqlite3"
-        ),
-    )
+    db_engine = get_env_value("DB_ENGINE")
+
+    if not db_engine:
+        return build_sqlite_database_config()
 
     if db_engine == "django.db.backends.mysql":
+        mysql_config = {
+            "NAME": get_env_value("DB_NAME", "MYSQL_DATABASE"),
+            "USER": get_env_value("DB_USER", "MYSQL_USER"),
+            "PASSWORD": get_env_value("DB_PASSWORD", "MYSQL_PASSWORD"),
+            "HOST": get_env_value("DB_HOST", "MYSQL_HOST"),
+            "PORT": get_env_value("DB_PORT", "MYSQL_PORT", default="3306"),
+        }
+        missing_mysql_config = [
+            name for name, value in mysql_config.items()
+            if name != "PORT" and value in [None, ""]
+        ]
+
+        if missing_mysql_config:
+            if os.getenv("RENDER") or RENDER_EXTERNAL_HOSTNAME:
+                missing_names = ", ".join(f"DB_{name}" for name in missing_mysql_config)
+                raise ImproperlyConfigured(
+                    f"Missing required MySQL environment variable(s): {missing_names}"
+                )
+
+            return build_sqlite_database_config()
+
         options = {
             "charset": "utf8mb4",
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -155,11 +192,7 @@ def build_database_config():
 
         return {
             "ENGINE": db_engine,
-            "NAME": get_env_value("DB_NAME", "MYSQL_DATABASE"),
-            "USER": get_env_value("DB_USER", "MYSQL_USER"),
-            "PASSWORD": get_env_value("DB_PASSWORD", "MYSQL_PASSWORD"),
-            "HOST": get_env_value("DB_HOST", "MYSQL_HOST"),
-            "PORT": get_env_value("DB_PORT", "MYSQL_PORT", default="3306"),
+            **mysql_config,
             "CONN_MAX_AGE": 60,
             "CONN_HEALTH_CHECKS": True,
             "OPTIONS": options,
@@ -168,6 +201,13 @@ def build_database_config():
     return {
         "ENGINE": db_engine,
         "NAME": get_env_value("DB_NAME", default=BASE_DIR / "db.sqlite3"),
+    }
+
+
+def build_sqlite_database_config():
+    return {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 
 
@@ -225,6 +265,14 @@ STATICFILES_DIRS = [
 ] if (BASE_DIR / "static").exists() else []
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 WHITENOISE_USE_FINDERS = os.getenv(
     "WHITENOISE_USE_FINDERS",
     "True",

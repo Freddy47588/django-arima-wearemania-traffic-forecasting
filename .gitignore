@@ -26,6 +26,7 @@ db.sqlite3-journal
 *ga4*.json
 *service_account*.json
 secret_key.txt
+ca.pem
 *.pem
 *.key
 

@@ -21,18 +21,25 @@ MIN_ACTIVE_DAYS = 14
 TRAIN_RATIO = 0.8
 FALLBACK_WINDOW = 7
 FALLBACK_CONFIDENCE_RATIO = 0.15
-MAX_MODEL_CONFIDENCE_WIDTH = 70
+MAX_MODEL_CONFIDENCE_WIDTH = 120
 MAX_PREDICTION_MULTIPLIER = 12
 WMAPE_TIE_TOLERANCE = 5
 MAX_TUNING_SERIES_LENGTH = 180
 MAX_TEST_LENGTH = 28
 MAX_MODEL_ITERATIONS = 35
+ARIMA_BIAS_MIN = 0.55
+ARIMA_BIAS_MAX = 1.65
 ARIMA_ORDERS = [
-    (1, 1, 1),
-    (1, 0, 1),
-    (2, 1, 1),
-    (2, 0, 1),
     (0, 1, 1),
+    (1, 1, 0),
+    (1, 1, 1),
+    (0, 0, 1),
+    (1, 0, 1),
+    (2, 0, 0),
+    (2, 0, 1),
+    (2, 1, 1),
+    (1, 1, 2),
+    (2, 1, 2),
 ]
 
 
@@ -49,6 +56,7 @@ class ModelCandidate:
     smape: float
     aic: float
     bic: float
+    bias_factor: float
 
 
 @dataclass
@@ -448,6 +456,28 @@ def inverse_transform_forecast(values):
     return np.maximum(0, np.expm1(values))
 
 
+def cap_outliers_for_arima(series):
+    if series is None or series.empty or len(series) < 30:
+        return series
+
+    upper_limit = series.quantile(0.95)
+
+    if upper_limit <= 0:
+        return series
+
+    return series.clip(upper=upper_limit)
+
+
+def get_bias_factor(actual, predicted):
+    actual_sum = float(np.sum(np.asarray(actual, dtype=float)))
+    predicted_sum = float(np.sum(np.asarray(predicted, dtype=float)))
+
+    if actual_sum <= 0 or predicted_sum <= 0:
+        return 1.0
+
+    return max(ARIMA_BIAS_MIN, min(actual_sum / predicted_sum, ARIMA_BIAS_MAX))
+
+
 def is_extreme_prediction(predicted_values, series):
     if len(predicted_values) == 0:
         return True
@@ -459,7 +489,8 @@ def is_extreme_prediction(predicted_values, series):
 
 
 def fit_candidate(train_series, test_series, order):
-    transformed_train = np.log1p(train_series.astype(float))
+    capped_train = cap_outliers_for_arima(train_series)
+    transformed_train = np.log1p(capped_train.astype(float))
 
     fitted_model = ARIMA(
         transformed_train,
@@ -473,6 +504,8 @@ def fit_candidate(train_series, test_series, order):
 
     forecast_result = fitted_model.get_forecast(steps=len(test_series))
     predicted_values = inverse_transform_forecast(forecast_result.predicted_mean)
+    bias_factor = get_bias_factor(test_series, predicted_values)
+    predicted_values = predicted_values * bias_factor
 
     if is_extreme_prediction(predicted_values, train_series):
         return None
@@ -499,6 +532,7 @@ def fit_candidate(train_series, test_series, order):
         smape=metrics["smape"],
         aic=safe_float(fitted_model.aic),
         bic=safe_float(fitted_model.bic),
+        bias_factor=safe_float(bias_factor) or 1.0,
     )
 
 
@@ -584,7 +618,8 @@ def format_order(order):
 
 
 def build_forecast_results(series, candidate, forecast_days):
-    transformed_series = np.log1p(series.astype(float))
+    capped_series = cap_outliers_for_arima(series)
+    transformed_series = np.log1p(capped_series.astype(float))
 
     refit_model = ARIMA(
         transformed_series,
@@ -594,9 +629,12 @@ def build_forecast_results(series, candidate, forecast_days):
     ).fit(method_kwargs={"maxiter": MAX_MODEL_ITERATIONS})
 
     forecast_result = refit_model.get_forecast(steps=forecast_days)
-    predicted_mean = inverse_transform_forecast(forecast_result.predicted_mean)
+    predicted_mean = (
+        inverse_transform_forecast(forecast_result.predicted_mean) *
+        candidate.bias_factor
+    )
     confidence_interval = np.expm1(forecast_result.conf_int(alpha=0.05))
-    confidence_interval = np.maximum(0, confidence_interval)
+    confidence_interval = np.maximum(0, confidence_interval * candidate.bias_factor)
 
     results = []
     order_label = format_order(candidate.order)
@@ -667,19 +705,6 @@ def forecast_with_best_model(series, forecast_days=7):
             candidate=candidate,
             forecast_days=forecast_days,
         )
-
-        if (
-            baseline_candidate and
-            baseline_candidate.wmape is not None and
-            candidate.wmape is not None and
-            baseline_candidate.wmape + WMAPE_TIE_TOLERANCE < candidate.wmape
-        ):
-            return run_moving_average_fallback(
-                series=series,
-                forecast_days=forecast_days,
-                reason="baseline_more_accurate",
-                baseline_candidate=baseline_candidate,
-            )
 
         has_zero_prediction_interval = any(
             item["predicted_views"] <= 0 and item["upper_bound"] > 0
