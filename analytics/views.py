@@ -15,6 +15,7 @@ from analytics.forms import CSVUploadForm
 from analytics.models import Category, ForecastRun, Prediction, TrafficData
 from analytics.services.csv_importer import import_raw_traffic_csv
 from analytics.services.forecasting import (
+    MAX_FORECAST_DAYS,
     create_forecast_run_and_generate,
     normalize_forecast_days,
 )
@@ -425,13 +426,13 @@ def get_alert_label(change_percentage):
 def get_prediction_status(wmape_value, needs_more_data=False):
     if wmape_value in [None, ""]:
         return (
-            "Data rendah",
-            "Traffic aktual pembanding masih terlalu rendah untuk menghitung WMAPE."
+            "Perlu dipantau",
+            "WMAPE belum tersedia, gunakan MAE/RMSE sebagai pendukung."
         )
 
     if needs_more_data:
         return (
-            "Perlu data tambahan",
+            "Data terbatas",
             "Tambahkan histori traffic agar prediksi lebih stabil untuk dibaca redaksi."
         )
 
@@ -439,23 +440,23 @@ def get_prediction_status(wmape_value, needs_more_data=False):
         wmape_value = float(wmape_value)
     except (TypeError, ValueError):
         return (
-            "Perlu data tambahan",
+            "Perlu dipantau",
             "Data evaluasi belum cukup untuk membaca kualitas prediksi."
         )
 
-    if wmape_value < 10:
+    if wmape_value <= 15:
         return (
             "Prediksi cukup akurat",
             "Prediksi cukup akurat untuk acuan awal redaksi."
         )
 
-    if wmape_value <= 20:
+    if wmape_value <= 30:
         return (
             "Prediksi cukup layak",
             "Prediksi cukup layak, tetap pantau kategori dengan perubahan besar."
         )
 
-    if wmape_value <= 35:
+    if wmape_value <= 50:
         return (
             "Perlu dipantau",
             "Prediksi perlu dipantau karena error masih cukup tinggi."
@@ -525,11 +526,12 @@ def get_latest_forecast_run():
     forecast_run_fields = get_model_field_names(ForecastRun)
 
     status_success = getattr(ForecastRun, "STATUS_SUCCESS", "success")
+    status_partial = getattr(ForecastRun, "STATUS_PARTIAL", "partial")
 
     queryset = ForecastRun.objects.all()
 
     if "status" in forecast_run_fields:
-        queryset = queryset.filter(status=status_success)
+        queryset = queryset.filter(status__in=[status_success, status_partial])
 
     order_fields = []
 
@@ -1132,15 +1134,16 @@ def dashboard(request):
         avg_mae=Avg("mae"),
         avg_rmse=Avg("rmse"),
         avg_mape=Avg("mape"),
+        avg_wmape=Avg("wmape"),
         avg_aic=Avg("aic"),
         avg_bic=Avg("bic"),
     )
 
     best_model_metric = (
         prediction_queryset
-        .exclude(mape__isnull=True)
-        .values("model_name", "arima_order", "seasonal_order", "mape", "mae", "rmse", "aic", "bic")
-        .order_by("mape", "aic", "bic")
+        .exclude(wmape__isnull=True)
+        .values("model_name", "arima_order", "seasonal_order", "wmape", "mape", "mae", "rmse", "aic", "bic")
+        .order_by("wmape", "mae", "aic")
         .first()
     )
 
@@ -1230,8 +1233,10 @@ def dashboard(request):
         (fallback_dominant and data_days_covered < 60)
     )
 
+    model_wmape_value = forecast_metrics["avg_wmape"] or wmape_value
+
     prediction_status, prediction_status_detail = get_prediction_status(
-        wmape_value,
+        model_wmape_value,
         needs_more_data=needs_more_prediction_data,
     )
 
@@ -1256,9 +1261,9 @@ def dashboard(request):
         },
         {
             "label": "WMAPE",
-            "value": format_percent_value(wmape_value),
-            "detail": "Error berbobot traffic. Kategori besar ikut memberi bobot lebih besar.",
-            "tooltip": "WMAPE = total selisih absolut dibagi total Traffic Aktual terbaru.",
+            "value": format_percent_metric(forecast_metrics["avg_wmape"]),
+            "detail": "Error berbobot terhadap total traffic, lebih stabil untuk data traffic kecil atau 0.",
+            "tooltip": "WMAPE = total selisih absolut dibagi total traffic aktual pada data uji.",
         },
         {
             "label": "Rata-rata lebar rentang prediksi",
@@ -1322,7 +1327,7 @@ def dashboard(request):
                 f"{format_metric(forecast_metrics['avg_aic'])} / "
                 f"{format_metric(forecast_metrics['avg_bic'])}"
             ),
-            "detail": "Kriteria pemilihan model saat MAPE kandidat relatif mirip.",
+            "detail": "Skor pembanding model; lebih kecil biasanya lebih baik.",
             "tooltip": "AIC dan BIC membantu membandingkan model statistik. Nilai lebih kecil biasanya lebih baik.",
         },
         {
@@ -1453,7 +1458,8 @@ def dashboard(request):
         "selected_start_date": start_date,
         "selected_end_date": end_date,
         "is_filter_active": is_filter_active,
-        "forecast_days": getattr(latest_forecast_run, "forecast_days", 7) if latest_forecast_run else 7,
+        "forecast_days": 7,
+        "max_forecast_days": MAX_FORECAST_DAYS,
 
         "actual_labels": json.dumps(actual_labels),
         "actual_views": json.dumps(actual_views),
@@ -1639,7 +1645,19 @@ def generate_forecast_view(request):
         )
         return redirect("dashboard")
 
-    forecast_days = normalize_forecast_days(request.POST.get("forecast_days", 7))
+    requested_days_raw = request.POST.get("forecast_days", 7)
+    forecast_days = normalize_forecast_days(requested_days_raw)
+
+    try:
+        requested_days = int(requested_days_raw)
+    except (TypeError, ValueError):
+        requested_days = forecast_days
+
+    if requested_days > MAX_FORECAST_DAYS:
+        messages.warning(
+            request,
+            "Forecast days dibatasi maksimal 14 hari agar prediksi tetap realistis."
+        )
 
     try:
         forecast_run = create_forecast_run_and_generate(
@@ -1647,12 +1665,20 @@ def generate_forecast_view(request):
         )
 
         total_predictions = getattr(forecast_run, "total_predictions", 0) or 0
+        run_summary = getattr(forecast_run, "summary", None)
+        fallback_count = getattr(run_summary, "fallback_categories", 0)
+        failed_count = len(getattr(run_summary, "failed_categories", []) or [])
+        success_count = getattr(run_summary, "successful_categories", 0)
 
         if total_predictions > 0:
             messages.success(
                 request,
                 (
-                    f"Forecast berhasil dibuat untuk {forecast_days} hari ke depan. "
+                    "Forecast selesai. "
+                    f"{success_count} kategori berhasil, "
+                    f"{fallback_count} kategori fallback, "
+                    f"{failed_count} kategori gagal. "
+                    f"Periode prediksi: {forecast_days} hari. "
                     f"Total prediksi: {total_predictions}."
                 ),
             )

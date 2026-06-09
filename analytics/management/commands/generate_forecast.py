@@ -3,6 +3,7 @@ from django.db.models import Avg, Count
 
 from analytics.models import Prediction, TrafficData
 from analytics.services.forecasting import (
+    MAX_FORECAST_DAYS,
     create_forecast_run_and_generate,
     normalize_forecast_days,
 )
@@ -16,7 +17,7 @@ def format_metric(value, suffix=""):
 
 
 class Command(BaseCommand):
-    help = "Generate ARIMA forecast for all traffic categories."
+    help = "Generate ARIMA forecast for traffic categories."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -25,9 +26,28 @@ class Command(BaseCommand):
             default=7,
             help="Jumlah hari prediksi ke depan. Default: 7, maksimal: 14.",
         )
+        parser.add_argument(
+            "--category",
+            type=str,
+            default=None,
+            help="Opsional: ID atau slug kategori untuk generate satu kategori saja.",
+        )
+        parser.add_argument(
+            "--fast",
+            action="store_true",
+            help="Lewati kandidat SARIMA musiman dan gunakan kandidat ARIMA kecil saja.",
+        )
 
     def handle(self, *args, **options):
-        forecast_days = normalize_forecast_days(options["days"])
+        requested_days = options["days"]
+        forecast_days = normalize_forecast_days(requested_days)
+
+        if requested_days > MAX_FORECAST_DAYS:
+            self.stdout.write(
+                self.style.WARNING(
+                    "Forecast days dibatasi maksimal 14 hari agar prediksi tetap realistis."
+                )
+            )
 
         if not TrafficData.objects.exists():
             raise CommandError(
@@ -42,7 +62,9 @@ class Command(BaseCommand):
 
         try:
             forecast_run = create_forecast_run_and_generate(
-                forecast_days=forecast_days
+                forecast_days=forecast_days,
+                category=options["category"],
+                fast=options["fast"],
             )
 
             predictions = Prediction.objects.filter(forecast_run=forecast_run)
@@ -62,13 +84,24 @@ class Command(BaseCommand):
                 .distinct()
                 .order_by("model_name")
             )
+            run_summary = getattr(forecast_run, "summary", None)
+            fallback_count = getattr(run_summary, "fallback_categories", 0)
+            failed_count = len(getattr(run_summary, "failed_categories", []) or [])
+            success_count = getattr(
+                run_summary,
+                "successful_categories",
+                summary["category_count"] or 0,
+            )
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    "Forecast generated successfully. "
+                    "Forecast selesai. "
+                    f"{success_count} kategori berhasil, "
+                    f"{fallback_count} kategori fallback, "
+                    f"{failed_count} kategori gagal. "
+                    f"Periode prediksi: {forecast_days} hari. "
                     f"Run ID: {forecast_run.id}. "
-                    f"Total predictions: {forecast_run.total_predictions}. "
-                    f"Categories processed: {summary['category_count'] or 0}."
+                    f"Total prediksi: {forecast_run.total_predictions}."
                 )
             )
             self.stdout.write(
@@ -77,11 +110,11 @@ class Command(BaseCommand):
             )
             self.stdout.write(
                 "Best-run metrics average: "
-                f"MAPE={format_metric(summary['avg_mape'], '%')}, "
                 f"WMAPE={format_metric(summary['avg_wmape'], '%')}, "
-                f"SMAPE={format_metric(summary['avg_smape'], '%')}, "
                 f"MAE={format_metric(summary['avg_mae'])}, "
                 f"RMSE={format_metric(summary['avg_rmse'])}, "
+                f"MAPE={format_metric(summary['avg_mape'], '%')}, "
+                f"SMAPE={format_metric(summary['avg_smape'], '%')}, "
                 f"AIC={format_metric(summary['avg_aic'])}, "
                 f"BIC={format_metric(summary['avg_bic'])}."
             )

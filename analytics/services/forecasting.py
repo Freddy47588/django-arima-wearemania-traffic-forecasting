@@ -7,67 +7,73 @@ import numpy as np
 import pandas as pd
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Sum
+from django.utils import timezone
 from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 from analytics.models import Category, ForecastRun, Prediction, TrafficData
 
 
 warnings.filterwarnings("ignore")
 
+DEFAULT_FORECAST_DAYS = 7
+MAX_FORECAST_DAYS = 14
 MIN_ARIMA_SERIES_LENGTH = 60
-MIN_ARIMA_TRAIN_LENGTH = 30
 MIN_ACTIVE_DAYS = 14
-TRAIN_RATIO = 0.8
 FALLBACK_WINDOW = 7
-FALLBACK_CONFIDENCE_RATIO = 0.15
-MAX_MODEL_CONFIDENCE_WIDTH = 120
-MAX_PREDICTION_MULTIPLIER = 12
-WMAPE_TIE_TOLERANCE = 5
-MAX_TUNING_SERIES_LENGTH = 180
-MAX_TEST_LENGTH = 28
 MAX_MODEL_ITERATIONS = 35
-ARIMA_BIAS_MIN = 0.55
-ARIMA_BIAS_MAX = 1.65
-ARIMA_ORDERS = [
+MAX_PREDICTION_MULTIPLIER = 12
+BASELINE_ARIMA_TOLERANCE = 1.15
+
+ARIMA_CANDIDATES = [
+    (1, 1, 1),
+    (1, 0, 1),
+    (2, 1, 1),
+    (2, 0, 1),
     (0, 1, 1),
     (1, 1, 0),
-    (1, 1, 1),
-    (0, 0, 1),
-    (1, 0, 1),
-    (2, 0, 0),
-    (2, 0, 1),
-    (2, 1, 1),
-    (1, 1, 2),
-    (2, 1, 2),
+    (0, 1, 2),
+]
+
+SARIMA_CANDIDATES = [
+    ((1, 1, 1), (1, 0, 1, 7)),
+    ((1, 0, 1), (1, 0, 1, 7)),
 ]
 
 
 @dataclass
-class ModelCandidate:
-    fitted_model: object
-    order: tuple
-    seasonal_order: tuple
-    model_name: str
-    mae: float
-    rmse: float
-    mape: float
-    wmape: float
-    smape: float
-    aic: float
-    bic: float
-    bias_factor: float
+class SeriesProfile:
+    total_days: int
+    active_days: int
+    zero_ratio: float
+    total_views: float
+    is_constant: bool
 
 
 @dataclass
-class BaselineCandidate:
-    strategy: str
+class EvaluatedModel:
+    order: tuple
+    seasonal_order: tuple
     model_name: str
-    mae: float
-    rmse: float
-    mape: float
-    wmape: float
-    smape: float
+    mae: float | None
+    rmse: float | None
+    mape: float | None
+    wmape: float | None
+    smape: float | None
+    aic: float | None
+    bic: float | None
+
+
+@dataclass
+class ForecastSummary:
+    total_categories: int
+    total_predictions: int
+    successful_categories: int
+    fallback_categories: int
+    failed_categories: list
+    average_wmape: float | None
+    forecast_days: int
 
 
 def safe_positive_int(value):
@@ -79,7 +85,7 @@ def safe_positive_int(value):
     return max(0, value)
 
 
-def safe_float(value):
+def safe_float(value, digits=4):
     try:
         value = float(value)
     except (TypeError, ValueError, OverflowError):
@@ -88,10 +94,13 @@ def safe_float(value):
     if math.isnan(value) or math.isinf(value):
         return None
 
-    return round(value, 4)
+    return round(value, digits)
 
 
-def normalize_forecast_days(value, default=7, minimum=1, maximum=14):
+def normalize_forecast_days(value, default=None, minimum=1, maximum=None):
+    default = default or getattr(settings, "DEFAULT_FORECAST_DAYS", DEFAULT_FORECAST_DAYS)
+    maximum = maximum or getattr(settings, "MAX_FORECAST_DAYS", MAX_FORECAST_DAYS)
+
     try:
         value = int(value)
     except (TypeError, ValueError):
@@ -118,77 +127,77 @@ def get_latest_traffic_date():
 
 
 def prepare_time_series(category, end_date=None):
-    """
-    Build a daily category time series from TrafficData.
-
-    Missing dates are filled with 0 because absent daily traffic rows should not
-    be interpreted as unknown positive traffic in this dashboard workflow.
-    """
     queryset = (
         TrafficData.objects
         .filter(category=category)
-        .values("date", "views")
+        .values("date")
+        .annotate(views=Sum("views"))
         .order_by("date")
     )
-
     df = pd.DataFrame(list(queryset))
 
     if df.empty:
-        return None
+        return pd.Series(dtype=float)
 
     df["date"] = pd.to_datetime(df["date"])
-
-    if end_date:
-        end_date = pd.to_datetime(end_date)
-
-    daily_df = (
-        df.groupby("date", as_index=False)["views"]
-        .sum()
-        .sort_values("date")
-    )
+    df["views"] = pd.to_numeric(df["views"], errors="coerce")
+    df["views"] = df["views"].replace([np.inf, -np.inf], np.nan).fillna(0)
+    df["views"] = df["views"].clip(lower=0)
 
     series = (
-        daily_df
-        .set_index("date")["views"]
+        df.groupby("date")["views"]
+        .sum()
+        .sort_index()
         .asfreq("D")
         .fillna(0)
-        .sort_index()
     )
 
-    if end_date and not series.empty and series.index.max() < end_date:
+    if end_date and not series.empty:
+        end_date = pd.to_datetime(end_date)
         full_index = pd.date_range(series.index.min(), end_date, freq="D")
         series = series.reindex(full_index, fill_value=0)
 
-    return series.astype(float)
+    return series.astype(float).replace([np.inf, -np.inf], 0).fillna(0).clip(lower=0)
 
 
-def train_test_split_series(series):
-    """
-    Split only histories that are long enough for ARIMA evaluation.
-
-    For 90+ days, use an 80/20 split. For 60-89 days, keep the latest 14 days
-    as test data so the model is evaluated against recent editorial traffic.
-    """
+def profile_series(series):
     if series is None or series.empty:
-        return None, None
+        return SeriesProfile(0, 0, 1.0, 0, True)
 
-    if len(series) < MIN_ARIMA_SERIES_LENGTH:
+    total_days = len(series)
+    active_days = int((series > 0).sum())
+    zero_ratio = safe_float((series == 0).sum() / total_days) or 0
+    total_views = float(series.sum())
+
+    return SeriesProfile(
+        total_days=total_days,
+        active_days=active_days,
+        zero_ratio=zero_ratio,
+        total_views=total_views,
+        is_constant=series.nunique() <= 1,
+    )
+
+
+def is_arima_eligible(profile):
+    return (
+        profile.total_days >= MIN_ARIMA_SERIES_LENGTH and
+        profile.active_days >= MIN_ACTIVE_DAYS and
+        profile.total_views > 0 and
+        not profile.is_constant
+    )
+
+
+def train_test_split_series(series, forecast_days):
+    if series is None or series.empty:
+        return pd.Series(dtype=float), pd.Series(dtype=float)
+
+    forecast_days = normalize_forecast_days(forecast_days)
+    test_size = min(forecast_days, MAX_FORECAST_DAYS, max(3, len(series) // 10))
+
+    if len(series) <= test_size:
         return series, pd.Series(dtype=float)
 
-    tuning_series = series.tail(MAX_TUNING_SERIES_LENGTH)
-
-    if len(tuning_series) >= 90:
-        split_index = int(len(tuning_series) * TRAIN_RATIO)
-        split_index = min(split_index, len(tuning_series) - 14)
-    else:
-        split_index = len(tuning_series) - 14
-
-    split_index = max(1, split_index)
-
-    train_series = tuning_series.iloc[:split_index]
-    test_series = tuning_series.iloc[split_index:].tail(MAX_TEST_LENGTH)
-
-    return train_series, test_series
+    return series.iloc[:-test_size], series.iloc[-test_size:]
 
 
 def calculate_metrics(actual, predicted):
@@ -196,45 +205,34 @@ def calculate_metrics(actual, predicted):
     predicted_values = np.asarray(predicted, dtype=float)
 
     if len(actual_values) == 0 or len(predicted_values) == 0:
-        return {
-            "mae": None,
-            "rmse": None,
-            "mape": None,
-        }
+        return {"mae": None, "rmse": None, "mape": None, "wmape": None, "smape": None}
 
     length = min(len(actual_values), len(predicted_values))
     actual_values = actual_values[:length]
-    predicted_values = predicted_values[:length]
-
+    predicted_values = np.maximum(0, predicted_values[:length])
     errors = actual_values - predicted_values
+
     mae = np.mean(np.abs(errors))
     rmse = np.sqrt(np.mean(np.square(errors)))
     actual_sum = np.sum(np.abs(actual_values))
-    denominator = (np.abs(actual_values) + np.abs(predicted_values)) / 2
+    nonzero_mask = actual_values > 0
+    smape_denominator = (np.abs(actual_values) + np.abs(predicted_values)) / 2
+    smape_mask = smape_denominator > 0
 
-    nonzero_mask = actual_values != 0
-
+    mape = None
     if nonzero_mask.any():
-        mape = np.mean(
-            np.abs(
-                (actual_values[nonzero_mask] - predicted_values[nonzero_mask]) /
-                actual_values[nonzero_mask]
-            )
-        ) * 100
-    else:
-        mape = None
+        mape = (
+            np.mean(np.abs(errors[nonzero_mask] / actual_values[nonzero_mask])) *
+            100
+        )
 
+    wmape = None
     if actual_sum > 0:
         wmape = (np.sum(np.abs(errors)) / actual_sum) * 100
-    else:
-        wmape = None
 
-    smape_mask = denominator > 0
-
+    smape = None
     if smape_mask.any():
-        smape = np.mean(np.abs(errors[smape_mask]) / denominator[smape_mask]) * 100
-    else:
-        smape = None
+        smape = np.mean(np.abs(errors[smape_mask]) / smape_denominator[smape_mask]) * 100
 
     return {
         "mae": safe_float(mae),
@@ -245,241 +243,33 @@ def calculate_metrics(actual, predicted):
     }
 
 
-def get_recent_baseline(series):
-    if series is None or series.empty:
-        return 0
-
-    window = 14 if len(series) >= 14 else FALLBACK_WINDOW
-    recent_series = series.tail(window)
-
-    if recent_series.empty:
-        return 0
-
-    return safe_positive_int(recent_series.mean())
-
-
-def get_window(series, window):
-    if series is None or series.empty:
-        return pd.Series(dtype=float)
-
-    return series.tail(min(window, len(series)))
-
-
-def get_baseline_value(series, strategy):
-    if series is None or series.empty:
-        return 0
-
-    if strategy == "last":
-        return safe_positive_int(series.iloc[-1])
-
-    if strategy == "ma14":
-        return safe_positive_int(get_window(series, 14).mean())
-
-    if strategy == "weighted":
-        ma7 = get_window(series, 7).mean()
-        ma28 = get_window(series, 28).mean()
-        return safe_positive_int((ma7 * 0.65) + (ma28 * 0.35))
-
-    return safe_positive_int(get_window(series, 7).mean())
-
-
-def get_baseline_predictions(series, steps, strategy):
-    if series is None or series.empty:
-        return [0] * steps
-
-    if strategy == "seasonal7" and len(series) >= 7:
-        values = list(series.tail(7).values)
-        return [
-            safe_positive_int(values[index % 7])
-            for index in range(steps)
-        ]
-
-    value = get_baseline_value(series, strategy)
-
-    return [value] * steps
-
-
-def get_baseline_model_name(strategy):
-    if strategy == "last":
-        return "Naive Fallback"
-
-    if strategy == "seasonal7":
-        return "Seasonal Naive Fallback"
-
-    if strategy == "weighted":
-        return "Weighted Moving Average Fallback"
-
-    if strategy == "ma14":
-        return "Moving Average 14 Fallback"
-
-    return "Moving Average Fallback"
-
-
-def evaluate_baseline_strategy(train_series, test_series, strategy):
-    if train_series is None or train_series.empty or test_series is None or test_series.empty:
-        return None
-
-    predicted_values = get_baseline_predictions(
-        series=train_series,
-        steps=len(test_series),
-        strategy=strategy,
-    )
-    metrics = calculate_metrics(test_series, predicted_values)
-
-    if metrics["wmape"] is None:
-        return None
-
-    return BaselineCandidate(
-        strategy=strategy,
-        model_name=get_baseline_model_name(strategy),
-        mae=metrics["mae"],
-        rmse=metrics["rmse"],
-        mape=metrics["mape"],
-        wmape=metrics["wmape"],
-        smape=metrics["smape"],
-    )
-
-
-def find_best_baseline_model(series):
-    train_series, test_series = train_test_split_series(series)
-
-    if train_series is None or train_series.empty:
-        return None
-
-    strategies = ["last", "ma7", "ma14", "weighted", "seasonal7"]
-    best_candidate = None
-
-    for strategy in strategies:
-        candidate = evaluate_baseline_strategy(
-            train_series=train_series,
-            test_series=test_series,
-            strategy=strategy,
-        )
-
-        if not candidate:
-            continue
-
-        if best_candidate is None or candidate.wmape < best_candidate.wmape:
-            best_candidate = candidate
-
-    if best_candidate:
-        return best_candidate
-
-    recent_value = get_baseline_value(series, "ma7")
-    metrics = calculate_metrics(
-        get_window(series, FALLBACK_WINDOW),
-        [recent_value] * len(get_window(series, FALLBACK_WINDOW)),
-    )
-
-    return BaselineCandidate(
-        strategy="ma7",
-        model_name=get_baseline_model_name("ma7"),
-        mae=metrics["mae"],
-        rmse=metrics["rmse"],
-        mape=metrics["mape"],
-        wmape=metrics["wmape"],
-        smape=metrics["smape"],
-    )
-
-
-def run_moving_average_fallback(
-    series,
-    forecast_days=7,
-    reason="fallback",
-    baseline_candidate=None,
-):
-    if series is None or series.empty:
-        return []
-
-    last_date = series.index.max().date()
-    baseline_candidate = baseline_candidate or find_best_baseline_model(series)
-    strategy = baseline_candidate.strategy if baseline_candidate else "ma7"
-    predicted_values = get_baseline_predictions(
-        series=series,
-        steps=forecast_days,
-        strategy=strategy,
-    )
-    mae_width = safe_positive_int(
-        baseline_candidate.mae if baseline_candidate else 0
-    )
-
-    results = []
-
-    for day in range(1, forecast_days + 1):
-        prediction_date = last_date + timedelta(days=day)
-        predicted_value = predicted_values[day - 1]
-        interval_width = min(
-            mae_width,
-            safe_positive_int(predicted_value * FALLBACK_CONFIDENCE_RATIO),
-        )
-        lower_bound = max(0, predicted_value - interval_width)
-        upper_bound = max(predicted_value, predicted_value + interval_width)
-
-        results.append({
-            "prediction_date": prediction_date,
-            "predicted_views": predicted_value,
-            "lower_bound": lower_bound,
-            "upper_bound": upper_bound,
-            "model_name": (
-                baseline_candidate.model_name
-                if baseline_candidate else
-                "Moving Average Fallback"
-            ),
-            "arima_order": "",
-            "seasonal_order": "",
-            "mae": baseline_candidate.mae if baseline_candidate else None,
-            "rmse": baseline_candidate.rmse if baseline_candidate else None,
-            "mape": baseline_candidate.mape if baseline_candidate else None,
-            "wmape": baseline_candidate.wmape if baseline_candidate else None,
-            "smape": baseline_candidate.smape if baseline_candidate else None,
-            "aic": None,
-            "bic": None,
-            "fallback_reason": reason,
-        })
-
-    return results
-
-
-def is_sparse_or_inactive_series(series):
-    if series is None or series.empty:
+def is_better_candidate(candidate, best_candidate):
+    if best_candidate is None:
         return True
 
-    nonzero_series = series[series > 0]
+    candidate_wmape = candidate.wmape if candidate.wmape is not None else float("inf")
+    best_wmape = best_candidate.wmape if best_candidate.wmape is not None else float("inf")
 
-    if len(nonzero_series) < MIN_ACTIVE_DAYS:
-        return True
+    if candidate_wmape != best_wmape:
+        return candidate_wmape < best_wmape
 
-    return False
+    candidate_mae = candidate.mae if candidate.mae is not None else float("inf")
+    best_mae = best_candidate.mae if best_candidate.mae is not None else float("inf")
 
+    if candidate_mae != best_mae:
+        return candidate_mae < best_mae
 
-def inverse_transform_forecast(values):
-    return np.maximum(0, np.expm1(values))
+    candidate_aic = candidate.aic if candidate.aic is not None else float("inf")
+    best_aic = best_candidate.aic if best_candidate.aic is not None else float("inf")
 
-
-def cap_outliers_for_arima(series):
-    if series is None or series.empty or len(series) < 30:
-        return series
-
-    upper_limit = series.quantile(0.95)
-
-    if upper_limit <= 0:
-        return series
-
-    return series.clip(upper=upper_limit)
-
-
-def get_bias_factor(actual, predicted):
-    actual_sum = float(np.sum(np.asarray(actual, dtype=float)))
-    predicted_sum = float(np.sum(np.asarray(predicted, dtype=float)))
-
-    if actual_sum <= 0 or predicted_sum <= 0:
-        return 1.0
-
-    return max(ARIMA_BIAS_MIN, min(actual_sum / predicted_sum, ARIMA_BIAS_MAX))
+    return candidate_aic < best_aic
 
 
 def is_extreme_prediction(predicted_values, series):
     if len(predicted_values) == 0:
+        return True
+
+    if np.any(np.isnan(predicted_values)) or np.any(np.isinf(predicted_values)):
         return True
 
     historical_max = max(float(series.max()), 1.0)
@@ -488,40 +278,23 @@ def is_extreme_prediction(predicted_values, series):
     return predicted_max > historical_max * MAX_PREDICTION_MULTIPLIER
 
 
-def fit_candidate(train_series, test_series, order):
-    capped_train = cap_outliers_for_arima(train_series)
-    transformed_train = np.log1p(capped_train.astype(float))
-
+def fit_arima_candidate(train_series, test_series, order):
     fitted_model = ARIMA(
-        transformed_train,
+        train_series,
         order=order,
         enforce_stationarity=False,
         enforce_invertibility=False,
     ).fit(method_kwargs={"maxiter": MAX_MODEL_ITERATIONS})
 
-    if not getattr(fitted_model, "mle_retvals", {}).get("converged", True):
-        return None
-
-    forecast_result = fitted_model.get_forecast(steps=len(test_series))
-    predicted_values = inverse_transform_forecast(forecast_result.predicted_mean)
-    bias_factor = get_bias_factor(test_series, predicted_values)
-    predicted_values = predicted_values * bias_factor
+    predicted_values = np.asarray(fitted_model.forecast(steps=len(test_series)), dtype=float)
+    predicted_values = np.maximum(0, predicted_values)
 
     if is_extreme_prediction(predicted_values, train_series):
         return None
 
     metrics = calculate_metrics(test_series, predicted_values)
 
-    if metrics["wmape"] is None:
-        sort_wmape = float("inf")
-    else:
-        sort_wmape = metrics["wmape"]
-
-    if math.isinf(sort_wmape):
-        return None
-
-    return ModelCandidate(
-        fitted_model=fitted_model,
+    return EvaluatedModel(
         order=order,
         seasonal_order=(0, 0, 0, 0),
         model_name="ARIMA",
@@ -532,82 +305,140 @@ def fit_candidate(train_series, test_series, order):
         smape=metrics["smape"],
         aic=safe_float(fitted_model.aic),
         bic=safe_float(fitted_model.bic),
-        bias_factor=safe_float(bias_factor) or 1.0,
     )
 
 
-def is_better_candidate(candidate, best_candidate):
-    if best_candidate is None:
-        return True
+def fit_sarima_candidate(train_series, test_series, order, seasonal_order):
+    fitted_model = SARIMAX(
+        train_series,
+        order=order,
+        seasonal_order=seasonal_order,
+        enforce_stationarity=False,
+        enforce_invertibility=False,
+    ).fit(disp=False, maxiter=MAX_MODEL_ITERATIONS)
 
-    candidate_wmape = candidate.wmape if candidate.wmape is not None else float("inf")
-    best_wmape = best_candidate.wmape if best_candidate.wmape is not None else float("inf")
+    predicted_values = np.asarray(fitted_model.forecast(steps=len(test_series)), dtype=float)
+    predicted_values = np.maximum(0, predicted_values)
 
-    if candidate_wmape < best_wmape - WMAPE_TIE_TOLERANCE:
-        return True
+    if is_extreme_prediction(predicted_values, train_series):
+        return None
 
-    if abs(candidate_wmape - best_wmape) <= WMAPE_TIE_TOLERANCE:
-        candidate_aic = candidate.aic if candidate.aic is not None else float("inf")
-        best_aic = best_candidate.aic if best_candidate.aic is not None else float("inf")
+    metrics = calculate_metrics(test_series, predicted_values)
 
-        if candidate_aic < best_aic:
-            return True
+    return EvaluatedModel(
+        order=order,
+        seasonal_order=seasonal_order,
+        model_name="SARIMA",
+        mae=metrics["mae"],
+        rmse=metrics["rmse"],
+        mape=metrics["mape"],
+        wmape=metrics["wmape"],
+        smape=metrics["smape"],
+        aic=safe_float(fitted_model.aic),
+        bic=safe_float(fitted_model.bic),
+    )
 
-        if candidate_aic == best_aic:
-            candidate_bic = candidate.bic if candidate.bic is not None else float("inf")
-            best_bic = best_candidate.bic if best_candidate.bic is not None else float("inf")
-            return candidate_bic < best_bic
 
-    return False
+def find_best_arima_model(series, forecast_days, fast=False):
+    train_series, test_series = train_test_split_series(series, forecast_days)
 
-
-def find_best_arima_model(series):
-    train_series, test_series = train_test_split_series(series)
-
-    if (
-        train_series is None or
-        test_series is None or
-        len(train_series) < MIN_ARIMA_TRAIN_LENGTH or
-        len(test_series) == 0 or
-        train_series.nunique() <= 1
-    ):
+    if train_series.empty or test_series.empty or train_series.nunique() <= 1:
         return None
 
     best_candidate = None
 
-    for order in ARIMA_ORDERS:
+    for order in ARIMA_CANDIDATES:
         try:
-            candidate = fit_candidate(
-                train_series=train_series,
-                test_series=test_series,
-                order=order,
-            )
+            candidate = fit_arima_candidate(train_series, test_series, order)
         except Exception:
             continue
 
         if candidate and is_better_candidate(candidate, best_candidate):
             best_candidate = candidate
 
+    profile = profile_series(series)
+
+    if not fast and profile.total_days >= 180 and profile.active_days >= 60:
+        for order, seasonal_order in SARIMA_CANDIDATES:
+            try:
+                candidate = fit_sarima_candidate(
+                    train_series,
+                    test_series,
+                    order,
+                    seasonal_order,
+                )
+            except Exception:
+                continue
+
+            if candidate and is_better_candidate(candidate, best_candidate):
+                best_candidate = candidate
+
     return best_candidate
 
 
-def get_average_confidence_width(results):
-    confidence_widths = []
-
-    for item in results:
-        predicted_value = item["predicted_views"]
-
-        if predicted_value <= 0:
-            continue
-
-        confidence_widths.append(
-            ((item["upper_bound"] - item["lower_bound"]) / predicted_value) * 100
-        )
-
-    if not confidence_widths:
+def get_fallback_value(series):
+    if series is None or series.empty:
         return 0
 
-    return sum(confidence_widths) / len(confidence_widths)
+    recent = series.tail(FALLBACK_WINDOW)
+    positive_recent = recent[recent > 0]
+
+    if not positive_recent.empty:
+        return safe_positive_int(positive_recent.median())
+
+    return safe_positive_int(recent.mean())
+
+
+def evaluate_moving_average_baseline(series, forecast_days):
+    train_series, test_series = train_test_split_series(series, forecast_days)
+
+    if train_series.empty or test_series.empty:
+        recent_value = get_fallback_value(series)
+        metrics = calculate_metrics(series.tail(FALLBACK_WINDOW), [recent_value] * len(series.tail(FALLBACK_WINDOW)))
+        return EvaluatedModel(
+            order=(),
+            seasonal_order=(),
+            model_name="Moving Average Fallback",
+            mae=metrics["mae"],
+            rmse=metrics["rmse"],
+            mape=metrics["mape"],
+            wmape=metrics["wmape"],
+            smape=metrics["smape"],
+            aic=None,
+            bic=None,
+        )
+
+    value = get_fallback_value(train_series)
+    metrics = calculate_metrics(test_series, [value] * len(test_series))
+
+    return EvaluatedModel(
+        order=(),
+        seasonal_order=(),
+        model_name="Moving Average Fallback",
+        mae=metrics["mae"],
+        rmse=metrics["rmse"],
+        mape=metrics["mape"],
+        wmape=metrics["wmape"],
+        smape=metrics["smape"],
+        aic=None,
+        bic=None,
+    )
+
+
+def should_use_fallback(arima_candidate, fallback_candidate):
+    if arima_candidate is None:
+        return True
+
+    if fallback_candidate is None:
+        return False
+
+    if arima_candidate.wmape is not None and fallback_candidate.wmape is not None:
+        return arima_candidate.wmape > fallback_candidate.wmape * BASELINE_ARIMA_TOLERANCE
+
+    if arima_candidate.mae is not None and fallback_candidate.mae is not None:
+        return arima_candidate.mae > fallback_candidate.mae * BASELINE_ARIMA_TOLERANCE
+
+    return False
 
 
 def format_order(order):
@@ -617,130 +448,165 @@ def format_order(order):
     return f"({','.join(str(value) for value in order)})"
 
 
-def build_forecast_results(series, candidate, forecast_days):
-    capped_series = cap_outliers_for_arima(series)
-    transformed_series = np.log1p(capped_series.astype(float))
+def build_fallback_results(series, forecast_days, candidate, reason="fallback"):
+    if series is None or series.empty:
+        return []
 
-    refit_model = ARIMA(
-        transformed_series,
-        order=candidate.order,
-        enforce_stationarity=False,
-        enforce_invertibility=False,
-    ).fit(method_kwargs={"maxiter": MAX_MODEL_ITERATIONS})
-
-    forecast_result = refit_model.get_forecast(steps=forecast_days)
-    predicted_mean = (
-        inverse_transform_forecast(forecast_result.predicted_mean) *
-        candidate.bias_factor
-    )
-    confidence_interval = np.expm1(forecast_result.conf_int(alpha=0.05))
-    confidence_interval = np.maximum(0, confidence_interval * candidate.bias_factor)
+    forecast_days = normalize_forecast_days(forecast_days)
+    last_date = series.index.max().date()
+    prediction_value = get_fallback_value(series)
+    recent = series.tail(min(FALLBACK_WINDOW, len(series)))
+    std_recent = safe_positive_int(recent.std()) if len(recent) > 1 else 0
+    interval_width = max(std_recent, safe_positive_int(prediction_value * 0.10))
 
     results = []
-    order_label = format_order(candidate.order)
-    model_name = f"ARIMA{order_label}"
 
-    for prediction_date, predicted_value in predicted_mean.items():
-        lower_value = confidence_interval.loc[prediction_date].iloc[0]
-        upper_value = confidence_interval.loc[prediction_date].iloc[1]
-        predicted_views = safe_positive_int(predicted_value)
-        lower_bound = safe_positive_int(lower_value)
-        upper_bound = max(predicted_views, safe_positive_int(upper_value))
+    for day in range(1, forecast_days + 1):
+        prediction_date = last_date + timedelta(days=day)
 
         results.append({
-            "prediction_date": prediction_date.date(),
-            "predicted_views": predicted_views,
-            "lower_bound": lower_bound,
-            "upper_bound": upper_bound,
-            "model_name": model_name,
-            "arima_order": order_label,
+            "prediction_date": prediction_date,
+            "predicted_views": prediction_value,
+            "lower_bound": max(0, prediction_value - interval_width),
+            "upper_bound": prediction_value + interval_width,
+            "model_name": "Moving Average Fallback",
+            "arima_order": "",
             "seasonal_order": "",
-            "mae": candidate.mae,
-            "rmse": candidate.rmse,
-            "mape": candidate.mape,
-            "wmape": candidate.wmape,
-            "smape": candidate.smape,
-            "aic": safe_float(refit_model.aic),
-            "bic": safe_float(refit_model.bic),
+            "mae": candidate.mae if candidate else None,
+            "rmse": candidate.rmse if candidate else None,
+            "mape": candidate.mape if candidate else None,
+            "wmape": candidate.wmape if candidate else None,
+            "smape": candidate.smape if candidate else None,
+            "aic": None,
+            "bic": None,
+            "fallback_reason": reason,
         })
 
     return results
 
 
-def forecast_with_best_model(series, forecast_days=7):
+def build_model_results(series, candidate, forecast_days):
+    forecast_days = normalize_forecast_days(forecast_days)
+    last_date = series.index.max().date()
+
+    if candidate.model_name == "SARIMA":
+        model = SARIMAX(
+            series,
+            order=candidate.order,
+            seasonal_order=candidate.seasonal_order,
+            enforce_stationarity=False,
+            enforce_invertibility=False,
+        ).fit(disp=False, maxiter=MAX_MODEL_ITERATIONS)
+    else:
+        model = ARIMA(
+            series,
+            order=candidate.order,
+            enforce_stationarity=False,
+            enforce_invertibility=False,
+        ).fit(method_kwargs={"maxiter": MAX_MODEL_ITERATIONS})
+
+    forecast = model.get_forecast(steps=forecast_days)
+    predicted_values = np.maximum(0, np.asarray(forecast.predicted_mean, dtype=float))
+
+    try:
+        confidence_interval = np.maximum(0, np.asarray(forecast.conf_int(alpha=0.05), dtype=float))
+        lower_values = confidence_interval[:, 0]
+        upper_values = confidence_interval[:, 1]
+    except Exception:
+        train_residuals = np.asarray(getattr(model, "resid", []), dtype=float)
+        residual_std = safe_positive_int(np.nanstd(train_residuals)) if len(train_residuals) else 0
+        lower_values = np.maximum(0, predicted_values - residual_std)
+        upper_values = predicted_values + residual_std
+
+    order_label = format_order(candidate.order)
+    seasonal_label = format_order(candidate.seasonal_order)
+    model_name = (
+        f"SARIMA{order_label}{seasonal_label}"
+        if candidate.model_name == "SARIMA" else
+        f"ARIMA{order_label}"
+    )
+
+    results = []
+
+    for index in range(forecast_days):
+        predicted_views = safe_positive_int(predicted_values[index])
+        lower_bound = safe_positive_int(lower_values[index])
+        upper_bound = max(predicted_views, safe_positive_int(upper_values[index]))
+
+        results.append({
+            "prediction_date": last_date + timedelta(days=index + 1),
+            "predicted_views": predicted_views,
+            "lower_bound": lower_bound,
+            "upper_bound": upper_bound,
+            "model_name": model_name,
+            "arima_order": order_label,
+            "seasonal_order": seasonal_label if candidate.model_name == "SARIMA" else "",
+            "mae": candidate.mae,
+            "rmse": candidate.rmse,
+            "mape": candidate.mape,
+            "wmape": candidate.wmape,
+            "smape": candidate.smape,
+            "aic": safe_float(model.aic),
+            "bic": safe_float(model.bic),
+        })
+
+    return results
+
+
+def forecast_with_best_model(series, forecast_days=DEFAULT_FORECAST_DAYS, fast=False):
+    forecast_days = normalize_forecast_days(forecast_days)
+
     if series is None or series.empty:
         return []
 
-    if len(series) < MIN_ARIMA_SERIES_LENGTH:
-        return run_moving_average_fallback(
-            series=series,
-            forecast_days=forecast_days,
-            reason="history_too_short",
+    profile = profile_series(series)
+    fallback_candidate = evaluate_moving_average_baseline(series, forecast_days)
+
+    if not is_arima_eligible(profile):
+        return build_fallback_results(
+            series,
+            forecast_days,
+            fallback_candidate,
+            reason="data_terbatas",
         )
 
-    active_days = int((series > 0).sum())
+    arima_candidate = find_best_arima_model(series, forecast_days, fast=fast)
 
-    if active_days < MIN_ACTIVE_DAYS:
-        return run_moving_average_fallback(
-            series=series,
-            forecast_days=forecast_days,
-            reason="active_days_too_low",
+    if should_use_fallback(arima_candidate, fallback_candidate):
+        return build_fallback_results(
+            series,
+            forecast_days,
+            fallback_candidate,
+            reason="baseline_lebih_stabil",
         )
 
     try:
-        train_series, test_series = train_test_split_series(series)
-        baseline_candidate = find_best_baseline_model(series)
-        candidate = find_best_arima_model(series)
-
-        if not candidate:
-            return run_moving_average_fallback(
-                series=series,
-                forecast_days=forecast_days,
-                reason="no_valid_arima_candidate",
-                baseline_candidate=baseline_candidate,
-            )
-
-        results = build_forecast_results(
-            series=series,
-            candidate=candidate,
-            forecast_days=forecast_days,
+        results = build_model_results(series, arima_candidate, forecast_days)
+    except Exception:
+        return build_fallback_results(
+            series,
+            forecast_days,
+            fallback_candidate,
+            reason="arima_final_error",
         )
 
-        has_zero_prediction_interval = any(
-            item["predicted_views"] <= 0 and item["upper_bound"] > 0
-            for item in results
+    if not results:
+        return build_fallback_results(
+            series,
+            forecast_days,
+            fallback_candidate,
+            reason="arima_tidak_valid",
         )
 
-        if (
-            has_zero_prediction_interval or
-            get_average_confidence_width(results) > MAX_MODEL_CONFIDENCE_WIDTH
-        ):
-            return run_moving_average_fallback(
-                series=series,
-                forecast_days=forecast_days,
-                reason="model_interval_too_wide",
-                baseline_candidate=baseline_candidate,
-            )
-
-        return results
-
-    except Exception as error:
-        print(f"Forecast error: {error}")
-
-        return run_moving_average_fallback(
-            series=series,
-            forecast_days=forecast_days,
-            reason="model_error",
-        )
+    return results
 
 
-def run_arima(series, forecast_days=7):
+def run_arima(series, forecast_days=DEFAULT_FORECAST_DAYS):
     return forecast_with_best_model(series=series, forecast_days=forecast_days)
 
 
 def build_prediction_kwargs(category, item, forecast_run=None):
     prediction_fields = get_model_field_names(Prediction)
-
     prediction_kwargs = {
         "category": category,
         "prediction_date": item["prediction_date"],
@@ -772,19 +638,21 @@ def build_prediction_kwargs(category, item, forecast_run=None):
     return prediction_kwargs
 
 
-def build_prediction_objects_for_category(category, forecast_days=7, forecast_run=None):
+def build_prediction_objects_for_category(
+    category,
+    forecast_days=DEFAULT_FORECAST_DAYS,
+    forecast_run=None,
+    fast=False,
+):
     series = prepare_time_series(
         category=category,
         end_date=get_latest_traffic_date(),
     )
-
     forecast_results = forecast_with_best_model(
         series=series,
         forecast_days=forecast_days,
+        fast=fast,
     )
-
-    if not forecast_results:
-        return []
 
     return [
         Prediction(**build_prediction_kwargs(category, item, forecast_run))
@@ -792,11 +660,18 @@ def build_prediction_objects_for_category(category, forecast_days=7, forecast_ru
     ]
 
 
-def generate_forecast_for_category(category, forecast_days=7, forecast_run=None):
+def generate_forecast_for_category(
+    category,
+    forecast_days=DEFAULT_FORECAST_DAYS,
+    forecast_run=None,
+    fast=False,
+):
+    forecast_days = normalize_forecast_days(forecast_days)
     prediction_objects = build_prediction_objects_for_category(
         category=category,
         forecast_days=forecast_days,
         forecast_run=forecast_run,
+        fast=fast,
     )
 
     with transaction.atomic():
@@ -806,6 +681,20 @@ def generate_forecast_for_category(category, forecast_days=7, forecast_run=None)
             Prediction.objects.bulk_create(prediction_objects, batch_size=500)
 
     return len(prediction_objects)
+
+
+def get_categories_for_forecast(category=None):
+    queryset = Category.objects.all().order_by("name")
+
+    if category in [None, ""]:
+        return list(queryset)
+
+    category_value = str(category).strip()
+
+    if category_value.isdigit():
+        return list(queryset.filter(id=int(category_value)))
+
+    return list(queryset.filter(slug=category_value))
 
 
 def cleanup_old_forecast_runs(keep_last=10):
@@ -824,45 +713,93 @@ def cleanup_old_forecast_runs(keep_last=10):
     return deleted_count
 
 
-def generate_all_forecasts(forecast_days=7, forecast_run=None):
+def generate_all_forecasts(
+    forecast_days=DEFAULT_FORECAST_DAYS,
+    forecast_run=None,
+    category=None,
+    fast=False,
+):
     forecast_days = normalize_forecast_days(forecast_days)
+    categories = get_categories_for_forecast(category)
     prediction_objects = []
     failed_categories = []
+    fallback_categories = 0
+    wmape_values = []
 
-    categories = list(Category.objects.all().order_by("name"))
-
-    for category in categories:
+    for category_obj in categories:
         try:
             category_predictions = build_prediction_objects_for_category(
-                category=category,
+                category=category_obj,
                 forecast_days=forecast_days,
                 forecast_run=forecast_run,
+                fast=fast,
             )
             prediction_objects.extend(category_predictions)
+
+            if category_predictions:
+                first_prediction = category_predictions[0]
+                model_name = (first_prediction.model_name or "").lower()
+
+                if "moving" in model_name or "fallback" in model_name:
+                    fallback_categories += 1
+
+                if first_prediction.wmape is not None:
+                    wmape_values.append(first_prediction.wmape)
         except Exception as error:
-            failed_categories.append(f"{category.name}: {error}")
+            failed_categories.append(f"{category_obj.name}: {error}")
 
     with transaction.atomic():
-        Prediction.objects.all().delete()
+        if categories:
+            Prediction.objects.filter(category__in=categories).delete()
 
         if prediction_objects:
             Prediction.objects.bulk_create(prediction_objects, batch_size=500)
 
-    return {
-        "total_categories": len(categories),
-        "total_predictions": len(prediction_objects),
-        "failed_categories": failed_categories,
-    }
+    average_wmape = safe_float(np.mean(wmape_values)) if wmape_values else None
+
+    return ForecastSummary(
+        total_categories=len(categories),
+        total_predictions=len(prediction_objects),
+        successful_categories=len(categories) - len(failed_categories),
+        fallback_categories=fallback_categories,
+        failed_categories=failed_categories,
+        average_wmape=average_wmape,
+        forecast_days=forecast_days,
+    )
 
 
-def create_forecast_run_and_generate(forecast_days=7):
+def update_forecast_run_success(forecast_run, summary):
+    forecast_run_fields = get_model_field_names(ForecastRun)
+    partial_status = getattr(ForecastRun, "STATUS_PARTIAL", "partial")
+    success_status = getattr(ForecastRun, "STATUS_SUCCESS", "success")
+
+    if "status" in forecast_run_fields:
+        forecast_run.status = partial_status if summary.failed_categories else success_status
+
+    if "forecast_days" in forecast_run_fields:
+        forecast_run.forecast_days = summary.forecast_days
+
+    if "total_predictions" in forecast_run_fields:
+        forecast_run.total_predictions = summary.total_predictions
+
+    if "finished_at" in forecast_run_fields:
+        forecast_run.finished_at = timezone.now()
+
+    if "error_message" in forecast_run_fields:
+        forecast_run.error_message = " | ".join(summary.failed_categories)[:2000]
+
+    forecast_run.save()
+
+
+def create_forecast_run_and_generate(
+    forecast_days=DEFAULT_FORECAST_DAYS,
+    category=None,
+    fast=False,
+):
     forecast_days = normalize_forecast_days(forecast_days)
     forecast_run_fields = get_model_field_names(ForecastRun)
-
     running_status = getattr(ForecastRun, "STATUS_RUNNING", "running")
-    success_status = getattr(ForecastRun, "STATUS_SUCCESS", "success")
     failed_status = getattr(ForecastRun, "STATUS_FAILED", "failed")
-
     create_kwargs = {}
 
     if "status" in forecast_run_fields:
@@ -877,68 +814,26 @@ def create_forecast_run_and_generate(forecast_days=7):
         summary = generate_all_forecasts(
             forecast_days=forecast_days,
             forecast_run=forecast_run,
+            category=category,
+            fast=fast,
         )
-        total_created = summary["total_predictions"]
-        failed_categories = summary["failed_categories"]
-
-        if failed_categories:
-            error_message = " | ".join(failed_categories)
-            if "error_message" in forecast_run_fields:
-                forecast_run.error_message = error_message[:2000]
-
-        if hasattr(forecast_run, "mark_success"):
-            forecast_run.mark_success(total_predictions=total_created)
-
-            if failed_categories and "error_message" in forecast_run_fields:
-                forecast_run.error_message = " | ".join(failed_categories)[:2000]
-                forecast_run.save(update_fields=["error_message"])
-        else:
-            update_fields = []
-
-            if "status" in forecast_run_fields:
-                forecast_run.status = success_status
-                update_fields.append("status")
-
-            if "total_predictions" in forecast_run_fields:
-                forecast_run.total_predictions = total_created
-                update_fields.append("total_predictions")
-
-            if "error_message" in forecast_run_fields and failed_categories:
-                forecast_run.error_message = " | ".join(failed_categories)[:2000]
-                update_fields.append("error_message")
-
-            if update_fields:
-                forecast_run.save(update_fields=update_fields)
-            else:
-                forecast_run.save()
-
-        cleanup_old_forecast_runs(
-            keep_last=getattr(settings, "FORECAST_HISTORY_LIMIT", 10)
-        )
-
+        update_forecast_run_success(forecast_run, summary)
+        forecast_run.summary = summary
     except Exception as error:
-        if hasattr(forecast_run, "mark_failed"):
-            forecast_run.mark_failed(error)
-        else:
-            update_fields = []
+        if "status" in forecast_run_fields:
+            forecast_run.status = failed_status
 
-            if "status" in forecast_run_fields:
-                forecast_run.status = failed_status
-                update_fields.append("status")
+        if "error_message" in forecast_run_fields:
+            forecast_run.error_message = str(error)[:2000]
 
-            if "error_message" in forecast_run_fields:
-                forecast_run.error_message = str(error)
-                update_fields.append("error_message")
+        if "finished_at" in forecast_run_fields:
+            forecast_run.finished_at = timezone.now()
 
-            if update_fields:
-                forecast_run.save(update_fields=update_fields)
-            else:
-                forecast_run.save()
-
+        forecast_run.save()
+        raise
+    finally:
         cleanup_old_forecast_runs(
             keep_last=getattr(settings, "FORECAST_HISTORY_LIMIT", 10)
         )
-
-        raise
 
     return forecast_run

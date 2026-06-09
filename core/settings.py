@@ -213,7 +213,9 @@ DATABASES = {
 }
 
 FORECAST_HISTORY_LIMIT = get_int_env("FORECAST_HISTORY_LIMIT", 10)
-FORECAST_DAYS = get_int_env("FORECAST_DAYS", 7)
+DEFAULT_FORECAST_DAYS = max(1, min(get_int_env("FORECAST_DAYS", 7), 14))
+MAX_FORECAST_DAYS = max(1, min(get_int_env("FORECAST_MAX_DAYS", 14), 14))
+FORECAST_DAYS = DEFAULT_FORECAST_DAYS
 
 
 # =========================

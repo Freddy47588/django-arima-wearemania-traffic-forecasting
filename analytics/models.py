@@ -59,12 +59,14 @@ class ForecastRun(models.Model):
     STATUS_PENDING = "pending"
     STATUS_RUNNING = "running"
     STATUS_SUCCESS = "success"
+    STATUS_PARTIAL = "partial"
     STATUS_FAILED = "failed"
 
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_RUNNING, "Running"),
         (STATUS_SUCCESS, "Success"),
+        (STATUS_PARTIAL, "Partial"),
         (STATUS_FAILED, "Failed"),
     ]
 
