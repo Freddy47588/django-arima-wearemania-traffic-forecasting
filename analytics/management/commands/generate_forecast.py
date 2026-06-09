@@ -51,6 +51,8 @@ class Command(BaseCommand):
                 avg_mae=Avg("mae"),
                 avg_rmse=Avg("rmse"),
                 avg_mape=Avg("mape"),
+                avg_wmape=Avg("wmape"),
+                avg_smape=Avg("smape"),
                 avg_aic=Avg("aic"),
                 avg_bic=Avg("bic"),
             )
@@ -76,6 +78,8 @@ class Command(BaseCommand):
             self.stdout.write(
                 "Best-run metrics average: "
                 f"MAPE={format_metric(summary['avg_mape'], '%')}, "
+                f"WMAPE={format_metric(summary['avg_wmape'], '%')}, "
+                f"SMAPE={format_metric(summary['avg_smape'], '%')}, "
                 f"MAE={format_metric(summary['avg_mae'])}, "
                 f"RMSE={format_metric(summary['avg_rmse'])}, "
                 f"AIC={format_metric(summary['avg_aic'])}, "

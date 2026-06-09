@@ -1,6 +1,6 @@
 # Wearemania Traffic Forecasting Dashboard
 
-Dashboard internal berbasis Django untuk mengelola data traffic Wearemania, mengelompokkan URL ke kategori berita, menampilkan analisis dashboard, dan membuat prediksi pageviews menggunakan ARIMA dengan fallback moving average.
+Dashboard berbasis Django untuk mengelola data traffic, mengelompokkan URL ke kategori berita, menampilkan analisis dashboard, dan membuat prediksi pageviews menggunakan ARIMA dengan fallback moving average.
 
 Project saat ini berfokus pada workflow upload CSV manual. Data dari CSV dibersihkan, divalidasi, disimpan ke database, lalu digunakan untuk visualisasi dan forecast kategori berita.
 
@@ -15,7 +15,7 @@ Project saat ini berfokus pada workflow upload CSV manual. Data dari CSV dibersi
 - Forecast disimpan per run menggunakan model `ForecastRun`.
 - Prediksi disimpan di model `Prediction` dengan `lower_bound`, `upper_bound`, dan `model_name`.
 - Static file production-ready memakai WhiteNoise.
-- Integrasi Google Analytics 4 masih tersedia sebagai dependency/credential, tetapi belum menjadi workflow utama aplikasi.
+- Integrasi Google Analytics 4 masih dapat dikembangkan sebagai workflow lanjutan, tetapi belum menjadi workflow utama aplikasi.
 
 ## Fitur Utama
 
@@ -27,12 +27,12 @@ Project saat ini berfokus pada workflow upload CSV manual. Data dari CSV dibersi
 - Pengecualian data non-forecast seperti homepage, arsip, halaman informasi, dan noise teknis.
 - Deteksi dan penggabungan duplikat dalam file CSV.
 - Skip data yang sudah ada di database.
-- Dashboard ringkasan total views, kategori, data aktual, data forecast, kualitas data, insight, dan rekomendasi editorial.
+- Dashboard ringkasan total views, kategori, data aktual, data forecast, kualitas data, insight, dan rekomendasi.
 - Filter dashboard berdasarkan kategori dan rentang tanggal.
 - Forecast ARIMA per kategori.
 - Fallback moving average jika histori terlalu pendek, data datar, atau ARIMA gagal.
 - Riwayat forecast terbaru.
-- Admin Django untuk `Category`, `TrafficData`, `ForecastRun`, dan `Prediction`.
+- Admin Django untuk pengelolaan data master, traffic, forecast run, dan hasil prediksi.
 
 ## Tech Stack
 
@@ -104,7 +104,7 @@ Login
   -> Dashboard menampilkan aktual, forecast, insight, dan rekomendasi
 ```
 
-## Endpoint Aplikasi
+## Route Aplikasi
 
 | URL | Nama route | Fungsi |
 |---|---|---|
@@ -113,9 +113,8 @@ Login
 | `/` | `dashboard` | Dashboard utama. |
 | `/upload/` | `upload_raw_data` | Upload CSV traffic. |
 | `/forecast/generate/` | `generate_forecast` | Generate forecast melalui POST dari dashboard. |
-| `/admin/` | - | Admin Django. |
 
-Semua halaman dashboard, upload, dan generate forecast membutuhkan login.
+Halaman dashboard, upload, dan generate forecast membutuhkan login. Admin Django tersedia untuk user yang memiliki akses staff.
 
 ## Format CSV Upload
 
@@ -133,7 +132,7 @@ Contoh CSV:
 date,page_path,views
 2026-05-01,/berita-arema/arema-menang,1200
 2026-05-01,/aremaday/jadwal-latihan,450
-2026-05-02,https://www.wearemania.net/berita-arema/contoh-artikel/?utm_source=x,900
+2026-05-02,https://example.com/berita-arema/contoh-artikel/?utm_source=x,900
 ```
 
 Catatan:
@@ -244,7 +243,7 @@ http://127.0.0.1:8000/
 5. Buka dashboard `/`.
 6. Gunakan filter kategori atau rentang tanggal jika diperlukan.
 7. Jalankan generate forecast dari dashboard.
-8. Lihat hasil prediksi, insight, kualitas forecast, dan rekomendasi editorial.
+8. Lihat hasil prediksi, insight, kualitas forecast, dan rekomendasi.
 
 ## Generate Forecast dari Terminal
 
@@ -296,7 +295,7 @@ Catatan keamanan:
 
 - Jangan commit `.env`.
 - Jangan commit `db.sqlite3` jika hanya database lokal.
-- Jangan commit credential seperti `ga4_credentials.json` ke repository publik.
+- Jangan commit file credential, token, database lokal, atau konfigurasi rahasia ke repository publik.
 - Untuk production, gunakan `DEBUG=False`, secret key kuat, host yang sesuai, dan database production.
 
 ## Static Files
@@ -372,16 +371,8 @@ python manage.py runserver 8080
 - Evaluasi akurasi forecast.
 - Tuning parameter ARIMA per kategori.
 - Deployment production dengan database MySQL atau PostgreSQL.
-- Dokumentasi user manual untuk redaksi.
-
-## Tim
-
-| Nama | Peran |
-|---|---|
-| Fredi Irawan | Backend Developer, Upload CSV, Database Management, Dashboard Integration |
-| Achmad Zaki Naufal | Data Analyst, Data Cleaning, ARIMA Modeling |
-| Irsal Fauzan Alfarizi | Data Analyst, Data Cleaning, ARIMA Modeling |
+- Dokumentasi user manual untuk pengguna dashboard.
 
 ## Lisensi
 
-Project ini digunakan untuk kebutuhan pembelajaran, internship, dan pengembangan internal dashboard Wearemania.
+Project ini digunakan untuk kebutuhan pembelajaran, pengembangan, dan dokumentasi sistem dashboard traffic forecasting.

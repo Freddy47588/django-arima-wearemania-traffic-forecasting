@@ -18,7 +18,8 @@ MIN_ARIMA_TRAIN_LENGTH = 30
 MIN_ACTIVE_DAYS = 14
 TRAIN_RATIO = 0.8
 FALLBACK_WINDOW = 7
-MAX_MODEL_CONFIDENCE_WIDTH = 200
+FALLBACK_CONFIDENCE_RATIO = 0.15
+MAX_MODEL_CONFIDENCE_WIDTH = 70
 MAX_PREDICTION_MULTIPLIER = 12
 WMAPE_TIE_TOLERANCE = 5
 MAX_TUNING_SERIES_LENGTH = 180
@@ -46,6 +47,17 @@ class ModelCandidate:
     smape: float
     aic: float
     bic: float
+
+
+@dataclass
+class BaselineCandidate:
+    strategy: str
+    model_name: str
+    mae: float
+    rmse: float
+    mape: float
+    wmape: float
+    smape: float
 
 
 def safe_positive_int(value):
@@ -227,56 +239,180 @@ def get_recent_baseline(series):
     return safe_positive_int(recent_series.mean())
 
 
-def get_moving_average_window(series):
-    if series is None:
-        return FALLBACK_WINDOW
+def get_window(series, window):
+    if series is None or series.empty:
+        return pd.Series(dtype=float)
 
-    return 14 if len(series) >= 14 else FALLBACK_WINDOW
+    return series.tail(min(window, len(series)))
 
 
-def evaluate_moving_average(train_series, test_series):
+def get_baseline_value(series, strategy):
+    if series is None or series.empty:
+        return 0
+
+    if strategy == "last":
+        return safe_positive_int(series.iloc[-1])
+
+    if strategy == "ma14":
+        return safe_positive_int(get_window(series, 14).mean())
+
+    if strategy == "weighted":
+        ma7 = get_window(series, 7).mean()
+        ma28 = get_window(series, 28).mean()
+        return safe_positive_int((ma7 * 0.65) + (ma28 * 0.35))
+
+    return safe_positive_int(get_window(series, 7).mean())
+
+
+def get_baseline_predictions(series, steps, strategy):
+    if series is None or series.empty:
+        return [0] * steps
+
+    if strategy == "seasonal7" and len(series) >= 7:
+        values = list(series.tail(7).values)
+        return [
+            safe_positive_int(values[index % 7])
+            for index in range(steps)
+        ]
+
+    value = get_baseline_value(series, strategy)
+
+    return [value] * steps
+
+
+def get_baseline_model_name(strategy):
+    if strategy == "last":
+        return "Naive Fallback"
+
+    if strategy == "seasonal7":
+        return "Seasonal Naive Fallback"
+
+    if strategy == "weighted":
+        return "Weighted Moving Average Fallback"
+
+    if strategy == "ma14":
+        return "Moving Average 14 Fallback"
+
+    return "Moving Average Fallback"
+
+
+def evaluate_baseline_strategy(train_series, test_series, strategy):
     if train_series is None or train_series.empty or test_series is None or test_series.empty:
         return None
 
-    window = get_moving_average_window(train_series)
-    baseline = safe_positive_int(train_series.tail(window).mean())
-    predicted_values = [baseline] * len(test_series)
+    predicted_values = get_baseline_predictions(
+        series=train_series,
+        steps=len(test_series),
+        strategy=strategy,
+    )
+    metrics = calculate_metrics(test_series, predicted_values)
 
-    return calculate_metrics(test_series, predicted_values)
+    if metrics["wmape"] is None:
+        return None
+
+    return BaselineCandidate(
+        strategy=strategy,
+        model_name=get_baseline_model_name(strategy),
+        mae=metrics["mae"],
+        rmse=metrics["rmse"],
+        mape=metrics["mape"],
+        wmape=metrics["wmape"],
+        smape=metrics["smape"],
+    )
 
 
-def run_moving_average_fallback(series, forecast_days=7, reason="fallback"):
+def find_best_baseline_model(series):
+    train_series, test_series = train_test_split_series(series)
+
+    if train_series is None or train_series.empty:
+        return None
+
+    strategies = ["last", "ma7", "ma14", "weighted", "seasonal7"]
+    best_candidate = None
+
+    for strategy in strategies:
+        candidate = evaluate_baseline_strategy(
+            train_series=train_series,
+            test_series=test_series,
+            strategy=strategy,
+        )
+
+        if not candidate:
+            continue
+
+        if best_candidate is None or candidate.wmape < best_candidate.wmape:
+            best_candidate = candidate
+
+    if best_candidate:
+        return best_candidate
+
+    recent_value = get_baseline_value(series, "ma7")
+    metrics = calculate_metrics(
+        get_window(series, FALLBACK_WINDOW),
+        [recent_value] * len(get_window(series, FALLBACK_WINDOW)),
+    )
+
+    return BaselineCandidate(
+        strategy="ma7",
+        model_name=get_baseline_model_name("ma7"),
+        mae=metrics["mae"],
+        rmse=metrics["rmse"],
+        mape=metrics["mape"],
+        wmape=metrics["wmape"],
+        smape=metrics["smape"],
+    )
+
+
+def run_moving_average_fallback(
+    series,
+    forecast_days=7,
+    reason="fallback",
+    baseline_candidate=None,
+):
     if series is None or series.empty:
         return []
 
     last_date = series.index.max().date()
-    predicted_value = get_recent_baseline(series)
-    window = min(get_moving_average_window(series), len(series))
-    metrics = calculate_metrics(
-        series.tail(window),
-        [predicted_value] * window,
+    baseline_candidate = baseline_candidate or find_best_baseline_model(series)
+    strategy = baseline_candidate.strategy if baseline_candidate else "ma7"
+    predicted_values = get_baseline_predictions(
+        series=series,
+        steps=forecast_days,
+        strategy=strategy,
     )
-    mae_width = safe_positive_int(metrics["mae"] or 0)
-    lower_bound = max(0, predicted_value - mae_width)
-    upper_bound = max(predicted_value, predicted_value + mae_width)
+    mae_width = safe_positive_int(
+        baseline_candidate.mae if baseline_candidate else 0
+    )
 
     results = []
 
     for day in range(1, forecast_days + 1):
         prediction_date = last_date + timedelta(days=day)
+        predicted_value = predicted_values[day - 1]
+        interval_width = min(
+            mae_width,
+            safe_positive_int(predicted_value * FALLBACK_CONFIDENCE_RATIO),
+        )
+        lower_bound = max(0, predicted_value - interval_width)
+        upper_bound = max(predicted_value, predicted_value + interval_width)
+
         results.append({
             "prediction_date": prediction_date,
             "predicted_views": predicted_value,
             "lower_bound": lower_bound,
             "upper_bound": upper_bound,
-            "model_name": "Moving Average Fallback",
+            "model_name": (
+                baseline_candidate.model_name
+                if baseline_candidate else
+                "Moving Average Fallback"
+            ),
             "arima_order": "",
             "seasonal_order": "",
-            "mae": metrics["mae"],
-            "rmse": metrics["rmse"],
-            "mape": metrics["mape"],
-            "wmape": metrics["wmape"],
-            "smape": metrics["smape"],
+            "mae": baseline_candidate.mae if baseline_candidate else None,
+            "rmse": baseline_candidate.rmse if baseline_candidate else None,
+            "mape": baseline_candidate.mape if baseline_candidate else None,
+            "wmape": baseline_candidate.wmape if baseline_candidate else None,
+            "smape": baseline_candidate.smape if baseline_candidate else None,
             "aic": None,
             "bic": None,
             "fallback_reason": reason,
@@ -504,6 +640,7 @@ def forecast_with_best_model(series, forecast_days=7):
 
     try:
         train_series, test_series = train_test_split_series(series)
+        baseline_candidate = find_best_baseline_model(series)
         candidate = find_best_arima_model(series)
 
         if not candidate:
@@ -511,6 +648,7 @@ def forecast_with_best_model(series, forecast_days=7):
                 series=series,
                 forecast_days=forecast_days,
                 reason="no_valid_arima_candidate",
+                baseline_candidate=baseline_candidate,
             )
 
         results = build_forecast_results(
@@ -519,18 +657,17 @@ def forecast_with_best_model(series, forecast_days=7):
             forecast_days=forecast_days,
         )
 
-        fallback_metrics = evaluate_moving_average(train_series, test_series)
-
         if (
-            fallback_metrics and
-            fallback_metrics["wmape"] is not None and
+            baseline_candidate and
+            baseline_candidate.wmape is not None and
             candidate.wmape is not None and
-            fallback_metrics["wmape"] + WMAPE_TIE_TOLERANCE < candidate.wmape
+            baseline_candidate.wmape + WMAPE_TIE_TOLERANCE < candidate.wmape
         ):
             return run_moving_average_fallback(
                 series=series,
                 forecast_days=forecast_days,
-                reason="moving_average_more_stable",
+                reason="baseline_more_accurate",
+                baseline_candidate=baseline_candidate,
             )
 
         has_zero_prediction_interval = any(
@@ -546,6 +683,7 @@ def forecast_with_best_model(series, forecast_days=7):
                 series=series,
                 forecast_days=forecast_days,
                 reason="model_interval_too_wide",
+                baseline_candidate=baseline_candidate,
             )
 
         return results

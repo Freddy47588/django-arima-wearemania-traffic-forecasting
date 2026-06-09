@@ -127,6 +127,8 @@ class Prediction(models.Model):
     mae = models.FloatField(blank=True, null=True)
     rmse = models.FloatField(blank=True, null=True)
     mape = models.FloatField(blank=True, null=True)
+    wmape = models.FloatField(blank=True, null=True)
+    smape = models.FloatField(blank=True, null=True)
     aic = models.FloatField(blank=True, null=True)
     bic = models.FloatField(blank=True, null=True)
     generated_at = models.DateTimeField(auto_now_add=True)
