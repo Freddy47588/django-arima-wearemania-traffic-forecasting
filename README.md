@@ -404,7 +404,7 @@ python manage.py runserver 8080
 - Export hasil forecast.
 - Evaluasi akurasi forecast.
 - Tuning parameter ARIMA per kategori.
-- Dokumentasi operasional deployment Northflank.
+- Deployment.
 - Dokumentasi user manual untuk pengguna dashboard.
 
 ## Lisensi
