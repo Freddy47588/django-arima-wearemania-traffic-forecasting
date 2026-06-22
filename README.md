@@ -38,7 +38,7 @@ Project saat ini berfokus pada workflow upload CSV manual. Data dari CSV dibersi
 
 - Python
 - Django 5.2
-- SQLite untuk development
+- MySQL untuk development
 - Pandas dan NumPy untuk data processing
 - Statsmodels ARIMA untuk forecasting
 - Chart.js untuk visualisasi frontend
