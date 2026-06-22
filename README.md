@@ -7,7 +7,7 @@ Project saat ini berfokus pada workflow upload CSV manual. Data dari CSV dibersi
 ## Status Project Saat Ini
 
 - Backend menggunakan Django 5.2.
-- Database development menggunakan SQLite.
+- Database development menggunakan MySQL.
 - Halaman utama dilindungi login.
 - Upload CSV manual tersedia di `/upload/`.
 - Dashboard tersedia di `/`.
